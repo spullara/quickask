@@ -15,17 +15,17 @@ const CSS = `
 *{box-sizing:border-box}html,body{margin:0;height:100%}
 body{font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;background:var(--bg);color:var(--fg);display:flex}
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
-#side{width:260px;flex:none;background:var(--soft);height:100vh;overflow-y:auto;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+#side{width:260px;flex:none;background:var(--soft);height:100vh;height:100dvh;overflow-y:auto;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
 #side .new{display:flex;align-items:center;padding:8px 10px;border-radius:8px;color:var(--fg);font-weight:600;margin-bottom:8px}
 #side .new kbd{margin-left:auto;font:500 11px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--mute);background:var(--bg);border-radius:5px;padding:4px 6px}
-@media (hover:none){#side .new kbd{display:none}}
+@media (hover:none){#side .new kbd{display:none}textarea{font-size:16px}}
 #side .new:hover,#side .it:hover{background:var(--line);text-decoration:none}
 #side .it{display:flex;align-items:center;border-radius:8px;color:var(--fg);padding:6px 10px;font-size:14px}
 #side .it span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #side .it.on{background:var(--line)}
 #side .it button{visibility:hidden;border:0;background:none;color:var(--mute);cursor:pointer;font-size:16px;padding:0 0 0 6px}
 #side .it:hover button{visibility:visible}
-main{flex:1;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+main{flex:1;height:100vh;height:100dvh;overflow-y:auto;display:flex;flex-direction:column}
 #log{width:100%;max-width:760px;margin:0 auto;padding:32px 24px 8px;flex:1}
 .u{background:var(--soft);border-radius:14px;padding:8px 14px;margin:24px 0 12px auto;width:fit-content;max-width:85%;white-space:pre-wrap}
 .m{margin-bottom:8px}.m p{margin:0 0 10px}.m h4{margin:16px 0 6px;font-size:15px}.m ul,.m ol{margin:0 0 10px;padding-left:22px}
