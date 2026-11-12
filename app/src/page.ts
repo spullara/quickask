@@ -31,8 +31,7 @@ main{flex:1;height:100vh;height:100dvh;overflow-y:auto;display:flex;flex-directi
 .m pre{background:var(--soft);padding:10px 12px;border-radius:8px;overflow-x:auto;font-size:13px}.m code{font:13px ui-monospace,SFMono-Regular,Menlo,monospace}
 .m.wait:empty::after,.m.wait>:last-child::after{content:"";display:inline-block;width:8px;height:8px;margin-left:4px;border-radius:50%;background:var(--mute);animation:p 1s infinite}
 @keyframes p{50%{opacity:.25}}
-.src{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.src a{font-size:12px;background:var(--soft);color:var(--mute);padding:2px 8px;border-radius:99px}
-.t{font-size:12px;color:var(--mute)}.err{color:#dc2626}
+.err{color:#dc2626}
 form{width:100%;max-width:760px;margin:0 auto;padding:8px 24px 20px;position:sticky;bottom:0;background:var(--bg)}
 textarea{width:100%;resize:none;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;background:var(--bg);color:var(--fg);outline:none;max-height:200px;overflow-y:hidden;display:block}
 textarea:focus{border-color:var(--mute)}
@@ -84,18 +83,17 @@ function blk(p){let o='',l=null,pa=[],ga=[];
  fp();fg();return o}
 const md=(s,im,src)=>{IM=im||[];SRC=src||[];return s.split('\`\`\`').map((p,i)=>i%2?'<pre><code>'+E1(p.replace(/^[^\\n]*\\n/,''))+'</code></pre>':blk(p)).join('')};
 function add(c,html){const d=document.createElement('div');d.className=c;d.innerHTML=html;log.append(d);return d}
-function srcs(s){s=(s||[]).filter((x,i,a)=>a.findIndex(y=>y.title===x.title)===i);if(s.length)add('src',s.map(x=>'<a href="'+E1(x.uri)+'" target="_blank" rel="noopener">'+E1(x.title)+'</a>').join(''))}`;
+`;
 
 const JS = `
 const ta=$('textarea'),side=$('#list');
 let cur=null,raf=0;
-function start(t0){cur={el:add('m wait',''),buf:'',t0,first:0,imgs:[]}}
+function start(){cur={el:add('m wait',''),buf:'',imgs:[]}}
 function paint(){raf=0;cur.el.innerHTML=md(cur.buf.replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs,cur.src)}
 const main=$('main');let nearEnd=true;main.addEventListener('scroll',()=>{nearEnd=main.scrollHeight-main.scrollTop-main.clientHeight<80});
 new ResizeObserver(()=>{if(nearEnd)main.scrollTop=main.scrollHeight}).observe(log);
-function T(t){if(!cur.first)cur.first=performance.now()-cur.t0;cur.buf+=t;if(!raf)raf=requestAnimationFrame(paint)}
-function D(s){cur.src=s;paint();cur.el.classList.remove('wait');srcs(s);
- add('t','first token '+(cur.first/1000).toFixed(2)+' s · done '+((performance.now()-cur.t0)/1000).toFixed(2)+' s');
+function T(t){cur.buf+=t;if(!raf)raf=requestAnimationFrame(paint)}
+function D(s){cur.src=s;paint();cur.el.classList.remove('wait');
  S.msgs.push({role:'model',text:cur.buf});cur=null;busy=false}
 function I(u){cur.imgs=u}
 function E(m){cur.el.classList.remove('wait');cur.el.insertAdjacentHTML('beforeend','<p class="err">'+E1(m)+'</p>');cur=null;busy=false}
@@ -105,11 +103,11 @@ function L(list){if(S.id&&!list.some(c=>c.id===S.id))list.unshift({id:S.id,title
 side.addEventListener('click',e=>{const id=e.target.dataset&&e.target.dataset.id;if(!id)return;e.preventDefault();
  fetch('/api/chats/'+id,{method:'DELETE'});e.target.closest('a').remove();if(id===S.id)location.href='/'});
 try{L(JSON.parse(localStorage['chats:'+S.uid]||'[]'))}catch{}
-for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images,m.sources));srcs(m.sources)}}
+for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images,m.sources))}}
 S.msgs=S.msgs.map(({role,text})=>({role,text}));
 let busy=false;
-if(S.streaming){busy=true;start(0);history.replaceState(null,'','/c/'+S.id)}
-async function ask(q){if(busy)return;busy=true;S.msgs.push({role:'user',text:q});add('u',E1(q));start(performance.now());main.scrollTop=main.scrollHeight;
+if(S.streaming){busy=true;start();history.replaceState(null,'','/c/'+S.id)}
+async function ask(q){if(busy)return;busy=true;S.msgs.push({role:'user',text:q});add('u',E1(q));start();main.scrollTop=main.scrollHeight;
  try{const r=await fetch('/api/chats/'+S.id,{method:'POST',body:JSON.stringify({title:S.title,msgs:S.msgs})});
   if(!r.ok)throw new Error('HTTP '+r.status);
   const rd=r.body.pipeThrough(new TextDecoderStream()).getReader();let buf='';
@@ -185,7 +183,7 @@ export function sharePage(s: { title: string; msgs: Msg[] }) {
 <meta property="og:site_name" content="Quick"><meta property="og:title" content="${esc(s.title)}"><meta property="og:description" content="${esc(summary)}">
 ${image ? `<meta property="og:image" content="${esc(image)}"><meta name="twitter:card" content="summary_large_image">` : ""}
 <style>${CSS}</style></head><body><main><div id="log"></div></main>
-<script>const S=${json({ msgs: s.msgs })};${RENDER}for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images,m.sources));srcs(m.sources)}}</script></body></html>`;
+<script>const S=${json({ msgs: s.msgs })};${RENDER}for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images,m.sources))}}</script></body></html>`;
 }
 
 const page = (body: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
