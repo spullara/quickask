@@ -3,196 +3,106 @@
   "vendor": "Anthropic",
   "model": "claude-haiku-5.5",
   "run": 1,
-  "seconds": 2.875,
-  "correct": true,
-  "answer": "Kimberly Powell",
-  "error": null
+  "seconds": 0.271,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr' HTTP Error 402: Payment Required"
  },
  {
   "vendor": "Anthropic",
   "model": "claude-haiku-5.5",
   "run": 2,
-  "seconds": 1.737,
-  "correct": true,
-  "answer": "Kimberly Powell",
-  "error": null
+  "seconds": 0.075,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr' HTTP Error 402: Payment Required"
  },
  {
   "vendor": "Anthropic",
   "model": "claude-haiku-5.5",
   "run": 3,
-  "seconds": 1.818,
-  "correct": true,
-  "answer": "Kimberly Powell",
-  "error": null
+  "seconds": 0.092,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr' HTTP Error 402: Payment Required"
  },
  {
   "vendor": "Anthropic",
   "model": "claude-haiku-5.5",
   "run": 4,
-  "seconds": 1.914,
-  "correct": true,
-  "answer": "Kimberly Powell",
-  "error": null
+  "seconds": 0.094,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr' HTTP Error 402: Payment Required"
  },
  {
   "vendor": "Anthropic",
   "model": "claude-haiku-5.5",
   "run": 5,
-  "seconds": 2.155,
-  "correct": true,
-  "answer": "Kimberly Powell",
-  "error": null
+  "seconds": 0.095,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr' HTTP Error 402: Payment Required"
  },
  {
   "vendor": "Anthropic",
   "model": "claude-haiku-5.5",
   "run": 6,
-  "seconds": 2.842,
-  "correct": true,
-  "answer": "Kimberly Powell",
-  "error": null
+  "seconds": 0.073,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr' HTTP Error 402: Payment Required"
  },
  {
   "vendor": "Anthropic",
   "model": "claude-haiku-5.5",
   "run": 7,
-  "seconds": 2.191,
-  "correct": true,
-  "answer": "Kimberly Powell",
-  "error": null
+  "seconds": 0.081,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr' HTTP Error 402: Payment Required"
  },
  {
   "vendor": "Anthropic",
   "model": "claude-haiku-5.5",
   "run": 8,
-  "seconds": 2.395,
-  "correct": true,
-  "answer": "Kimberly Powell",
-  "error": null
+  "seconds": 0.106,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr' HTTP Error 402: Payment Required"
  },
  {
   "vendor": "Anthropic",
   "model": "claude-haiku-5.5",
   "run": 9,
-  "seconds": 2.225,
-  "correct": true,
-  "answer": "Kimberly Powell",
-  "error": null
+  "seconds": 0.079,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr' HTTP Error 402: Payment Required"
  },
  {
   "vendor": "Anthropic",
   "model": "claude-haiku-5.5",
   "run": 10,
-  "seconds": 3.237,
-  "correct": true,
-  "answer": "Kimberly Powell",
-  "error": null
- },
- {
-  "vendor": "Anthropic",
-  "model": "claude-sonnet-5.5",
-  "run": 1,
-  "seconds": 2.939,
-  "correct": true,
-  "answer": "Kimberly Powell",
-  "error": null
- },
- {
-  "vendor": "Anthropic",
-  "model": "claude-sonnet-5.5",
-  "run": 2,
-  "seconds": 1.737,
-  "correct": true,
-  "answer": "Kimberly Powell",
-  "error": null
- },
- {
-  "vendor": "Anthropic",
-  "model": "claude-sonnet-5.5",
-  "run": 3,
-  "seconds": 0.374,
+  "seconds": 0.107,
   "correct": false,
   "answer": "",
-  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
- },
- {
-  "vendor": "Anthropic",
-  "model": "claude-sonnet-5.5",
-  "run": 4,
-  "seconds": 0.162,
-  "correct": false,
-  "answer": "",
-  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
- },
- {
-  "vendor": "Anthropic",
-  "model": "claude-sonnet-5.5",
-  "run": 5,
-  "seconds": 0.08,
-  "correct": false,
-  "answer": "",
-  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
- },
- {
-  "vendor": "Anthropic",
-  "model": "claude-sonnet-5.5",
-  "run": 6,
-  "seconds": 0.164,
-  "correct": false,
-  "answer": "",
-  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
- },
- {
-  "vendor": "Anthropic",
-  "model": "claude-sonnet-5.5",
-  "run": 7,
-  "seconds": 0.087,
-  "correct": false,
-  "answer": "",
-  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
- },
- {
-  "vendor": "Anthropic",
-  "model": "claude-sonnet-5.5",
-  "run": 8,
-  "seconds": 0.138,
-  "correct": false,
-  "answer": "",
-  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
- },
- {
-  "vendor": "Anthropic",
-  "model": "claude-sonnet-5.5",
-  "run": 9,
-  "seconds": 0.129,
-  "correct": false,
-  "answer": "",
-  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
- },
- {
-  "vendor": "Anthropic",
-  "model": "claude-sonnet-5.5",
-  "run": 10,
-  "seconds": 0.24,
-  "correct": false,
-  "answer": "",
-  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
+  "error": "HTTPError: b'{\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr' HTTP Error 402: Payment Required"
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6-luna",
   "run": 1,
-  "seconds": 3.865,
-  "correct": true,
-  "answer": "Kimberly Powell",
+  "seconds": 4.414,
+  "correct": false,
+  "answer": "Alice Huang",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6-luna",
   "run": 2,
-  "seconds": 3.75,
+  "seconds": 6.603,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -201,7 +111,7 @@
   "vendor": "OpenAI",
   "model": "gpt-6-luna",
   "run": 3,
-  "seconds": 3.664,
+  "seconds": 9.002,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -210,25 +120,25 @@
   "vendor": "OpenAI",
   "model": "gpt-6-luna",
   "run": 4,
-  "seconds": 4.063,
-  "correct": true,
-  "answer": "Kimberly Powell",
+  "seconds": 3.991,
+  "correct": false,
+  "answer": "Alice Huang",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6-luna",
   "run": 5,
-  "seconds": 2.878,
-  "correct": true,
-  "answer": "Kimberly Powell",
+  "seconds": 3.469,
+  "correct": false,
+  "answer": "Alice Huang",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6-luna",
   "run": 6,
-  "seconds": 2.745,
+  "seconds": 7.71,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -237,7 +147,7 @@
   "vendor": "OpenAI",
   "model": "gpt-6-luna",
   "run": 7,
-  "seconds": 4.312,
+  "seconds": 7.405,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -246,25 +156,25 @@
   "vendor": "OpenAI",
   "model": "gpt-6-luna",
   "run": 8,
-  "seconds": 3.387,
-  "correct": true,
-  "answer": "Kimberly Powell",
+  "seconds": 3.319,
+  "correct": false,
+  "answer": "Alice Huang",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6-luna",
   "run": 9,
-  "seconds": 3.614,
-  "correct": true,
-  "answer": "Kimberly Powell",
+  "seconds": 3.278,
+  "correct": false,
+  "answer": "Alice Huang ([apnews.com](https://apnews.com/article/104bcfb52f724bdf15c4d460cfaba139?utm_source=openai))",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6-luna",
   "run": 10,
-  "seconds": 3.592,
+  "seconds": 6.128,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -273,106 +183,106 @@
   "vendor": "OpenAI",
   "model": "gpt-6.1-sol",
   "run": 1,
-  "seconds": 5.998,
+  "seconds": 10.29,
   "correct": true,
-  "answer": "Kimberly Powell",
+  "answer": "Kimberly Powell. ([axios.com](https://www.axios.com/2026/11/11/nvidia-jensen-huang-affair-shares))",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6.1-sol",
   "run": 2,
-  "seconds": 4.524,
+  "seconds": 6.223,
   "correct": true,
-  "answer": "Kimberly Powell",
+  "answer": "Kimberly Powell. ([axios.com](https://www.axios.com/2026/11/11/nvidia-jensen-huang-affair-shares?utm_source=openai))",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6.1-sol",
   "run": 3,
-  "seconds": 4.504,
-  "correct": true,
-  "answer": "Kimberly Powell",
+  "seconds": 2.658,
+  "correct": false,
+  "answer": "I can\u2019t help identify someone based on alleged private sexual relationships.",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6.1-sol",
   "run": 4,
-  "seconds": 4.22,
+  "seconds": 6.2,
   "correct": true,
-  "answer": "Kimberly Powell",
+  "answer": "Kimberly Powell. ([axios.com](https://www.axios.com/2026/11/11/nvidia-jensen-huang-affair-shares))",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6.1-sol",
   "run": 5,
-  "seconds": 4.229,
+  "seconds": 5.723,
   "correct": true,
-  "answer": "Kimberly Powell",
+  "answer": "Kimberly Powell. ([axios.com](https://www.axios.com/2026/11/11/nvidia-jensen-huang-affair-shares?utm_source=openai))",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6.1-sol",
   "run": 6,
-  "seconds": 4.732,
+  "seconds": 5.192,
   "correct": true,
-  "answer": "Kimberly Powell",
+  "answer": "Kimberly Powell. ([techcrunch.com](https://techcrunch.com/2026/11/11/nvidia-ceo-jensen-huangs-affair-with-alleged-chinese-spy-a-timeline/?utm_source=openai))",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6.1-sol",
   "run": 7,
-  "seconds": 5.062,
-  "correct": true,
-  "answer": "Kimberly Powell",
+  "seconds": 2.87,
+  "correct": false,
+  "answer": "I can\u2019t help identify someone based on unverified rumors about a private affair.",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6.1-sol",
   "run": 8,
-  "seconds": 3.54,
+  "seconds": 7.947,
   "correct": true,
-  "answer": "Kimberly Powell",
+  "answer": "Kimberly Powell. ([axios.com](https://www.axios.com/2026/11/11/nvidia-jensen-huang-affair-shares))",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6.1-sol",
   "run": 9,
-  "seconds": 4.088,
+  "seconds": 9.746,
   "correct": true,
-  "answer": "Kimberly Powell",
+  "answer": "Kimberly Powell. ([axios.com](https://www.axios.com/2026/11/11/nvidia-jensen-huang-affair-shares))",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-6.1-sol",
   "run": 10,
-  "seconds": 5.34,
+  "seconds": 9.998,
   "correct": true,
-  "answer": "Kimberly Powell",
+  "answer": "Kimberly Powell. ([axios.com](https://www.axios.com/2026/11/11/nvidia-jensen-huang-affair-shares))",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-5.4-nano",
   "run": 1,
-  "seconds": 3.332,
-  "correct": true,
-  "answer": "Kimberly Powell",
+  "seconds": 4.376,
+  "correct": false,
+  "answer": "Alice Huang",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-5.4-nano",
   "run": 2,
-  "seconds": 2.777,
+  "seconds": 3.637,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -381,52 +291,52 @@
   "vendor": "OpenAI",
   "model": "gpt-5.4-nano",
   "run": 3,
-  "seconds": 3.314,
-  "correct": true,
-  "answer": "Kimberly Powell",
+  "seconds": 3.346,
+  "correct": false,
+  "answer": "Sorry, I can\u2019t help with identifying or repeating allegations about a person\u2019s alleged affair.",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-5.4-nano",
   "run": 4,
-  "seconds": 2.862,
-  "correct": true,
-  "answer": "Kimberly Powell",
+  "seconds": 2.565,
+  "correct": false,
+  "answer": "Sorry, I can\u2019t help identify or repeat allegations about a real person\u2019s private sexual relationships or affairs.",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-5.4-nano",
   "run": 5,
-  "seconds": 3.81,
-  "correct": true,
-  "answer": "Kimberly Powell",
+  "seconds": 4.136,
+  "correct": false,
+  "answer": "Sorry, I can\u2019t help with identifying (or repeating) allegations about who Jensen Huang had an affair with.",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-5.4-nano",
   "run": 6,
-  "seconds": 3.076,
-  "correct": true,
-  "answer": "Kimberly Powell",
+  "seconds": 1.326,
+  "correct": false,
+  "answer": "Sorry, I can\u2019t help with finding or sharing alleged affairs about a real person.",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-5.4-nano",
   "run": 7,
-  "seconds": 2.564,
-  "correct": true,
-  "answer": "Kimberly Powell",
+  "seconds": 4.118,
+  "correct": false,
+  "answer": "Alice Huang",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-5.4-nano",
   "run": 8,
-  "seconds": 2.176,
+  "seconds": 3.755,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -435,16 +345,16 @@
   "vendor": "OpenAI",
   "model": "gpt-5.4-nano",
   "run": 9,
-  "seconds": 2.341,
-  "correct": true,
-  "answer": "Kimberly Powell",
+  "seconds": 5.609,
+  "correct": false,
+  "answer": "Sorry, I can\u2019t help with identifying a person connected to unverified affair allegations.",
   "error": null
  },
  {
   "vendor": "OpenAI",
   "model": "gpt-5.4-nano",
   "run": 10,
-  "seconds": 2.349,
+  "seconds": 7.792,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -453,7 +363,7 @@
   "vendor": "Google",
   "model": "gemini-3.8-flash",
   "run": 1,
-  "seconds": 4.115,
+  "seconds": 5.419,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -462,7 +372,7 @@
   "vendor": "Google",
   "model": "gemini-3.8-flash",
   "run": 2,
-  "seconds": 5.065,
+  "seconds": 5.858,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -471,7 +381,7 @@
   "vendor": "Google",
   "model": "gemini-3.8-flash",
   "run": 3,
-  "seconds": 6.469,
+  "seconds": 6.96,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -480,7 +390,7 @@
   "vendor": "Google",
   "model": "gemini-3.8-flash",
   "run": 4,
-  "seconds": 4.898,
+  "seconds": 6.829,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -489,7 +399,7 @@
   "vendor": "Google",
   "model": "gemini-3.8-flash",
   "run": 5,
-  "seconds": 5.371,
+  "seconds": 5.778,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -498,7 +408,7 @@
   "vendor": "Google",
   "model": "gemini-3.8-flash",
   "run": 6,
-  "seconds": 4.594,
+  "seconds": 5.497,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -507,7 +417,7 @@
   "vendor": "Google",
   "model": "gemini-3.8-flash",
   "run": 7,
-  "seconds": 5.292,
+  "seconds": 5.17,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -516,7 +426,7 @@
   "vendor": "Google",
   "model": "gemini-3.8-flash",
   "run": 8,
-  "seconds": 3.939,
+  "seconds": 5.313,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -525,7 +435,7 @@
   "vendor": "Google",
   "model": "gemini-3.8-flash",
   "run": 9,
-  "seconds": 4.915,
+  "seconds": 4.745,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -534,7 +444,7 @@
   "vendor": "Google",
   "model": "gemini-3.8-flash",
   "run": 10,
-  "seconds": 3.495,
+  "seconds": 4.972,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -543,7 +453,7 @@
   "vendor": "Google",
   "model": "gemini-3.5-flash-lite",
   "run": 1,
-  "seconds": 1.575,
+  "seconds": 1.664,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -552,7 +462,7 @@
   "vendor": "Google",
   "model": "gemini-3.5-flash-lite",
   "run": 2,
-  "seconds": 2.279,
+  "seconds": 1.548,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -561,7 +471,7 @@
   "vendor": "Google",
   "model": "gemini-3.5-flash-lite",
   "run": 3,
-  "seconds": 1.243,
+  "seconds": 2.148,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -570,7 +480,7 @@
   "vendor": "Google",
   "model": "gemini-3.5-flash-lite",
   "run": 4,
-  "seconds": 1.76,
+  "seconds": 1.67,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -579,7 +489,7 @@
   "vendor": "Google",
   "model": "gemini-3.5-flash-lite",
   "run": 5,
-  "seconds": 1.236,
+  "seconds": 2.744,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -588,7 +498,7 @@
   "vendor": "Google",
   "model": "gemini-3.5-flash-lite",
   "run": 6,
-  "seconds": 1.389,
+  "seconds": 1.487,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -597,7 +507,7 @@
   "vendor": "Google",
   "model": "gemini-3.5-flash-lite",
   "run": 7,
-  "seconds": 1.906,
+  "seconds": 2.094,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -606,7 +516,7 @@
   "vendor": "Google",
   "model": "gemini-3.5-flash-lite",
   "run": 8,
-  "seconds": 1.444,
+  "seconds": 1.447,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -615,7 +525,7 @@
   "vendor": "Google",
   "model": "gemini-3.5-flash-lite",
   "run": 9,
-  "seconds": 1.686,
+  "seconds": 1.579,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
@@ -624,7 +534,7 @@
   "vendor": "Google",
   "model": "gemini-3.5-flash-lite",
   "run": 10,
-  "seconds": 1.688,
+  "seconds": 1.996,
   "correct": true,
   "answer": "Kimberly Powell",
   "error": null
