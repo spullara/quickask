@@ -125,7 +125,7 @@ async function ask(q){if(busy)return;busy=true;S.msgs.push({role:'user',text:q})
   for(;;){const {value,done}=await rd.read();if(done)break;buf+=value;const parts=buf.split('\\u0000');buf=parts.pop();
    for(const p of parts){const k=p[0],v=p.slice(1);if(k==='T')T(v);else if(k==='I')I(JSON.parse(v));else if(k==='R')R(JSON.parse(v));else if(k==='D')D(JSON.parse(v));else if(k==='E')E(v)}}
   if(cur)E('Connection closed.')}catch(e){E(String(e.message||e))}}
-$('form').addEventListener('submit',e=>{const q=ta.value.trim();if(!S.id)return;e.preventDefault();if(!q||busy)return;ta.value='';fit();ask(q)});
+$('form').addEventListener('submit',e=>{const q=ta.value.trim();if(!S.id)return;e.preventDefault();if(!q||busy)return;ta.value='';fit();if(matchMedia('(hover:none)').matches)ta.blur();ask(q)});
 ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('form').requestSubmit()}});
 const fit=()=>{ta.style.height='auto';const h=ta.scrollHeight+ta.offsetHeight-ta.clientHeight;ta.style.height=h+'px';ta.style.overflowY=h>200?'auto':'hidden'};
 ta.addEventListener('input',fit);
