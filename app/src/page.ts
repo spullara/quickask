@@ -33,7 +33,7 @@ main{flex:1;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
 .src{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.src a{font-size:12px;background:var(--soft);color:var(--mute);padding:2px 8px;border-radius:99px}
 .t{font-size:12px;color:var(--mute)}.err{color:#dc2626}
 form{width:100%;max-width:760px;margin:0 auto;padding:8px 24px 20px;position:sticky;bottom:0;background:var(--bg)}
-textarea{width:100%;resize:none;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;background:var(--bg);color:var(--fg);outline:none;max-height:200px}
+textarea{width:100%;resize:none;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;background:var(--bg);color:var(--fg);outline:none;max-height:200px;overflow-y:hidden;display:block}
 textarea:focus{border-color:var(--mute)}
 .home{display:flex;flex-direction:column;justify-content:center}.home #log{flex:none;padding:0}.home form{position:static}
 #tg{display:none}
@@ -122,9 +122,10 @@ async function ask(q){if(busy)return;busy=true;S.msgs.push({role:'user',text:q})
   for(;;){const {value,done}=await rd.read();if(done)break;buf+=value;const parts=buf.split('\\u0000');buf=parts.pop();
    for(const p of parts){const k=p[0],v=p.slice(1);if(k==='T')T(v);else if(k==='I')I(JSON.parse(v));else if(k==='R')R(JSON.parse(v));else if(k==='D')D(JSON.parse(v));else if(k==='E')E(v)}}
   if(cur)E('Connection closed.')}catch(e){E(String(e.message||e))}}
-$('form').addEventListener('submit',e=>{const q=ta.value.trim();if(!S.id)return;e.preventDefault();if(!q||busy)return;ta.value='';ask(q)});
+$('form').addEventListener('submit',e=>{const q=ta.value.trim();if(!S.id)return;e.preventDefault();if(!q||busy)return;ta.value='';fit();ask(q)});
 ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('form').requestSubmit()}});
-ta.addEventListener('input',()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px'});
+const fit=()=>{ta.style.height='auto';const h=ta.scrollHeight+ta.offsetHeight-ta.clientHeight;ta.style.height=h+'px';ta.style.overflowY=h>200?'auto':'hidden'};
+ta.addEventListener('input',fit);
 $('#tg').onclick=()=>document.body.classList.toggle('open');main.addEventListener('click',()=>document.body.classList.remove('open'));
 if(!S.streaming)ta.focus();
 const shx=$('#shx'),sh=$('#sh'),sl=$('#sl'),sp=$('#sp'),shareUrl=id=>location.origin+'/s/'+id;
