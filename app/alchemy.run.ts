@@ -4,7 +4,7 @@ import * as State from "alchemy/State";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import type { Auth } from "./src/auth-store.ts";
-import type { Chats } from "./src/worker.ts";
+import type { Chats, Shares } from "./src/worker.ts";
 
 export const Worker = Cloudflare.Worker("Quick", {
   main: "./src/worker.ts",
@@ -16,6 +16,7 @@ export const Worker = Cloudflare.Worker("Quick", {
   env: {
     CHATS: Cloudflare.DurableObject<Chats>("Chats", { className: "Chats" }),
     AUTH: Cloudflare.DurableObject<Auth>("Auth", { className: "Auth" }),
+    SHARES: Cloudflare.DurableObject<Shares>("Shares", { className: "Shares" }),
     GEMINI_API_KEY: Config.Redacted("GEMINI_API_KEY"),
     EXA_API_KEY: Config.Redacted("EXA_API_KEY"),
     ACCESS_KEY: Config.Redacted("ACCESS_KEY"),

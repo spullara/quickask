@@ -35,6 +35,7 @@ textarea{width:100%;resize:none;border:1px solid var(--line);border-radius:14px;
 textarea:focus{border-color:var(--mute)}
 .home{display:flex;flex-direction:column;justify-content:center}.home #log{flex:none;padding:0}.home form{position:static}
 #tg{display:none}
+#sh{position:fixed;top:10px;right:14px;z-index:1;border:0;background:var(--soft);color:var(--fg);border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}#sh:hover{background:var(--line)}
 .gal{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
 .m img.mi{height:180px;max-width:100%;object-fit:cover;border-radius:10px;display:block;background:var(--soft)}
 .m p img.mi{margin:6px 0}
@@ -52,14 +53,16 @@ body.open #side{transform:none}#tg{display:block;position:fixed;top:10px;left:10
 #log{padding-top:52px}}
 `;
 
-const JS = `
-const $=s=>document.querySelector(s),log=$('#log'),ta=$('textarea'),side=$('#list');
+/** Message rendering, shared by the app and the read-only share page. */
+const RENDER = `
+const $=s=>document.querySelector(s),log=$('#log');
 const E1=s=>s.replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
-let IM=[];
+let IM=[],SRC=[];
 const pic=(u,alt)=>u?'<a href="'+u+'" target="_blank" rel="noopener"><img class="mi" src="'+u+'" alt="'+alt+'" title="'+alt+'" referrerpolicy="no-referrer" onerror="this.parentNode.remove()" onload="if(this.naturalWidth<120)this.parentNode.remove()"></a>':'';
 const inl=s=>E1(s).replace(/\`([^\`]+)\`/g,'<code>$1</code>').replace(/\\*\\*([^*]+)\\*\\*/g,'<b>$1</b>')
  .replace(/!\\[([^\\]]*)\\]\\((?:img:(\\d+)|(https:[^)\\s]+))\\)/g,(_,a,n,u)=>pic(n?E1(IM[n-1]||''):u,a))
- .replace(/\\[([^\\]]+)\\]\\((https?:[^)\\s]+)\\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+ .replace(/\\[([^\\]]+)\\]\\((https?:[^)\\s]+)\\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
+ .replace(/\\[(\\d+(?:,\\s*\\d+)*)\\](?!\\()/g,(m,l)=>SRC.length?'<sup>'+l.split(/,\\s*/).map(n=>SRC[n-1]?'<a href="'+E1(SRC[n-1].uri)+'" target="_blank" rel="noopener">'+n+'</a>':n).join(',')+'</sup>':m);
 function blk(p){let o='',l=null,pa=[],ga=[];
  const fp=()=>{if(pa.length){o+='<p>'+pa.map(inl).join('<br>')+'</p>';pa=[]}if(l){o+='</'+l+'>';l=null}};
  const fg=()=>{if(ga.length){o+='<div class="gal">'+ga.map(inl).join('')+'</div>';ga=[]}};
@@ -71,15 +74,18 @@ function blk(p){let o='',l=null,pa=[],ga=[];
    else if(m=ln.match(/^\\s*([-*]|\\d+[.)])\\s+(.*)/)){const t=/\\d/.test(m[1])?'ol':'ul';if(pa.length||l!==t){fp();o+='<'+t+'>';l=t}o+='<li>'+inl(m[2])+'</li>'}
    else{if(l){o+='</'+l+'>';l=null}pa.push(ln)}}}
  fp();fg();return o}
-const md=(s,im)=>{IM=im||[];return s.split('\`\`\`').map((p,i)=>i%2?'<pre><code>'+E1(p.replace(/^[^\\n]*\\n/,''))+'</code></pre>':blk(p)).join('')};
+const md=(s,im,src)=>{IM=im||[];SRC=src||[];return s.split('\`\`\`').map((p,i)=>i%2?'<pre><code>'+E1(p.replace(/^[^\\n]*\\n/,''))+'</code></pre>':blk(p)).join('')};
 function add(c,html){const d=document.createElement('div');d.className=c;d.innerHTML=html;log.append(d);return d}
-function srcs(s){if(s&&s.length)add('src',s.map(x=>'<a href="'+E1(x.uri)+'" target="_blank" rel="noopener">'+E1(x.title)+'</a>').join(''))}
+function srcs(s){s=(s||[]).filter((x,i,a)=>a.findIndex(y=>y.title===x.title)===i);if(s.length)add('src',s.map(x=>'<a href="'+E1(x.uri)+'" target="_blank" rel="noopener">'+E1(x.title)+'</a>').join(''))}`;
+
+const JS = `
+const ta=$('textarea'),side=$('#list');
 let cur=null,raf=0;
 function start(t0){cur={el:add('m wait',''),buf:'',t0,first:0,imgs:[]}}
-function paint(){raf=0;cur.el.innerHTML=md(cur.buf.replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs);if(nearEnd)main.scrollTop=main.scrollHeight}
+function paint(){raf=0;cur.el.innerHTML=md(cur.buf.replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs,cur.src);if(nearEnd)main.scrollTop=main.scrollHeight}
 const main=$('main');let nearEnd=true;main.addEventListener('scroll',()=>{nearEnd=main.scrollHeight-main.scrollTop-main.clientHeight<80});
 function T(t){if(!cur.first)cur.first=performance.now()-cur.t0;cur.buf+=t;if(!raf)raf=requestAnimationFrame(paint)}
-function D(s){paint();cur.el.classList.remove('wait');srcs(s);
+function D(s){cur.src=s;paint();cur.el.classList.remove('wait');srcs(s);
  add('t','first token '+(cur.first/1000).toFixed(2)+' s · done '+((performance.now()-cur.t0)/1000).toFixed(2)+' s');
  S.msgs.push({role:'model',text:cur.buf});cur=null;busy=false}
 function I(u){cur.imgs=u}
@@ -90,7 +96,7 @@ function L(list){if(S.id&&!list.some(c=>c.id===S.id))list.unshift({id:S.id,title
 side.addEventListener('click',e=>{const id=e.target.dataset&&e.target.dataset.id;if(!id)return;e.preventDefault();
  fetch('/api/chats/'+id,{method:'DELETE'});e.target.closest('a').remove();if(id===S.id)location.href='/'});
 try{L(JSON.parse(localStorage['chats:'+S.uid]||'[]'))}catch{}
-for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images));srcs(m.sources)}}
+for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images,m.sources));srcs(m.sources)}}
 S.msgs=S.msgs.map(({role,text})=>({role,text}));
 let busy=false;
 if(S.streaming){busy=true;start(0);history.replaceState(null,'','/c/'+S.id)}
@@ -106,6 +112,14 @@ ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposin
 ta.addEventListener('input',()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px'});
 $('#tg').onclick=()=>document.body.classList.toggle('open');main.addEventListener('click',()=>document.body.classList.remove('open'));
 if(!S.streaming)ta.focus();
+const sh=$('#sh');if(sh)sh.onclick=()=>{if(busy)return;const label=sh.textContent;
+ const link=fetch('/api/chats/'+S.id+'/share',{method:'POST',body:JSON.stringify({n:S.msgs.length})})
+  .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(j=>j.url);
+ const show=t=>{sh.textContent=t;setTimeout(()=>sh.textContent=label,2000)};
+ const plain=()=>link.then(u=>navigator.clipboard.writeText(u));
+ (window.ClipboardItem&&navigator.clipboard.write
+  ?navigator.clipboard.write([new ClipboardItem({'text/plain':link.then(u=>new Blob([u],{type:'text/plain'}))})]).catch(plain)
+  :plain()).then(()=>show('Link copied'),()=>show('Could not copy'))};
 `;
 
 export function shell(o: { id: string | null; title: string; msgs: Msg[]; streaming: boolean; user: { u: string; n: string } }) {
@@ -120,8 +134,26 @@ export function shell(o: { id: string | null; title: string; msgs: Msg[]; stream
 <div class="me"><span>${esc(o.user.n)}</span><a href="/auth/logout">Sign out</a></div></nav>
 <main class="${o.id ? "" : "home"}"><div id="log"></div>
 <form action="/" method="get"><textarea name="q" rows="1" placeholder="${o.id ? "Ask a follow-up" : "Ask anything"}" autocomplete="off"></textarea></form></main>
-<script>const S=${json(state)};${JS}</script>
+${o.id ? '<button id="sh">Share</button>' : ""}
+<script>const S=${json(state)};${RENDER}${JS}</script>
 `;
+}
+
+/** Changes whenever the share page's code changes, so cached share pages never outlive a deploy. */
+export const PAGE_VERSION = [...CSS + RENDER].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0, 2166136261).toString(36);
+
+/** Read-only snapshot of a chat for anyone with the link: no sidebar, no input, no account. */
+export function sharePage(s: { title: string; msgs: Msg[] }) {
+  const answer = s.msgs.find((m) => m.role === "model");
+  const summary = (answer?.text ?? "").replace(/!\[[^\]]*\]\([^)]*\)|[*#`>_]/g, "").replace(/\s+/g, " ").trim().slice(0, 200);
+  const n = Number(answer?.text.match(/\]\(img:(\d+)\)/)?.[1] ?? 0);
+  const image = n ? answer?.images?.[n - 1] : undefined;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc(s.title)}</title><meta name="robots" content="noindex">
+<meta property="og:site_name" content="Quick"><meta property="og:title" content="${esc(s.title)}"><meta property="og:description" content="${esc(summary)}">
+${image ? `<meta property="og:image" content="${esc(image)}"><meta name="twitter:card" content="summary_large_image">` : ""}
+<style>${CSS}</style></head><body><main><div id="log"></div></main>
+<script>const S=${json({ msgs: s.msgs })};${RENDER}for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images,m.sources));srcs(m.sources)}}</script></body></html>`;
 }
 
 const page = (body: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

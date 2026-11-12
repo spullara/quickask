@@ -172,6 +172,22 @@ while chunk := r.read1(65536):
 frames = raw.decode().split("\u0000")
 checks["followup_frames"] = any(f.startswith("T") for f in frames) and any(f.startswith("D") for f in frames)
 
+time.sleep(1)
+stored_chat = alice.text(f"/c/{chat_id}")
+checks["followup_cannot_rewrite_history"] = "It is a suspension bridge in San Francisco." not in stored_chat and "how long is it?" in stored_chat
+link = alice.json(f"/api/chats/{chat_id}/share", {"n": 2})["url"]
+share_path = "/s/" + link.rsplit("/", 1)[1]
+public = Browser(access_key=False).text(share_path)
+checks["share_link_public"] = link.startswith(BASE) and "golden gate" in public.lower() and "](img:" in public
+checks["share_page_read_only"] = 'id="side"' not in public and "<textarea" not in public and "og:title" in public
+anon = Browser().open(f"/api/chats/{chat_id}/share", {"n": 2}, "POST").read().decode()
+checks["share_needs_account"] = '"url"' not in anon
+try:
+    Browser(access_key=False).open("/s/doesnotexist")
+    checks["unknown_share_404"] = False
+except urllib.error.HTTPError as e:
+    checks["unknown_share_404"] = e.code == 404
+
 out = Browser()
 out.cookies = dict(alice.cookies)
 out.open("/auth/logout")
@@ -182,6 +198,7 @@ checks["opensearch_inline"] = "{searchTerms}" in osd.read().decode() and osd.hea
 for cid in alice.chat_ids():
     alice.open(f"/api/chats/{cid}", method="DELETE").read()
 checks["delete"] = alice.chat_ids() == []
+checks["share_outlives_chat"] = "golden gate" in Browser(access_key=False).text(share_path).lower()
 
 avg = {k: round(statistics.mean(r[k] for r in rows), 3) for k in ("ttfb", "first_token", "total")}
 json.dump({"base": BASE, "runs": rows, "avg": avg, "followup_first_token": round(followup_ft, 3), "checks": checks},

@@ -1,7 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 import { cookie, session } from "./session.ts";
-import { call, keyPage, opensearch, shell, signIn, type Msg, type Source } from "./page.ts";
+import { PAGE_VERSION, call, keyPage, opensearch, sharePage, shell, signIn, type Msg, type Source } from "./page.ts";
 
 export { Auth } from "./auth-store.ts";
 
@@ -47,6 +47,25 @@ Results are sorted newest first and show publish dates. For questions about the 
 anything, the most recently published reports decide the answer: lead with what they say, then mention older context.`;
 
 /** Gemini with the search results attached to the latest question. No search tool: Exa already did the search. */
+/** Read-only chat snapshots behind share links. One global instance. */
+export class Shares extends DurableObject<WorkerEnv> {
+  sql = this.ctx.storage.sql;
+
+  constructor(ctx: DurableObjectState, env: WorkerEnv) {
+    super(ctx, env);
+    this.sql.exec("CREATE TABLE IF NOT EXISTS shares (id TEXT PRIMARY KEY, title TEXT, msgs TEXT, created INTEGER)");
+  }
+
+  put(id: string, title: string, msgs: Msg[]) {
+    this.sql.exec("INSERT INTO shares VALUES (?, ?, ?, ?)", id, title, JSON.stringify(msgs), Date.now());
+  }
+
+  get(id: string) {
+    const row = this.sql.exec<{ title: string; msgs: string }>("SELECT title, msgs FROM shares WHERE id = ?", id).toArray()[0];
+    return row ? { title: row.title, msgs: JSON.parse(row.msgs) as Msg[] } : null;
+  }
+}
+
 function gemini(env: WorkerEnv, msgs: Msg[], found: Search) {
   const results = found.context ? `<search_results>\n${found.context}\n</search_results>` : "(No search results.)";
   return fetch(GEMINI, {
@@ -93,6 +112,16 @@ function stream() {
   const writer = writable.getWriter();
   const enc = new TextEncoder();
   return { readable, send: (s: string) => void writer.write(enc.encode(s)), close: () => writer.close() };
+}
+
+/** A chat as stored, waiting up to 3 s for a save still in flight to reach at least n messages. */
+async function stored(chats: DurableObjectStub<Chats>, id: string, n: number) {
+  let chat = await chats.get(id);
+  for (let i = 0; i < 10 && (!chat || chat.msgs.length < n); i++) {
+    await new Promise((r) => setTimeout(r, 300));
+    chat = await chats.get(id);
+  }
+  return chat;
 }
 
 const newId = () => crypto.randomUUID().replaceAll("-", "").slice(0, 12);
@@ -166,6 +195,19 @@ export default {
     }
     if (path === "/favicon.ico") return new Response(null, { status: 204 });
 
+    // Share links are public: no access key, no account. Snapshots never change, so the edge caches them.
+    const shared = path.match(/^\/s\/(\w+)$/);
+    if (shared) {
+      const key = new Request(`${url.origin}${path}?v=${PAGE_VERSION}`);
+      const hit = await caches.default.match(key);
+      if (hit) return hit;
+      const snap = await env.SHARES.get(env.SHARES.idFromName("shares")).get(shared[1]!);
+      if (!snap) return new Response("This link does not exist.", { status: 404 });
+      const res = new Response(sharePage(snap), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60, s-maxage=86400" } });
+      ctx.waitUntil(caches.default.put(key, res.clone()));
+      return res;
+    }
+
     const hasKey = cookie(req, "k") === env.ACCESS_KEY;
     const keyParam = url.searchParams.get("k") === env.ACCESS_KEY;
     if (!hasKey && !keyParam) return new Response(keyPage(url.searchParams.has("k")), { status: 401, headers: HTML });
@@ -212,6 +254,18 @@ export default {
       return new Response(shell({ ...chat, streaming: false, user }) + call("L", list), { headers });
     }
 
+    const share = path.match(/^\/api\/chats\/(\w+)\/share$/);
+    if (share && req.method === "POST") {
+      // Snapshot from storage, not from the client, so nobody can publish made-up answers on this domain.
+      // The chat saves after its stream ends, so wait briefly when the newest answer is not stored yet.
+      const { n } = (await req.json()) as { n: number };
+      const chat = await stored(chats, share[1]!, n);
+      if (!chat) return new Response("Not found", { status: 404 });
+      const id = newId();
+      await env.SHARES.get(env.SHARES.idFromName("shares")).put(id, chat.title, chat.msgs);
+      return Response.json({ url: `${url.origin}/s/${id}` });
+    }
+
     const api = path.match(/^\/api\/chats\/(\w+)$/);
     if (api && req.method === "POST") {
       // Follow-up: the client sends the history it already has, so no storage read is on the critical path.
@@ -222,7 +276,9 @@ export default {
         const result = await turn(env, body.msgs, searching,
           (t, v) => out.send(t + (typeof v === "string" ? v : JSON.stringify(v)) + "\u0000"));
         await out.close();
-        if (result) await chats.save(api[1]!, body.title, [...body.msgs, { role: "model", ...result }]);
+        // Save stored history plus this turn. The client's copy of earlier answers is never written back.
+        const base = await stored(chats, api[1]!, body.msgs.length - 1);
+        if (result && base) await chats.save(api[1]!, base.title, [...base.msgs, body.msgs.at(-1)!, { role: "model", ...result }]);
       })());
       return new Response(out.readable, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
     }
