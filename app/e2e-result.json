@@ -1,55 +1,55 @@
 {
- "base": "https://quick-quick-live-sam-bcofqz27ftvxjhus.spullara-f09.workers.dev",
+ "base": "https://quickask.dev",
  "runs": [
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.11,
-   "first_token": 0.977,
-   "total": 1.013,
+   "ttfb": 0.081,
+   "first_token": 0.655,
+   "total": 0.682,
    "inline_images": 0
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.149,
-   "first_token": 1.082,
-   "total": 1.284,
+   "ttfb": 0.084,
+   "first_token": 0.769,
+   "total": 1.193,
    "inline_images": 1
   },
   {
    "q": "who is the latest person jensen huang had an affair with",
-   "ttfb": 0.141,
-   "first_token": 1.345,
-   "total": 1.533,
+   "ttfb": 0.068,
+   "first_token": 0.795,
+   "total": 1.012,
    "inline_images": 0
   },
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.267,
-   "first_token": 0.905,
-   "total": 0.929,
+   "ttfb": 0.07,
+   "first_token": 0.613,
+   "total": 0.632,
    "inline_images": 0
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.104,
-   "first_token": 0.606,
-   "total": 0.846,
+   "ttfb": 0.072,
+   "first_token": 1.598,
+   "total": 1.61,
    "inline_images": 1
   },
   {
    "q": "who is the latest person jensen huang had an affair with",
-   "ttfb": 0.107,
-   "first_token": 0.992,
-   "total": 1.14,
+   "ttfb": 0.061,
+   "first_token": 0.65,
+   "total": 0.814,
    "inline_images": 0
   }
  ],
  "avg": {
-  "ttfb": 0.146,
-  "first_token": 0.985,
-  "total": 1.124
+  "ttfb": 0.073,
+  "first_token": 0.847,
+  "total": 0.991
  },
- "followup_first_token": 1.024,
+ "followup_first_token": 0.976,
  "checks": {
   "no_access_key_is_401": true,
   "access_key_shows_passkey_page": true,
