@@ -39,16 +39,17 @@ def gemini(model):
     return "".join(p.get("text", "") for p in d["candidates"][0]["content"]["parts"])
 
 
-def openrouter(model):
-    d = post("https://openrouter.ai/api/v1/chat/completions",
-             {"Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}"},
-             {"model": model, "messages": [{"role": "user", "content": QUESTION}], "max_tokens": 400,
-              "plugins": [{"id": "web", "engine": "native"}]})
-    return d["choices"][0]["message"]["content"]
+def anthropic(model):
+    d = post("https://api.anthropic.com/v1/messages",
+             {"x-api-key": os.environ["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01"},
+             {"model": model, "max_tokens": 400, "messages": [{"role": "user", "content": QUESTION}],
+              "tools": [{"type": "web_search_20250305", "name": "web_search", "max_uses": 3}]})
+    return "".join(c.get("text", "") for c in d["content"] if c["type"] == "text")
 
 
 MODELS = [
-    ("Anthropic", "claude-haiku-5.5", lambda: openrouter("anthropic/claude-haiku-5.5")),
+    ("Anthropic", "claude-haiku-5.5", lambda: anthropic("claude-haiku-5-5")),
+    ("Anthropic", "claude-sonnet-5.5", lambda: anthropic("claude-sonnet-5-5")),
     ("OpenAI", "gpt-6-luna", lambda: openai("gpt-6-luna")),
     ("OpenAI", "gpt-6.1-sol", lambda: openai("gpt-6.1-sol")),
     ("OpenAI", "gpt-5.4-nano", lambda: openai("gpt-5.4-nano")),
