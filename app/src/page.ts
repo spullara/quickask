@@ -20,7 +20,9 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 #side .new kbd{margin-left:auto;font:500 11px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--mute);background:var(--bg);border-radius:5px;padding:4px 6px}
 @media (hover:none){#side .new kbd{display:none}textarea{font-size:16px}}
 #side .new:hover,#side .it:hover{background:var(--line);text-decoration:none}
-#side .it{display:flex;align-items:center;border-radius:8px;color:var(--fg);padding:6px 10px;font-size:14px}
+#side .it{position:relative;display:flex;align-items:center;border-radius:8px;color:var(--fg);padding:6px 10px;font-size:14px;background:var(--soft);transition:transform .2s ease;touch-action:pan-y}
+.row{position:relative;overflow:hidden;border-radius:8px;flex:none}
+.row .del{position:absolute;top:0;right:0;bottom:0;width:80px;border:0;background:#dc2626;color:#fff;font:inherit;font-size:14px;font-weight:500}
 #side .it span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #side .it.on{background:var(--line)}
 #side .it button{visibility:hidden;border:0;background:none;color:var(--mute);cursor:pointer;font-size:16px;padding:0 0 0 6px}
@@ -103,9 +105,23 @@ function I(u){cur.imgs=u}
 function E(m){cur.el.classList.remove('wait');cur.el.insertAdjacentHTML('beforeend','<p class="err">'+E1(m)+'</p>');cur=null;busy=false}
 function L(list){if(S.id&&!list.some(c=>c.id===S.id))list.unshift({id:S.id,title:S.title});
  try{localStorage['chats:'+S.uid]=JSON.stringify(list.slice(0,300))}catch{}
- side.innerHTML=list.map(c=>'<a class="it'+(c.id===S.id?' on':'')+'" href="/c/'+c.id+'"><span>'+E1(c.title)+'</span><button data-id="'+c.id+'" title="Delete">×</button></a>').join('')}
-side.addEventListener('click',e=>{const id=e.target.dataset&&e.target.dataset.id;if(!id)return;e.preventDefault();
- fetch('/api/chats/'+id,{method:'DELETE'});e.target.closest('a').remove();if(id===S.id)location.href='/'});
+ side.innerHTML=list.map(c=>'<div class="row"><button class="del" data-id="'+c.id+'">Delete</button><a class="it'+(c.id===S.id?' on':'')+'" href="/c/'+c.id+'"><span>'+E1(c.title)+'</span><button data-id="'+c.id+'" title="Delete">×</button></a></div>').join('')}
+function del(id){fetch('/api/chats/'+id,{method:'DELETE'});const r=side.querySelector('[data-id="'+id+'"]');if(r)r.closest('.row').remove();if(id===S.id)location.href='/'}
+// Swipe left on a row (touch): reveal Delete; a long swipe deletes; swipe back or tap to close.
+let sw=null,opened=null,swiped=false;const shut=it=>{it.style.transform='';if(opened===it)opened=null};
+side.addEventListener('touchstart',e=>{const it=e.target.closest('.it');if(!it)return;if(opened&&opened!==it)shut(opened);
+ const t=e.touches[0];sw={it,x:t.clientX,y:t.clientY,dx:0,dir:null,base:it===opened?-80:0};it.style.transition='none'},{passive:true});
+side.addEventListener('touchmove',e=>{if(!sw)return;const t=e.touches[0],dx=t.clientX-sw.x,dy=t.clientY-sw.y;
+ if(!sw.dir){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;sw.dir=Math.abs(dx)>Math.abs(dy)?'x':'y'}
+ if(sw.dir!=='x'){sw.it.style.transition='';sw=null;return}
+ e.preventDefault();sw.dx=Math.min(0,sw.base+dx);sw.it.style.transform='translateX('+sw.dx+'px)'},{passive:false});
+side.addEventListener('touchend',()=>{if(!sw)return;const {it,dx,dir}=sw;sw=null;it.style.transition='';if(dir!=='x')return;
+ swiped=true;setTimeout(()=>swiped=false,350);const id=it.querySelector('[data-id]').dataset.id;
+ if(-dx>it.offsetWidth*.6){it.style.transform='translateX(-100%)';setTimeout(()=>del(id),200)}
+ else if(-dx>40){it.style.transform='translateX(-80px)';opened=it}else shut(it)});
+side.addEventListener('click',e=>{const id=e.target.dataset&&e.target.dataset.id;
+ if(id){e.preventDefault();del(id);return}
+ if(swiped||opened){e.preventDefault();if(opened)shut(opened)}});
 try{L(JSON.parse(localStorage['chats:'+S.uid]||'[]'))}catch{}
 for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images,m.sources))}}
 S.msgs=S.msgs.map(({role,text})=>({role,text}));
