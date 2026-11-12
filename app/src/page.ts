@@ -168,6 +168,13 @@ function fresh(){document.body.classList.remove('open');
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='k'){e.preventDefault();fresh()}});
 $('.new').addEventListener('click',e=>{if(e.metaKey||e.ctrlKey||e.shiftKey||e.button)return;e.preventDefault();fresh()});
 addEventListener('popstate',()=>location.reload());
+// Live sidebar: the server pushes the chat list when any tab or device changes it.
+let live=null;function connect(){if(live&&live.readyState<2)return;live=new WebSocket(location.origin.replace(/^http/,'ws')+'/api/live');
+ live.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.list&&!sw)L(m.list)}catch{}};
+ live.onclose=()=>{if(document.visibilityState==='visible')setTimeout(connect,3000)}}
+if(document.readyState==='complete')connect();else addEventListener('load',connect);
+setInterval(()=>{if(live&&live.readyState===1)live.send('ping')},50000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')connect()});
 if(!/Mac|iPhone|iPad/.test(navigator.platform))$('.new kbd').textContent='Ctrl K';
 const shx=$('#shx'),sh=$('#sh'),sl=$('#sl'),sp=$('#sp'),shareUrl=id=>location.origin+'/s/'+id;
 const when=t=>new Date(t).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});

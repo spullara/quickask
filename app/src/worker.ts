@@ -19,6 +19,31 @@ export class Chats extends DurableObject<WorkerEnv> {
   constructor(ctx: DurableObjectState, env: WorkerEnv) {
     super(ctx, env);
     this.sql.exec("CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, title TEXT, updated INTEGER, msgs TEXT)");
+    // Keep-alive pings get an answer without waking the object.
+    this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
+  }
+
+  /** Live sidebar: open pages hold a hibernatable WebSocket and get the list whenever it changes. */
+  override async fetch() {
+    const [client, server] = Object.values(new WebSocketPair()) as [WebSocket, WebSocket];
+    this.ctx.acceptWebSocket(server);
+    server.send(JSON.stringify({ list: this.list() }));
+    return new Response(null, { status: 101, webSocket: client });
+  }
+
+  override webSocketClose(ws: WebSocket, code: number, reason: string) {
+    try {
+      ws.close(code, reason);
+    } catch {}
+  }
+
+  private notify() {
+    const msg = JSON.stringify({ list: this.list() });
+    for (const ws of this.ctx.getWebSockets()) {
+      try {
+        ws.send(msg);
+      } catch {}
+    }
   }
 
   list() {
@@ -35,10 +60,12 @@ export class Chats extends DurableObject<WorkerEnv> {
       "INSERT INTO chats VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET title = excluded.title, updated = excluded.updated, msgs = excluded.msgs",
       id, title, Date.now(), JSON.stringify(msgs),
     );
+    this.notify();
   }
 
   remove(id: string) {
     this.sql.exec("DELETE FROM chats WHERE id = ?", id);
+    this.notify();
   }
 }
 
@@ -306,6 +333,11 @@ export default {
       const [chat, list, links] = await Promise.all([chats.get(chatPage[1]!), chats.list(), shares.list(`${user.u}/${chatPage[1]}`)]);
       if (!chat) return Response.redirect(url.origin + "/", 302);
       return new Response(shell({ ...chat, streaming: false, user, shares: links }) + call("L", list), { headers });
+    }
+
+    if (path === "/api/live") {
+      if (req.headers.get("Upgrade") !== "websocket") return new Response("Expected a WebSocket", { status: 426 });
+      return chats.fetch(req);
     }
 
     if (path === "/api/usage" || path === "/admin") {
