@@ -129,19 +129,24 @@ checks["login_twice_counter_ok"] = again.json("/auth/login/verify", alice_key.ge
 o = Browser().json("/auth/login/options")
 checks["unknown_passkey_rejected"] = "error" in Browser().json("/auth/login/verify", Authenticator().get(o))
 
+def answer(html):
+    return "".join(json.loads(m) for m in re.findall(r"<script>T\((\".*?\")\)</script>", html))
+
+
 for q in ["what is the capital of australia", "golden gate bridge",
           "who is the latest person jensen huang had an affair with"] * 2:
     ttfb, first, total, html = search(again, q)
     rows.append({"q": q, "ttfb": round(ttfb, 3), "first_token": round(first or -1, 3), "total": round(total, 3),
-                 "images": len(json.loads(m)) if (m := re.search(r"<script>I\((.*?)\)</script>", html) and
-                                                  re.search(r"<script>I\((.*?)\)</script>", html).group(1)) else 0})
+                 "inline_images": answer(html).count("](img:")})
     print(rows[-1], flush=True)
     if q == "golden gate bridge":
         bridge = html
+plain = answer(search(again, "what is 17 times 23")[3])
 
 chat_id = re.search(r'"id":"(\w+)"', bridge).group(1)
 checks["answer_streams"] = "<script>T(" in bridge and "<script>D(" in bridge
-checks["images_for_visual_query"] = "<script>I(" in bridge
+checks["images_for_visual_query"] = "](img:" in answer(bridge)
+checks["no_images_for_plain_fact"] = "391" in plain and "](img:" not in plain
 time.sleep(1.5)
 checks["chat_in_own_sidebar"] = chat_id in alice.chat_ids()
 checks["chat_not_in_other_sidebar"] = chat_id not in bob.chat_ids()

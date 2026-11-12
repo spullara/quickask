@@ -35,9 +35,9 @@ textarea{width:100%;resize:none;border:1px solid var(--line);border-radius:14px;
 textarea:focus{border-color:var(--mute)}
 .home{display:flex;flex-direction:column;justify-content:center}.home #log{flex:none;padding:0}.home form{position:static}
 #tg{display:none}
-.imgs{display:flex;gap:8px;overflow-x:auto;margin:4px 0 12px;scrollbar-width:none}.imgs:empty{display:none}
-.imgs a{flex:none}.imgs img{height:120px;border-radius:10px;display:block;background:var(--soft)}
-.m img.mi{max-width:100%;max-height:320px;border-radius:10px;display:block;margin:8px 0}
+.gal{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
+.m img.mi{height:180px;max-width:100%;object-fit:cover;border-radius:10px;display:block;background:var(--soft)}
+.m p img.mi{margin:6px 0}
 #side .me{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;font-size:13px;color:var(--mute)}
 #side .me span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .auth{width:100%;max-width:340px;margin:0 auto;display:flex;flex-direction:column;gap:12px;padding:24px}
@@ -55,30 +55,34 @@ body.open #side{transform:none}#tg{display:block;position:fixed;top:10px;left:10
 const JS = `
 const $=s=>document.querySelector(s),log=$('#log'),ta=$('textarea'),side=$('#list');
 const E1=s=>s.replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
+let IM=[];
+const pic=(u,alt)=>u?'<a href="'+u+'" target="_blank" rel="noopener"><img class="mi" src="'+u+'" alt="'+alt+'" title="'+alt+'" referrerpolicy="no-referrer" onerror="this.parentNode.remove()" onload="if(this.naturalWidth<120)this.parentNode.remove()"></a>':'';
 const inl=s=>E1(s).replace(/\`([^\`]+)\`/g,'<code>$1</code>').replace(/\\*\\*([^*]+)\\*\\*/g,'<b>$1</b>')
- .replace(/!\\[([^\\]]*)\\]\\((https:[^)\\s]+)\\)/g,'<img class="mi" src="$2" alt="$1" referrerpolicy="no-referrer" onerror="this.remove()">')
+ .replace(/!\\[([^\\]]*)\\]\\((?:img:(\\d+)|(https:[^)\\s]+))\\)/g,(_,a,n,u)=>pic(n?E1(IM[n-1]||''):u,a))
  .replace(/\\[([^\\]]+)\\]\\((https?:[^)\\s]+)\\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
-function blk(p){let o='',l=null,pa=[];const fl=()=>{if(pa.length){o+='<p>'+pa.map(inl).join('<br>')+'</p>';pa=[]}if(l){o+='</'+l+'>';l=null}};
+function blk(p){let o='',l=null,pa=[],ga=[];
+ const fp=()=>{if(pa.length){o+='<p>'+pa.map(inl).join('<br>')+'</p>';pa=[]}if(l){o+='</'+l+'>';l=null}};
+ const fg=()=>{if(ga.length){o+='<div class="gal">'+ga.map(inl).join('')+'</div>';ga=[]}};
  for(const ln of p.split('\\n')){let m;
-  if(m=ln.match(/^#{1,4}\\s+(.*)/)){fl();o+='<h4>'+inl(m[1])+'</h4>'}
-  else if(m=ln.match(/^\\s*([-*]|\\d+[.)])\\s+(.*)/)){const t=/\\d/.test(m[1])?'ol':'ul';if(pa.length||l!==t){fl();o+='<'+t+'>';l=t}o+='<li>'+inl(m[2])+'</li>'}
-  else if(!ln.trim())fl();else{if(l){o+='</'+l+'>';l=null}pa.push(ln)}}
- fl();return o}
-const md=s=>s.split('\`\`\`').map((p,i)=>i%2?'<pre><code>'+E1(p.replace(/^[^\\n]*\\n/,''))+'</code></pre>':blk(p)).join('');
+  if(/^\\s*(!\\[[^\\]]*\\]\\([^)\\s]+\\)\\s*)+$/.test(ln)){fp();ga.push(ln)}
+  else if(!ln.trim())fp();
+  else{fg();
+   if(m=ln.match(/^#{1,4}\\s+(.*)/)){fp();o+='<h4>'+inl(m[1])+'</h4>'}
+   else if(m=ln.match(/^\\s*([-*]|\\d+[.)])\\s+(.*)/)){const t=/\\d/.test(m[1])?'ol':'ul';if(pa.length||l!==t){fp();o+='<'+t+'>';l=t}o+='<li>'+inl(m[2])+'</li>'}
+   else{if(l){o+='</'+l+'>';l=null}pa.push(ln)}}}
+ fp();fg();return o}
+const md=(s,im)=>{IM=im||[];return s.split('\`\`\`').map((p,i)=>i%2?'<pre><code>'+E1(p.replace(/^[^\\n]*\\n/,''))+'</code></pre>':blk(p)).join('')};
 function add(c,html){const d=document.createElement('div');d.className=c;d.innerHTML=html;log.append(d);return d}
 function srcs(s){if(s&&s.length)add('src',s.map(x=>'<a href="'+E1(x.uri)+'" target="_blank" rel="noopener">'+E1(x.title)+'</a>').join(''))}
-function pics(u,before){if(!u||!u.length)return;const d=document.createElement('div');d.className='imgs';
- d.innerHTML=u.map(x=>'<a href="'+E1(x)+'" target="_blank" rel="noopener"><img src="'+E1(x)+'" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.remove()" onload="const w=this.naturalWidth,h=this.naturalHeight;if(w<200||h<120||w/h>2.4||h/w>2)this.parentNode.remove()"></a>').join('');
- before?before.before(d):log.append(d)}
 let cur=null,raf=0;
-function start(t0){cur={el:add('m wait',''),buf:'',t0,first:0}}
-function paint(){raf=0;cur.el.innerHTML=md(cur.buf);if(nearEnd)main.scrollTop=main.scrollHeight}
+function start(t0){cur={el:add('m wait',''),buf:'',t0,first:0,imgs:[]}}
+function paint(){raf=0;cur.el.innerHTML=md(cur.buf.replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs);if(nearEnd)main.scrollTop=main.scrollHeight}
 const main=$('main');let nearEnd=true;main.addEventListener('scroll',()=>{nearEnd=main.scrollHeight-main.scrollTop-main.clientHeight<80});
 function T(t){if(!cur.first)cur.first=performance.now()-cur.t0;cur.buf+=t;if(!raf)raf=requestAnimationFrame(paint)}
 function D(s){paint();cur.el.classList.remove('wait');srcs(s);
  add('t','first token '+(cur.first/1000).toFixed(2)+' s · done '+((performance.now()-cur.t0)/1000).toFixed(2)+' s');
  S.msgs.push({role:'model',text:cur.buf});cur=null;busy=false}
-function I(u){pics(u,cur.buf?null:cur.el)}
+function I(u){cur.imgs=u}
 function E(m){cur.el.classList.remove('wait');cur.el.insertAdjacentHTML('beforeend','<p class="err">'+E1(m)+'</p>');cur=null;busy=false}
 function L(list){if(S.id&&!list.some(c=>c.id===S.id))list.unshift({id:S.id,title:S.title});
  try{localStorage['chats:'+S.uid]=JSON.stringify(list.slice(0,300))}catch{}
@@ -86,7 +90,7 @@ function L(list){if(S.id&&!list.some(c=>c.id===S.id))list.unshift({id:S.id,title
 side.addEventListener('click',e=>{const id=e.target.dataset&&e.target.dataset.id;if(!id)return;e.preventDefault();
  fetch('/api/chats/'+id,{method:'DELETE'});e.target.closest('a').remove();if(id===S.id)location.href='/'});
 try{L(JSON.parse(localStorage['chats:'+S.uid]||'[]'))}catch{}
-for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{pics(m.images);add('m',md(m.text));srcs(m.sources)}}
+for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images));srcs(m.sources)}}
 S.msgs=S.msgs.map(({role,text})=>({role,text}));
 let busy=false;
 if(S.streaming){busy=true;start(0);history.replaceState(null,'','/c/'+S.id)}
