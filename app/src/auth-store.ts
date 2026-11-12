@@ -18,6 +18,18 @@ export class Auth extends DurableObject<WorkerEnv> {
     this.sql.exec("INSERT INTO creds VALUES (?, ?, ?, ?, ?)", cred.id, userId, cred.publicKey, cred.counter, cred.transports);
   }
 
+  nameTaken(name: string) {
+    return this.sql.exec("SELECT 1 FROM users WHERE lower(name) = lower(?) LIMIT 1", name).toArray().length > 0;
+  }
+
+  firstNamed(name: string): string | null {
+    return this.sql.exec<{ id: string }>("SELECT id FROM users WHERE lower(name) = lower(?) ORDER BY created LIMIT 1", name).toArray()[0]?.id ?? null;
+  }
+
+  names(): Record<string, string> {
+    return Object.fromEntries(this.sql.exec<{ id: string; name: string }>("SELECT id, name FROM users").toArray().map((r) => [r.id, r.name]));
+  }
+
   getCred(id: string): Cred | null {
     return this.sql.exec<Cred>(
       `SELECT c.id, c.user_id AS userId, u.name, c.public_key AS publicKey, c.counter, c.transports

@@ -117,9 +117,17 @@ except urllib.error.HTTPError as e:
     checks["no_access_key_is_401"] = e.code == 401
 checks["access_key_shows_passkey_page"] = "Sign in with passkey" in Browser().text("/")
 
-alice, alice_key, ok_a = signup("e2e-alice")
-bob, _, ok_b = signup("e2e-bob")
+RUN = os.urandom(3).hex()
+alice, alice_key, ok_a = signup(f"e2e-alice-{RUN}")
+bob, _, ok_b = signup(f"e2e-bob-{RUN}")
 checks["register_passkey"] = ok_a and ok_b
+checks["name_must_be_unique"] = Browser().json("/auth/register/options", {"name": f"E2E-ALICE-{RUN}"}).get("error") == "That name is taken."
+def status(b, path):
+    try:
+        return b.open(path).getcode()
+    except urllib.error.HTTPError as e:
+        return e.code
+checks["usage_hidden_from_users"] = status(alice, "/api/usage") == 404 and status(alice, "/admin") == 404
 
 again = Browser()
 o = again.json("/auth/login/options")

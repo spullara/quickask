@@ -1,6 +1,7 @@
 export type Source = { title: string; uri: string };
 export type Msg = { role: "user" | "model"; text: string; sources?: Source[]; images?: string[] };
 export type ShareRef = { id: string; created: number };
+type Row = { day?: string; user?: string; searches: number; exa: number; gemini: number; cost: number; tokensIn: number; tokensOut: number };
 
 const json = (v: unknown) => JSON.stringify(v).replace(/</g, "\\u003c").replace(/\u2028|\u2029/g, "");
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -50,6 +51,7 @@ textarea:focus{border-color:var(--mute)}
 .m p img.mi{margin:6px 0}
 #side .me{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;font-size:13px;color:var(--mute)}
 #side .me span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#usage{margin-top:auto;padding:8px 10px 0;font-size:13px;color:var(--mute)}#usage:hover{color:var(--fg);text-decoration:none}#usage:not([hidden])+.me{margin-top:0}
 .auth{width:100%;max-width:340px;margin:0 auto;display:flex;flex-direction:column;gap:12px;padding:24px}
 .auth h1{font-size:22px;margin:0 0 8px;text-align:center}
 .btn{font:inherit;padding:10px 14px;border-radius:12px;border:0;background:var(--fg);color:var(--bg);cursor:pointer;font-weight:600}
@@ -95,7 +97,7 @@ function paint(){raf=0;cur.el.innerHTML=md(cur.buf.replace(/!\\[[^\\]\\n]*(\\]\\
 const main=$('main');let nearEnd=true;main.addEventListener('scroll',()=>{nearEnd=main.scrollHeight-main.scrollTop-main.clientHeight<80});
 new ResizeObserver(()=>{if(nearEnd)main.scrollTop=main.scrollHeight}).observe(log);
 function T(t){cur.buf+=t;if(!raf)raf=requestAnimationFrame(paint)}
-function D(s){cur.src=s;paint();cur.el.classList.remove('wait');
+function D(s){cur.src=s;paint();cur.el.classList.remove('wait');if(!ug.hidden)setTimeout(U,1500);
  S.msgs.push({role:'model',text:cur.buf});cur=null;busy=false}
 function I(u){cur.imgs=u}
 function E(m){cur.el.classList.remove('wait');cur.el.insertAdjacentHTML('beforeend','<p class="err">'+E1(m)+'</p>');cur=null;busy=false}
@@ -122,6 +124,9 @@ const fit=()=>{ta.style.height='auto';const h=ta.scrollHeight+ta.offsetHeight-ta
 ta.addEventListener('input',fit);
 $('#tg').onclick=()=>document.body.classList.toggle('open');main.addEventListener('click',()=>document.body.classList.remove('open'));
 if(!S.streaming)ta.focus();
+// Admin only: the server answers 404 to everyone else, and the line stays hidden.
+const ug=$('#usage');function U(){fetch('/api/usage').then(r=>r.ok?r.json():null).then(j=>{if(!j||!j.month)return;ug.hidden=false;ug.textContent='$'+j.month.cost.toFixed(2)+' this month · '+j.month.searches+' searches'},()=>{})}
+U();
 // New search in place: no page load. A streaming answer loads the home page instead so it keeps saving.
 function fresh(){document.body.classList.remove('open');
  if(!S.id){ta.focus();return}
@@ -163,6 +168,7 @@ export function shell(o: { id: string | null; title: string; msgs: Msg[]; stream
 <style>${CSS}</style></head>
 <body><button id="tg" aria-label="Chats">☰</button>
 <nav id="side"><a class="new" href="/">+ New chat<kbd>⌘K</kbd></a><div id="list"></div>
+<a id="usage" href="/admin" hidden></a>
 <div class="me"><span>${esc(o.user.n)}</span><a href="/auth/logout">Sign out</a></div></nav>
 <main class="${o.id ? "" : "home"}"><div id="log"></div>
 <form action="/" method="get"><textarea name="q" rows="1" placeholder="${o.id ? "Ask a follow-up" : "Ask anything"}" autocomplete="off"></textarea></form></main>
@@ -173,6 +179,29 @@ ${o.id ? '<div id="shx"><button id="sl" hidden></button><button id="sh">Share</b
 
 /** Changes whenever the share page's code changes, so cached share pages never outlive a deploy. */
 export const PAGE_VERSION = [...CSS + RENDER].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0, 2166136261).toString(36);
+
+const usd = (n: number) => "$" + (n < 1 ? n.toFixed(4) : n.toFixed(2));
+
+/** Admin cost page: variable costs from Exa and Gemini, recorded per search. */
+export function adminPage(d: { today: Row; month: Row; byUser: Row[]; byDay: Row[]; names: Record<string, string> }) {
+  const card = (label: string, r: Row) => `<div class="card"><span>${label}</span><b>${usd(r.cost)}</b><span>${r.searches} searches · ${usd(r.searches ? r.cost / r.searches : 0)} each</span></div>`;
+  const table = (head: string, rows: Row[], name: (r: Row) => string) => rows.length ? `<table><tr><th>${head}</th><th>Searches</th><th>Exa</th><th>Gemini</th><th>Total</th></tr>${
+    rows.map((r) => `<tr><td>${esc(name(r))}</td><td>${r.searches}</td><td>${usd(r.exa)}</td><td>${usd(r.gemini)}</td><td>${usd(r.cost)}</td></tr>`).join("")}</table>` : "<p>No searches yet.</p>";
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Usage · Quick</title><meta name="robots" content="noindex"><style>${CSS}
+main.admin{padding:32px 24px;max-width:760px;margin:0 auto;display:block;height:auto}.admin h1{font-size:20px;margin:0 0 4px}.admin h2{font-size:15px;margin:28px 0 8px}
+.admin .note{color:var(--mute);font-size:13px;margin:0 0 16px}.admin .back{font-size:14px}
+.cards{display:flex;gap:12px;flex-wrap:wrap}.card{flex:1;min-width:200px;background:var(--soft);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.card span{color:var(--mute);font-size:13px}.card b{font-size:24px;font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}th{text-align:left;color:var(--mute);font-weight:500;font-size:13px}
+th,td{padding:6px 8px 6px 0}td+td,th+th{text-align:right}tr+tr td{border-top:1px solid var(--line)}
+</style></head><body style="display:block;overflow:auto"><main class="admin"><a class="back" href="/">← Quick</a>
+<h1>Usage</h1><p class="note">Exa and Gemini charges, recorded per search. Cloudflare's $5/month plan is not included.</p>
+<div class="cards">${card("Today", d.today)}${card("This month", d.month)}</div>
+<h2>This month by user</h2>${table("User", d.byUser, (r) => d.names[r.user ?? ""] ?? "(deleted)")}
+<h2>Last 30 days</h2>${table("Day", d.byDay, (r) => r.day ?? "")}
+</main></body></html>`;
+}
 
 /** Read-only snapshot of a chat for anyone with the link: no sidebar, no input, no account. */
 export function sharePage(s: { title: string; msgs: Msg[] }) {

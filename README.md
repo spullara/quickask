@@ -10,6 +10,8 @@ with sources and, when they help, pictures.
 - Passkey accounts, behind a shared access key.
 - Read-only share links that anyone can open, with no account.
 - Press ⌘K (Ctrl K) for a new search.
+- Exa calls are limited to 10 per second for the whole app. Extra searches wait their turn.
+- The admin sees live costs in the sidebar and a breakdown by user and day at `/admin`.
 
 ## How it stays fast
 
@@ -123,6 +125,7 @@ Passkeys are tied to a hostname. Pick the domain before people create accounts.
 | `EXA_API_KEY` | yes | Web search and images. |
 | `CLOUDFLARE_ACCOUNT_ID` | no | Needed only when the token can see more than one account. |
 | `QUICK_DOMAIN` | no | Custom domain, for example `ask.example.com`. |
+| `ADMIN_NAME` | no | Account name that can see costs. The oldest account with this name is the admin. |
 | `ACCESS_KEY`, `SESSION_SECRET` | created for you | Change `SESSION_SECRET` to sign everyone out. |
 
 ### Keep `app/.alchemy/`
@@ -150,7 +153,7 @@ python3 e2e.py https://<your app> "$(grep ^ACCESS_KEY= .env | cut -d= -f2)"
 
 It checks the access gate, passkey sign-up and sign-in, streaming, images, separate
 histories per account, follow-ups, share links and deletes. It writes `e2e-result.json`.
-Each run creates two test accounts (`e2e-alice`, `e2e-bob`).
+Each run creates two test accounts (`e2e-alice-<random>`, `e2e-bob-<random>`).
 The `latest_news_leads_with_powell` check is tied to news from November 2026 and
 will fail once that story is no longer the latest.
 
@@ -166,11 +169,13 @@ app/
   src/session.ts     signed session cookies
   src/auth.ts        passkey routes (loaded on demand)
   src/auth-store.ts  users and passkeys
+  src/usage.ts       Exa rate limiter and cost ledger
 bench.py, ttft.py, answer_eval.py, tool_eval.py   model and search benchmarks
 ```
 
-Storage is three SQLite-backed Durable Objects: one `Chats` object per user, one
-`Auth` object for users and passkeys, and one `Shares` object for share links.
+Storage is four SQLite-backed Durable Objects: one `Chats` object per user, one
+`Auth` object for users and passkeys, one `Shares` object for share links, and one
+`Usage` object for the Exa rate limit and the cost ledger.
 
 ## Benchmarks
 

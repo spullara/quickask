@@ -1,9 +1,11 @@
 import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 import { cookie, session } from "./session.ts";
-import { PAGE_VERSION, call, keyPage, opensearch, sharePage, shell, signIn, type Msg, type Source } from "./page.ts";
+import { PAGE_VERSION, adminPage, call, keyPage, opensearch, sharePage, shell, signIn, type Msg, type Source } from "./page.ts";
+import type { Meter } from "./usage.ts";
 
 export { Auth } from "./auth-store.ts";
+export { Usage } from "./usage.ts";
 
 const MODEL = "gemini-3.5-flash-lite";
 const GEMINI = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:streamGenerateContent?alt=sse`;
@@ -102,12 +104,12 @@ function gemini(env: WorkerEnv, msgs: Msg[], found: Search) {
   });
 }
 
-/** Read Gemini SSE, call onText for each text delta, return the full text. */
+/** Read Gemini SSE, call onText for each text delta. Returns the full text and the billed token counts. */
 async function relay(upstream: Promise<Response>, onText: (t: string) => void) {
   const res = await upstream;
   if (!res.ok || !res.body) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
-  let text = "", buf = "";
+  let text = "", buf = "", tokensIn = 0, tokensOut = 0;
   for (;;) {
     const { value, done } = await reader.read();
     if (done) break;
@@ -116,7 +118,13 @@ async function relay(upstream: Promise<Response>, onText: (t: string) => void) {
       const line = buf.slice(0, i).trim();
       buf = buf.slice(i + 1);
       if (!line.startsWith("data:")) continue;
-      for (const p of JSON.parse(line.slice(5)).candidates?.[0]?.content?.parts ?? []) {
+      const chunk = JSON.parse(line.slice(5));
+      const u = chunk.usageMetadata;
+      if (u) {
+        tokensIn = u.promptTokenCount ?? tokensIn;
+        tokensOut = (u.candidatesTokenCount ?? 0) + (u.thoughtsTokenCount ?? 0) || tokensOut;
+      }
+      for (const p of chunk.candidates?.[0]?.content?.parts ?? []) {
         if (p.text && !p.thought) {
           text += p.text;
           onText(p.text);
@@ -124,7 +132,7 @@ async function relay(upstream: Promise<Response>, onText: (t: string) => void) {
       }
     }
   }
-  return text;
+  return { text, tokensIn, tokensOut };
 }
 
 function stream() {
@@ -146,16 +154,28 @@ async function stored(chats: DurableObjectStub<Chats>, id: string, n: number) {
 
 const shareKey = (origin: string, id: string) => new Request(`${origin}/s/${id}?v=${PAGE_VERSION}`);
 
+/** The admin is the oldest account named ADMIN_NAME. Names are unique for new accounts, so it cannot be copied. */
+let adminId: string | undefined;
+async function isAdmin(env: WorkerEnv, user: string) {
+  if (!env.ADMIN_NAME) return false;
+  adminId ??= (await env.AUTH.get(env.AUTH.idFromName("auth")).firstNamed(env.ADMIN_NAME)) ?? undefined;
+  return user === adminId;
+}
+
 const newId = () => crypto.randomUUID().replaceAll("-", "").slice(0, 12);
 const titleOf = (q: string) => (q.length > 80 ? q.slice(0, 77) + "…" : q);
 
-type Search = { context: string; sources: Source[]; images: string[] };
+type Search = { context: string; sources: Source[]; images: string[]; exa: number };
 type ExaResult = { url: string; title?: string; publishedDate?: string; highlights?: string[]; image?: string; extras?: { imageLinks?: string[] } };
 const NOT_A_PHOTO = /\.svg(\?|$)|\/\d{1,2}px-|logo|icon|favicon|sprite|avatar|badge|banner|slide|promo|hiring|advert/i;
 
 /** Exa search: the most query-relevant sentences of each page (anywhere in it, not just the top) for the model, plus each page's images as short ids (img:N) the model can place. */
 async function search(env: WorkerEnv, query: string): Promise<Search> {
   try {
+    // Global 10 searches/s limit. Over a 3 s queue, answer without search instead of making the user wait.
+    const wait = await env.USAGE.get(env.USAGE.idFromName("global")).acquire();
+    if (wait > 3000) throw new Error("Exa queue full");
+    if (wait) await new Promise((r) => setTimeout(r, wait));
     const res = await fetch("https://api.exa.ai/search", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": env.EXA_API_KEY },
@@ -163,7 +183,7 @@ async function search(env: WorkerEnv, query: string): Promise<Search> {
       signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) throw new Error(`Exa ${res.status}`);
-    const { results = [] } = (await res.json()) as { results?: ExaResult[] };
+    const { results = [], costDollars } = (await res.json()) as { results?: ExaResult[]; costDollars?: { total?: number } };
     results.sort((a, b) => (b.publishedDate ?? "").localeCompare(a.publishedDate ?? ""));
     const images: string[] = [], sources: Source[] = [], parts: string[] = [];
     results.forEach((r, i) => {
@@ -176,9 +196,9 @@ async function search(env: WorkerEnv, query: string): Promise<Search> {
       const date = r.publishedDate ? `, ${r.publishedDate.slice(0, 10)}` : "";
       parts.push(`[${i + 1}] ${r.title ?? host} (${host}${date})\n${(r.highlights ?? []).join(" … ")}${ids.length ? `\nImages: ${ids.join(", ")}` : ""}`);
     });
-    return { context: parts.join("\n\n"), sources, images };
+    return { context: parts.join("\n\n"), sources, images, exa: costDollars?.total ?? 0 };
   } catch {
-    return { context: "", sources: [], images: [] };
+    return { context: "", sources: [], images: [], exa: 0 };
   }
 }
 
@@ -191,14 +211,14 @@ function queryOf(msgs: Msg[]) {
 
 type Emit = (type: "T" | "I" | "D" | "E", value: unknown) => void;
 
-/** One answer turn as events: I image ids, T text delta, D done with sources, E error. Returns what to save. */
-async function turn(env: WorkerEnv, msgs: Msg[], searching: Promise<Search>, emit: Emit) {
+/** One answer turn as events: I image ids, T text delta, D done with sources, E error. Returns what to save and what it cost. */
+async function turn(env: WorkerEnv, msgs: Msg[], searching: Promise<Search>, emit: Emit): Promise<{ msg: Msg; meter: Meter } | null> {
   try {
     const found = await searching;
     if (found.images.length) emit("I", found.images);
-    const text = await relay(gemini(env, msgs, found), (t) => emit("T", t));
+    const { text, tokensIn, tokensOut } = await relay(gemini(env, msgs, found), (t) => emit("T", t));
     emit("D", found.sources);
-    return { text, sources: found.sources, images: found.images };
+    return { msg: { role: "model", text, sources: found.sources, images: found.images }, meter: { exa: found.exa, tokensIn, tokensOut } };
   } catch (e) {
     emit("E", (e as Error).message);
     return null;
@@ -248,6 +268,7 @@ export default {
     const searching = q ? search(env, q) : null;
     const chats = env.CHATS.get(env.CHATS.idFromName(user.u));
     const shares = env.SHARES.get(env.SHARES.idFromName("shares"));
+    const usage = env.USAGE.get(env.USAGE.idFromName("global"));
 
     // New chat from the search box: one response carries the page and the streamed answer.
     if (path === "/" && searching && q) {
@@ -260,7 +281,7 @@ export default {
         const result = await turn(env, msgs, searching, (t, v) => out.send(call(t, v)));
         await list.catch(() => {});
         await out.close();
-        if (result) await chats.save(id, title, [...msgs, { role: "model", ...result }]);
+        if (result) await Promise.all([chats.save(id, title, [...msgs, result.msg]), usage.record(user.u, result.meter)]);
       })());
       return new Response(out.readable, { headers });
     }
@@ -275,6 +296,18 @@ export default {
       const [chat, list, links] = await Promise.all([chats.get(chatPage[1]!), chats.list(), shares.list(`${user.u}/${chatPage[1]}`)]);
       if (!chat) return Response.redirect(url.origin + "/", 302);
       return new Response(shell({ ...chat, streaming: false, user, shares: links }) + call("L", list), { headers });
+    }
+
+    if (path === "/api/usage" || path === "/admin") {
+      if (!(await isAdmin(env, user.u))) return new Response("Not found", { status: 404 });
+      const month = new Date().toISOString().slice(0, 8) + "01", today = new Date().toISOString().slice(0, 10);
+      if (path === "/api/usage") return Response.json({ month: (await usage.totals(month))[0] });
+      const since = new Date(Date.now() - 29 * 86400_000).toISOString().slice(0, 10);
+      const [t, m, byUser, byDay, names] = await Promise.all([
+        usage.totals(today), usage.totals(month), usage.totals(month, "user"), usage.totals(since, "day"),
+        env.AUTH.get(env.AUTH.idFromName("auth")).names(),
+      ]);
+      return new Response(adminPage({ today: t[0]!, month: m[0]!, byUser, byDay, names }), { headers });
     }
 
     const share = path.match(/^\/api\/chats\/(\w+)\/share$/);
@@ -308,7 +341,8 @@ export default {
         await out.close();
         // Save stored history plus this turn. The client's copy of earlier answers is never written back.
         const base = await stored(chats, api[1]!, body.msgs.length - 1);
-        if (result && base) await chats.save(api[1]!, base.title, [...base.msgs, body.msgs.at(-1)!, { role: "model", ...result }]);
+        if (result) await usage.record(user.u, result.meter);
+        if (result && base) await chats.save(api[1]!, base.title, [...base.msgs, body.msgs.at(-1)!, result.msg]);
       })());
       return new Response(out.readable, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
     }

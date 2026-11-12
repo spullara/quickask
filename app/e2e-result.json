@@ -3,57 +3,59 @@
  "runs": [
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.077,
-   "first_token": 0.882,
-   "total": 0.913,
-   "inline_images": 1
+   "ttfb": 0.102,
+   "first_token": 2.125,
+   "total": 2.16,
+   "inline_images": 0
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.086,
-   "first_token": 1.168,
-   "total": 1.394,
+   "ttfb": 0.108,
+   "first_token": 1.359,
+   "total": 1.58,
    "inline_images": 1
   },
   {
    "q": "who is the latest person jensen huang had an affair with",
-   "ttfb": 0.096,
-   "first_token": 1.306,
-   "total": 1.542,
+   "ttfb": 0.076,
+   "first_token": 0.933,
+   "total": 1.053,
    "inline_images": 0
   },
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.174,
-   "first_token": 0.751,
-   "total": 0.773,
+   "ttfb": 0.078,
+   "first_token": 0.677,
+   "total": 0.68,
    "inline_images": 0
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.123,
-   "first_token": 0.828,
-   "total": 1.097,
+   "ttfb": 0.07,
+   "first_token": 1.018,
+   "total": 1.273,
    "inline_images": 1
   },
   {
    "q": "who is the latest person jensen huang had an affair with",
-   "ttfb": 0.07,
-   "first_token": 1.155,
-   "total": 1.342,
+   "ttfb": 0.076,
+   "first_token": 0.763,
+   "total": 0.877,
    "inline_images": 0
   }
  ],
  "avg": {
-  "ttfb": 0.104,
-  "first_token": 1.015,
-  "total": 1.177
+  "ttfb": 0.085,
+  "first_token": 1.146,
+  "total": 1.27
  },
- "followup_first_token": 1.0,
+ "followup_first_token": 1.417,
  "checks": {
   "no_access_key_is_401": true,
   "access_key_shows_passkey_page": true,
   "register_passkey": true,
+  "name_must_be_unique": true,
+  "usage_hidden_from_users": true,
   "login_with_passkey": true,
   "login_twice_counter_ok": true,
   "unknown_passkey_rejected": true,

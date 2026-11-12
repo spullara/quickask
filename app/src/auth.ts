@@ -32,6 +32,7 @@ export async function authRoute(req: Request, env: WorkerEnv, url: URL): Promise
       const { name } = (await req.json()) as { name: string };
       const userName = name.trim().slice(0, 60);
       if (!userName) return json({ error: "Enter a name." });
+      if (await store.nameTaken(userName)) return json({ error: "That name is taken." });
       const userId = isoBase64URL.fromBuffer(crypto.getRandomValues(new Uint8Array(16)));
       const options = await generateRegistrationOptions({
         rpName: "Quick", rpID, userName, userID: isoBase64URL.toBuffer(userId), attestationType: "none",

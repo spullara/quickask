@@ -20,6 +20,7 @@ export EXA_API_KEY="$(key EXA_API_KEY)"
 export CLOUDFLARE_API_TOKEN="$(key CLOUDFLARE_API_TOKEN CF_TOKEN)"
 export CLOUDFLARE_ACCOUNT_ID="$(key CLOUDFLARE_ACCOUNT_ID)"
 export QUICK_DOMAIN="$(key QUICK_DOMAIN)"
+export ADMIN_NAME="$(key ADMIN_NAME)"
 need GEMINI_API_KEY; need EXA_API_KEY; need CLOUDFLARE_API_TOKEN
 
 # App secrets: created once, then reused so sessions and the access key survive redeploys.
