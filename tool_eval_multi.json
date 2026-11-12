@@ -1,0 +1,401 @@
+[
+ {
+  "mode": "direct",
+  "q": "what is the capital of australia",
+  "ttft": 0.76,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "direct",
+  "q": "what is the capital of australia",
+  "ttft": 0.826,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "direct",
+  "q": "what is the capital of australia",
+  "ttft": 0.872,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "direct",
+  "q": "how old was the ceo of amd when nvidia was founded",
+  "ttft": 1.022,
+  "ok": true,
+  "queries": [],
+  "lead": "AMD's current CEO, Lisa Su, was **23 years old** when Nvidia was founded on April 5, 1993 (born November 7, 1969). \n\n*(Note: If referring to AMD's founding CEO,"
+ },
+ {
+  "mode": "direct",
+  "q": "how old was the ceo of amd when nvidia was founded",
+  "ttft": 0.71,
+  "ok": true,
+  "queries": [],
+  "lead": "AMD CEO Lisa Su was **23 years old** when Nvidia was founded on April 5, 1993 (having been born on November 7, 1969). \n\n*(Note: Lisa Su did not become AMD's CEO"
+ },
+ {
+  "mode": "direct",
+  "q": "how old was the ceo of amd when nvidia was founded",
+  "ttft": 0.92,
+  "ok": true,
+  "queries": [],
+  "lead": "AMD CEO Lisa Su was **23 years old** when Nvidia was founded on April 5, 1993 (having been born on November 7, 1969). \n\n*(Note: Lisa Su did not become AMD's CEO"
+ },
+ {
+  "mode": "direct",
+  "q": "what is the population of the capital of the country that hosted the 2016 summer olympics",
+  "ttft": 1.068,
+  "ok": true,
+  "queries": [],
+  "lead": "The population of Bras\u00edlia, the capital of the 2016 Summer Olympics host country (Brazil), is approximately 2,996,899."
+ },
+ {
+  "mode": "direct",
+  "q": "what is the population of the capital of the country that hosted the 2016 summer olympics",
+  "ttft": 0.832,
+  "ok": true,
+  "queries": [],
+  "lead": "The population of Bras\u00edlia, the capital of the 2016 Summer Olympics host country (Brazil), is approximately 2,996,899."
+ },
+ {
+  "mode": "direct",
+  "q": "what is the population of the capital of the country that hosted the 2016 summer olympics",
+  "ttft": 0.82,
+  "ok": true,
+  "queries": [],
+  "lead": "The population of Bras\u00edlia, the capital of Brazil (which hosted the 2016 Summer Olympics), is approximately 2,996,899."
+ },
+ {
+  "mode": "direct",
+  "q": "which is taller, the golden gate bridge towers or the eiffel tower",
+  "ttft": 6.498,
+  "ok": true,
+  "queries": [],
+  "lead": "The Eiffel Tower is taller than the Golden Gate Bridge towers. \n\n* **Eiffel Tower:** 330 meters (1,083 feet)\n* **Golden Gate Bridge towers:** 227 meters (746 fe"
+ },
+ {
+  "mode": "direct",
+  "q": "which is taller, the golden gate bridge towers or the eiffel tower",
+  "ttft": 1.202,
+  "ok": true,
+  "queries": [],
+  "lead": "The Eiffel Tower is taller than the Golden Gate Bridge towers. \n\n* **Eiffel Tower:** 330 meters (1,083 feet)\n* **Golden Gate Bridge towers:** 227 meters (746 fe"
+ },
+ {
+  "mode": "direct",
+  "q": "which is taller, the golden gate bridge towers or the eiffel tower",
+  "ttft": 0.962,
+  "ok": true,
+  "queries": [],
+  "lead": "The Eiffel Tower is taller than the Golden Gate Bridge towers. \n\n* **Eiffel Tower:** 330 meters (1,083 feet)\n* **Golden Gate Bridge towers:** 227 meters (746 fe"
+ },
+ {
+  "mode": "direct",
+  "q": "who is the ceo of the company that makes the main competitor to nvidia's h100",
+  "ttft": 0.578,
+  "ok": true,
+  "queries": [],
+  "lead": "The CEO of AMD (Advanced Micro Devices), the maker of the MI300X chip that competes with Nvidia's H100, is **Lisa Su**."
+ },
+ {
+  "mode": "direct",
+  "q": "who is the ceo of the company that makes the main competitor to nvidia's h100",
+  "ttft": 0.659,
+  "ok": true,
+  "queries": [],
+  "lead": "The CEO of AMD (the maker of the MI300X, the main competitor to Nvidia's H100) is **Lisa Su**."
+ },
+ {
+  "mode": "direct",
+  "q": "who is the ceo of the company that makes the main competitor to nvidia's h100",
+  "ttft": 0.983,
+  "ok": true,
+  "queries": [],
+  "lead": "The CEO of AMD (the maker of the MI300X, the main competitor to Nvidia's H100) is **Lisa Su**."
+ },
+ {
+  "mode": "tool-first",
+  "q": "what is the capital of australia",
+  "ttft": 0.486,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "tool-first",
+  "q": "what is the capital of australia",
+  "ttft": 0.438,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "tool-first",
+  "q": "what is the capital of australia",
+  "ttft": 0.542,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "tool-first",
+  "q": "how old was the ceo of amd when nvidia was founded",
+  "ttft": 1.775,
+  "ok": true,
+  "queries": [
+   "who is the CEO of AMD",
+   "Lisa Su birth date",
+   "when was Nvidia founded"
+  ],
+  "lead": "AMD CEO Lisa Su was **23 years old** when Nvidia was founded on April 5, 1993."
+ },
+ {
+  "mode": "tool-first",
+  "q": "how old was the ceo of amd when nvidia was founded",
+  "ttft": 1.446,
+  "ok": true,
+  "queries": [
+   "who is the CEO of AMD",
+   "Lisa Su birth date",
+   "when was NVIDIA founded"
+  ],
+  "lead": "AMD CEO Lisa Su was **23 years old** when Nvidia was founded on April 5, 1993 (having been born on November 7, 1969)."
+ },
+ {
+  "mode": "tool-first",
+  "q": "how old was the ceo of amd when nvidia was founded",
+  "ttft": 2.064,
+  "ok": true,
+  "queries": [
+   "Lisa Su birth date",
+   "Nvidia founding date"
+  ],
+  "lead": "AMD CEO Lisa Su was **23 years old** when Nvidia was founded on April 5, 1993 (having been born on November 7, 1969). \n\n*(Note: Nvidia's current CEO is Jensen H"
+ },
+ {
+  "mode": "tool-first",
+  "q": "what is the population of the capital of the country that hosted the 2016 summer olympics",
+  "ttft": 2.44,
+  "ok": true,
+  "queries": [
+   "Rio de Janeiro population 2024 2025 2026",
+   "Brazil capital population"
+  ],
+  "lead": "The population of Bras\u00edlia, the capital of Brazil (which hosted the 2016 Summer Olympics), is approximately 3 million people (estimated at about 3,009,996 by th"
+ },
+ {
+  "mode": "tool-first",
+  "q": "what is the population of the capital of the country that hosted the 2016 summer olympics",
+  "ttft": 3.112,
+  "ok": true,
+  "queries": [
+   "2016 summer olympics host city",
+   "population of Rio de Janeiro",
+   "population of Brasilia capital of Brazil"
+  ],
+  "lead": "The population of Bras\u00edlia, the capital of the 2016 Summer Olympics host country (Brazil), is approximately **3 million** (estimated at about 3.01 million by th"
+ },
+ {
+  "mode": "tool-first",
+  "q": "what is the population of the capital of the country that hosted the 2016 summer olympics",
+  "ttft": 2.19,
+  "ok": true,
+  "queries": [
+   "population of Rio de Janeiro 2026",
+   "population of Brasilia 2026"
+  ],
+  "lead": "The population of Bras\u00edlia, the capital of Brazil (the country that hosted the 2016 Summer Olympics), is approximately **3,009,996** according to official IBGE "
+ },
+ {
+  "mode": "tool-first",
+  "q": "which is taller, the golden gate bridge towers or the eiffel tower",
+  "ttft": 1.778,
+  "ok": true,
+  "queries": [
+   "height of golden gate bridge towers",
+   "height of eiffel tower"
+  ],
+  "lead": "The Eiffel Tower is significantly taller than the Golden Gate Bridge towers. \n\n* **Eiffel Tower:** 330 meters (1,083 feet) tall\n* **Golden Gate Bridge Towers:**"
+ },
+ {
+  "mode": "tool-first",
+  "q": "which is taller, the golden gate bridge towers or the eiffel tower",
+  "ttft": 2.918,
+  "ok": true,
+  "queries": [
+   "Golden Gate Bridge towers height",
+   "Eiffel Tower height"
+  ],
+  "lead": "The Eiffel Tower is taller than the Golden Gate Bridge towers. \n\n* **Eiffel Tower:** 1,083 feet (330 meters) tall\n* **Golden Gate Bridge towers:** 746 feet (227"
+ },
+ {
+  "mode": "tool-first",
+  "q": "which is taller, the golden gate bridge towers or the eiffel tower",
+  "ttft": 2.193,
+  "ok": true,
+  "queries": [
+   "golden gate bridge tower height",
+   "eiffel tower height"
+  ],
+  "lead": "The Eiffel Tower is taller than the Golden Gate Bridge towers. \n\nThe Eiffel Tower stands at 330 meters (1,083 feet), while the Golden Gate Bridge towers reach a"
+ },
+ {
+  "mode": "tool-first",
+  "q": "who is the ceo of the company that makes the main competitor to nvidia's h100",
+  "ttft": 2.743,
+  "ok": true,
+  "queries": [
+   "nvidia h100 main competitor",
+   "amd instinct mi300x ceo"
+  ],
+  "lead": "The CEO of AMD\u2014the company that makes the Instinct MI300X, the main commercial competitor to Nvidia's H100\u2014is **Lisa Su**."
+ },
+ {
+  "mode": "tool-first",
+  "q": "who is the ceo of the company that makes the main competitor to nvidia's h100",
+  "ttft": 1.706,
+  "ok": true,
+  "queries": [
+   "nvidia h100 main competitor",
+   "amd ai chip MI300 ceo"
+  ],
+  "lead": "The CEO of AMD (the maker of the Instinct MI300X, the main commercial competitor to Nvidia's H100) is **Lisa Su**."
+ },
+ {
+  "mode": "tool-first",
+  "q": "who is the ceo of the company that makes the main competitor to nvidia's h100",
+  "ttft": 1.897,
+  "ok": true,
+  "queries": [
+   "Nvidia H100 main competitor",
+   "AMD MI300X CEO"
+  ],
+  "lead": "The CEO of AMD, the company that makes the Instinct MI300X (the primary GPU-based competitor to Nvidia's H100), is **Lisa Su**."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "what is the capital of australia",
+  "ttft": 1.051,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "what is the capital of australia",
+  "ttft": 0.624,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "what is the capital of australia",
+  "ttft": 0.854,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "how old was the ceo of amd when nvidia was founded",
+  "ttft": 1.004,
+  "ok": false,
+  "queries": [],
+  "lead": "When Nvidia was founded on April 5, 1993, AMD's CEO at the time, Jerry Sanders, was **56 years old** (born September 12, 1936)."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "how old was the ceo of amd when nvidia was founded",
+  "ttft": 0.59,
+  "ok": false,
+  "queries": [],
+  "lead": "Nvidia was founded on April 5, 1993, at which time AMD's CEO, Jerry Sanders, was **56 years old** (born September 12, 1936)."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "how old was the ceo of amd when nvidia was founded",
+  "ttft": 0.644,
+  "ok": true,
+  "queries": [],
+  "lead": "When NVIDIA was founded on April 5, 1993, AMD's CEO at the time was Jerry Sanders, who was **56 years old** (born September 12, 1936). \n\n*(Note: AMD's current C"
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "what is the population of the capital of the country that hosted the 2016 summer olympics",
+  "ttft": 1.378,
+  "ok": true,
+  "queries": [],
+  "lead": "The population of Bras\u00edlia, the capital of the 2016 Summer Olympics host country (Brazil), is approximately 3 million."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "what is the population of the capital of the country that hosted the 2016 summer olympics",
+  "ttft": 3.019,
+  "ok": true,
+  "queries": [],
+  "lead": "The population of Bras\u00edlia, the capital of the country that hosted the 2016 Summer Olympics (Brazil), is approximately 3 million."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "what is the population of the capital of the country that hosted the 2016 summer olympics",
+  "ttft": 0.991,
+  "ok": true,
+  "queries": [],
+  "lead": "The population of Bras\u00edlia, the capital of the country that hosted the 2016 Summer Olympics (Brazil), is approximately 3 million (around 2.99 million)."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "which is taller, the golden gate bridge towers or the eiffel tower",
+  "ttft": 0.577,
+  "ok": true,
+  "queries": [],
+  "lead": "The Eiffel Tower is taller than the Golden Gate Bridge towers, standing at 330 meters (1,083 feet) compared to the bridge towers' height of 227 meters (746 feet"
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "which is taller, the golden gate bridge towers or the eiffel tower",
+  "ttft": 0.658,
+  "ok": true,
+  "queries": [],
+  "lead": "The Eiffel Tower is taller than the Golden Gate Bridge towers, standing at 330 meters (1,083 feet) compared to the bridge towers' height of 227 meters (746 feet"
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "which is taller, the golden gate bridge towers or the eiffel tower",
+  "ttft": 0.671,
+  "ok": true,
+  "queries": [],
+  "lead": "The Eiffel Tower is taller than the Golden Gate Bridge towers, standing at 330 meters (1,083 feet) compared to the bridge towers' height of 227 meters (746 feet"
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "who is the ceo of the company that makes the main competitor to nvidia's h100",
+  "ttft": 0.875,
+  "ok": true,
+  "queries": [],
+  "lead": "The CEO of AMD (the maker of the MI300X, a main competitor to Nvidia's H100) is **Lisa Su**."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "who is the ceo of the company that makes the main competitor to nvidia's h100",
+  "ttft": 0.603,
+  "ok": true,
+  "queries": [],
+  "lead": "The CEO of AMD (the company that makes the MI300X, the main competitor to Nvidia's H100) is Lisa Su."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "who is the ceo of the company that makes the main competitor to nvidia's h100",
+  "ttft": 0.767,
+  "ok": true,
+  "queries": [],
+  "lead": "The CEO of AMD (the company that makes the MI300X, the main competitor to Nvidia's H100) is Lisa Su."
+ }
+]

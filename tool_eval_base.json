@@ -1,0 +1,400 @@
+[
+ {
+  "mode": "direct",
+  "q": "what is the capital of australia",
+  "ttft": 1.03,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "direct",
+  "q": "what is the capital of australia",
+  "ttft": 0.733,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "direct",
+  "q": "what is the capital of australia",
+  "ttft": 0.946,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "direct",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.731,
+  "ok": true,
+  "queries": [],
+  "lead": "Jensen Huang's latest reported affair partner is Kimberly Powell, Nvidia\u2019s vice president of health care."
+ },
+ {
+  "mode": "direct",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.764,
+  "ok": true,
+  "queries": [],
+  "lead": "Based on recent reports, Jensen Huang's latest known affair partner is **Kimberly Powell**, Nvidia\u2019s vice president of health care, who reports directly to him."
+ },
+ {
+  "mode": "direct",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.066,
+  "ok": true,
+  "queries": [],
+  "lead": "Jensen Huang's latest reported affair partner is **Kimberly Powell**, Nvidia\u2019s vice president of health care, who reports directly to him."
+ },
+ {
+  "mode": "direct",
+  "q": "who is older, jensen huang or lisa su",
+  "ttft": 0.677,
+  "ok": true,
+  "queries": [],
+  "lead": "Jensen Huang is older than Lisa Su by about six years."
+ },
+ {
+  "mode": "direct",
+  "q": "who is older, jensen huang or lisa su",
+  "ttft": 0.671,
+  "ok": true,
+  "queries": [],
+  "lead": "Jensen Huang is older than Lisa Su. \n\nHuang was born on February 17, 1963, while Su was born on November 7, 1969, making him about six years her senior."
+ },
+ {
+  "mode": "direct",
+  "q": "who is older, jensen huang or lisa su",
+  "ttft": 0.98,
+  "ok": true,
+  "queries": [],
+  "lead": "Jensen Huang is older than Lisa Su by about six years."
+ },
+ {
+  "mode": "direct",
+  "q": "how many years apart were nvidia and amd founded",
+  "ttft": 0.978,
+  "ok": true,
+  "queries": [],
+  "lead": "AMD and Nvidia were founded **24 years** apart. AMD was founded on May 1, 1969, and Nvidia was founded on April 5, 1993."
+ },
+ {
+  "mode": "direct",
+  "q": "how many years apart were nvidia and amd founded",
+  "ttft": 0.868,
+  "ok": true,
+  "queries": [],
+  "lead": "Nvidia and AMD were founded **24 years** apart. AMD was founded on May 1, 1969, and Nvidia was founded on April 5, 1993."
+ },
+ {
+  "mode": "direct",
+  "q": "how many years apart were nvidia and amd founded",
+  "ttft": 0.607,
+  "ok": true,
+  "queries": [],
+  "lead": "AMD and Nvidia were founded **24 years** apart (AMD in May 1969 and Nvidia in April 1993)."
+ },
+ {
+  "mode": "direct",
+  "q": "compare the weather in san francisco and new york today",
+  "ttft": 1.124,
+  "ok": true,
+  "queries": [],
+  "lead": "San Francisco is significantly warmer and clearer today than New York. \n\n* **San Francisco:** Partly sunny and mild with a high near 71\u00b0F\u201372\u00b0F (around 16\u00b0C to 2"
+ },
+ {
+  "mode": "direct",
+  "q": "compare the weather in san francisco and new york today",
+  "ttft": 0.643,
+  "ok": true,
+  "queries": [],
+  "lead": "San Francisco is noticeably warmer and clearer today than New York. \n\n* **San Francisco:** Mild and partly sunny with a high reaching around 71\u00b0F\u201372\u00b0F (approx. "
+ },
+ {
+  "mode": "direct",
+  "q": "compare the weather in san francisco and new york today",
+  "ttft": 0.764,
+  "ok": true,
+  "queries": [],
+  "lead": "San Francisco is noticeably warmer and clearer today than New York. \n\n* **San Francisco:** Mild and partly sunny with a high reaching around 71\u00b0F to 72\u00b0F (appro"
+ },
+ {
+  "mode": "tool-first",
+  "q": "what is the capital of australia",
+  "ttft": 0.673,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "tool-first",
+  "q": "what is the capital of australia",
+  "ttft": 0.543,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "tool-first",
+  "q": "what is the capital of australia",
+  "ttft": 0.704,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "tool-first",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.72,
+  "ok": true,
+  "queries": [
+   "Jensen Huang affair",
+   "Jensen Huang rumors affair",
+   "Jensen Huang personal life scandal"
+  ],
+  "lead": "Nvidia CEO Jensen Huang's most recently reported affair was with **Kimberly Powell**, Nvidia\u2019s vice president of health care, who reports directly to him. \n\nPri"
+ },
+ {
+  "mode": "tool-first",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.803,
+  "ok": true,
+  "queries": [
+   "Jensen Huang affair",
+   "Jensen Huang scandal",
+   "Jensen Huang personal life rumor"
+  ],
+  "lead": "The latest person linked to Jensen Huang in reports of an extramarital affair is Kimberly Powell, Nvidia\u2019s vice president of healthcare, who reports directly to"
+ },
+ {
+  "mode": "tool-first",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.679,
+  "ok": true,
+  "queries": [
+   "Jensen Huang affair",
+   "Jensen Huang scandal rumor"
+  ],
+  "lead": "Jensen Huang's most recently reported affair was with **Kimberly Powell**, Nvidia\u2019s vice president of healthcare who reports directly to him. \n\nPrior to that re"
+ },
+ {
+  "mode": "tool-first",
+  "q": "who is older, jensen huang or lisa su",
+  "ttft": 1.588,
+  "ok": true,
+  "queries": [
+   "Jensen Huang birth date",
+   "Lisa Su birth date"
+  ],
+  "lead": "Jensen Huang is older. He was born on February 17, 1963, while Lisa Su was born on November 7, 1969 (making him over six years her senior)."
+ },
+ {
+  "mode": "tool-first",
+  "q": "who is older, jensen huang or lisa su",
+  "ttft": 1.124,
+  "ok": true,
+  "queries": [
+   "Jensen Huang birth date",
+   "Lisa Su birth date"
+  ],
+  "lead": "Jensen Huang is older. He was born on February 17, 1963, while Lisa Su was born on November 7, 1969."
+ },
+ {
+  "mode": "tool-first",
+  "q": "who is older, jensen huang or lisa su",
+  "ttft": 2.418,
+  "ok": true,
+  "queries": [
+   "Jensen Huang birth date",
+   "Lisa Su birth date"
+  ],
+  "lead": "Jensen Huang is older. He was born on February 17, 1963, while Lisa Su was born on November 7, 1969."
+ },
+ {
+  "mode": "tool-first",
+  "q": "how many years apart were nvidia and amd founded",
+  "ttft": 1.924,
+  "ok": true,
+  "queries": [
+   "nvidia founding year",
+   "amd founding year"
+  ],
+  "lead": "Nvidia and AMD were founded **24 years** apart; AMD was founded in May 1969 and Nvidia was founded in April 1993."
+ },
+ {
+  "mode": "tool-first",
+  "q": "how many years apart were nvidia and amd founded",
+  "ttft": 1.302,
+  "ok": true,
+  "queries": [
+   "nvidia founding year",
+   "amd founding year"
+  ],
+  "lead": "Nvidia and AMD were founded **24 years** apart. AMD was founded on May 1, 1969, and Nvidia was founded on April 5, 1993."
+ },
+ {
+  "mode": "tool-first",
+  "q": "how many years apart were nvidia and amd founded",
+  "ttft": 1.998,
+  "ok": true,
+  "queries": [
+   "NVIDIA founding year",
+   "AMD founding year"
+  ],
+  "lead": "AMD and NVIDIA were founded **24 years** apart. \n\n* **AMD** was founded on May 1, 1969.\n* **NVIDIA** was founded on April 5, 1993."
+ },
+ {
+  "mode": "tool-first",
+  "q": "compare the weather in san francisco and new york today",
+  "ttft": 2.154,
+  "ok": true,
+  "queries": [
+   "weather San Francisco today November 12 2026",
+   "weather New York today November 12 2026"
+  ],
+  "lead": "San Francisco is slightly warmer and drier today, while New York is experiencing active rain. \n\n* **San Francisco:** Mostly cloudy and overcast with a high near"
+ },
+ {
+  "mode": "tool-first",
+  "q": "compare the weather in san francisco and new york today",
+  "ttft": 1.712,
+  "ok": true,
+  "queries": [
+   "weather san francisco today",
+   "weather new york today"
+  ],
+  "lead": "San Francisco is experiencing mild, partly sunny weather with highs around 67\u00b0F to 72\u00b0F, whereas New York is seeing cooler temperatures with a high near 60\u00b0F an"
+ },
+ {
+  "mode": "tool-first",
+  "q": "compare the weather in san francisco and new york today",
+  "ttft": 1.507,
+  "ok": true,
+  "queries": [
+   "weather san francisco today",
+   "weather new york today"
+  ],
+  "lead": "San Francisco is currently experiencing milder, partly sunny weather with highs around 67\u00b0F to 72\u00b0F, while New York is cooler and cloudier with daytime temperat"
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "what is the capital of australia",
+  "ttft": 0.925,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "what is the capital of australia",
+  "ttft": 0.594,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "what is the capital of australia",
+  "ttft": 0.71,
+  "ok": true,
+  "queries": [],
+  "lead": "The capital of Australia is Canberra."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.953,
+  "ok": true,
+  "queries": [],
+  "lead": "According to reports from *The New York Times*, the latest person Jensen Huang had an affair with is **Kimberly Powell**, Nvidia\u2019s vice president of healthcare,"
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.728,
+  "ok": true,
+  "queries": [],
+  "lead": "The latest person Jensen Huang is reported to have had an affair with is **Kimberly Powell**, Nvidia\u2019s vice president of health care, following earlier revelati"
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.782,
+  "ok": true,
+  "queries": [],
+  "lead": "The latest person reported to have had an affair with Jensen Huang is **Kimberly Powell**, Nvidia\u2019s vice president of healthcare, who reports directly to him."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "who is older, jensen huang or lisa su",
+  "ttft": 1.48,
+  "ok": true,
+  "queries": [],
+  "lead": "Jensen Huang is older; he was born on February 17, 1963, while Lisa Su was born on November 7, 1969."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "who is older, jensen huang or lisa su",
+  "ttft": 0.693,
+  "ok": true,
+  "queries": [],
+  "lead": "Jensen Huang is older; he was born on February 17, 1963, while Lisa Su was born on November 7, 1969."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "who is older, jensen huang or lisa su",
+  "ttft": 0.916,
+  "ok": true,
+  "queries": [],
+  "lead": "Jensen Huang is older; he was born on February 17, 1963, while Lisa Su was born on November 7, 1969."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "how many years apart were nvidia and amd founded",
+  "ttft": 0.77,
+  "ok": true,
+  "queries": [],
+  "lead": "Nvidia and AMD were founded **24 years** apart (AMD in May 1969, and Nvidia in April 1993)."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "how many years apart were nvidia and amd founded",
+  "ttft": 0.644,
+  "ok": true,
+  "queries": [],
+  "lead": "Nvidia and AMD were founded **24 years** apart (AMD in May 1969, and Nvidia in April 1993)."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "how many years apart were nvidia and amd founded",
+  "ttft": 0.839,
+  "ok": true,
+  "queries": [],
+  "lead": "Nvidia and AMD were founded **24 years** apart (AMD in May 1969, and Nvidia in April 1993)."
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "compare the weather in san francisco and new york today",
+  "ttft": 1.236,
+  "ok": true,
+  "queries": [],
+  "lead": "San Francisco is significantly warmer than New York today, with San Francisco experiencing mild, partly sunny conditions and a high near 71\u00b0F\u201372\u00b0F (around 16\u00b0C "
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "compare the weather in san francisco and new york today",
+  "ttft": 0.897,
+  "ok": true,
+  "queries": [],
+  "lead": "San Francisco is significantly warmer and clearer today than New York City. San Francisco features partly sunny skies with daytime highs reaching around 71\u00b0F to"
+ },
+ {
+  "mode": "prefetch+tool",
+  "q": "compare the weather in san francisco and new york today",
+  "ttft": 0.816,
+  "ok": true,
+  "queries": [],
+  "lead": "San Francisco is significantly warmer and clearer today than New York City. \n\n* **San Francisco:** Experiencing mild, partly sunny conditions with highs reachin"
+ }
+]
