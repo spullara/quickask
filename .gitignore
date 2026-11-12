@@ -25,3 +25,9 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Alchemy deploy state (keep it, but never commit it)
+.alchemy/
+
+# Intent workspace files
+.intent/

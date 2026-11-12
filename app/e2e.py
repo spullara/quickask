@@ -6,7 +6,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 
 BASE, KEY = sys.argv[1].rstrip("/"), sys.argv[2]
-CTX = ssl.create_default_context(cafile="/etc/ssl/cert.pem")
+CTX = ssl.create_default_context(cafile="/etc/ssl/cert.pem" if os.path.exists("/etc/ssl/cert.pem") else None)
 UA = {"User-Agent": "Mozilla/5.0 quick-e2e", "Accept-Encoding": "identity"}
 
 
