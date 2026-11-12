@@ -1,0 +1,632 @@
+[
+ {
+  "vendor": "Anthropic",
+  "model": "claude-haiku-5.5",
+  "run": 1,
+  "seconds": 2.875,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-haiku-5.5",
+  "run": 2,
+  "seconds": 1.737,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-haiku-5.5",
+  "run": 3,
+  "seconds": 1.818,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-haiku-5.5",
+  "run": 4,
+  "seconds": 1.914,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-haiku-5.5",
+  "run": 5,
+  "seconds": 2.155,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-haiku-5.5",
+  "run": 6,
+  "seconds": 2.842,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-haiku-5.5",
+  "run": 7,
+  "seconds": 2.191,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-haiku-5.5",
+  "run": 8,
+  "seconds": 2.395,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-haiku-5.5",
+  "run": 9,
+  "seconds": 2.225,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-haiku-5.5",
+  "run": 10,
+  "seconds": 3.237,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-sonnet-5.5",
+  "run": 1,
+  "seconds": 2.939,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-sonnet-5.5",
+  "run": 2,
+  "seconds": 1.737,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-sonnet-5.5",
+  "run": 3,
+  "seconds": 0.374,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-sonnet-5.5",
+  "run": 4,
+  "seconds": 0.162,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-sonnet-5.5",
+  "run": 5,
+  "seconds": 0.08,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-sonnet-5.5",
+  "run": 6,
+  "seconds": 0.164,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-sonnet-5.5",
+  "run": 7,
+  "seconds": 0.087,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-sonnet-5.5",
+  "run": 8,
+  "seconds": 0.138,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-sonnet-5.5",
+  "run": 9,
+  "seconds": 0.129,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
+ },
+ {
+  "vendor": "Anthropic",
+  "model": "claude-sonnet-5.5",
+  "run": 10,
+  "seconds": 0.24,
+  "correct": false,
+  "answer": "",
+  "error": "HTTPError: b'{\"error\":{\"message\":\"This request would exceed your available credits given your current in-flight requests. Retry after in-flight requests settle, or add credits.\",\"code\":402,\"metadata\":{\"reason\":\"in' HTTP Error 402: Payment Required"
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6-luna",
+  "run": 1,
+  "seconds": 3.865,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6-luna",
+  "run": 2,
+  "seconds": 3.75,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6-luna",
+  "run": 3,
+  "seconds": 3.664,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6-luna",
+  "run": 4,
+  "seconds": 4.063,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6-luna",
+  "run": 5,
+  "seconds": 2.878,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6-luna",
+  "run": 6,
+  "seconds": 2.745,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6-luna",
+  "run": 7,
+  "seconds": 4.312,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6-luna",
+  "run": 8,
+  "seconds": 3.387,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6-luna",
+  "run": 9,
+  "seconds": 3.614,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6-luna",
+  "run": 10,
+  "seconds": 3.592,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6.1-sol",
+  "run": 1,
+  "seconds": 5.998,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6.1-sol",
+  "run": 2,
+  "seconds": 4.524,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6.1-sol",
+  "run": 3,
+  "seconds": 4.504,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6.1-sol",
+  "run": 4,
+  "seconds": 4.22,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6.1-sol",
+  "run": 5,
+  "seconds": 4.229,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6.1-sol",
+  "run": 6,
+  "seconds": 4.732,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6.1-sol",
+  "run": 7,
+  "seconds": 5.062,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6.1-sol",
+  "run": 8,
+  "seconds": 3.54,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6.1-sol",
+  "run": 9,
+  "seconds": 4.088,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-6.1-sol",
+  "run": 10,
+  "seconds": 5.34,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-5.4-nano",
+  "run": 1,
+  "seconds": 3.332,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-5.4-nano",
+  "run": 2,
+  "seconds": 2.777,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-5.4-nano",
+  "run": 3,
+  "seconds": 3.314,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-5.4-nano",
+  "run": 4,
+  "seconds": 2.862,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-5.4-nano",
+  "run": 5,
+  "seconds": 3.81,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-5.4-nano",
+  "run": 6,
+  "seconds": 3.076,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-5.4-nano",
+  "run": 7,
+  "seconds": 2.564,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-5.4-nano",
+  "run": 8,
+  "seconds": 2.176,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-5.4-nano",
+  "run": 9,
+  "seconds": 2.341,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "OpenAI",
+  "model": "gpt-5.4-nano",
+  "run": 10,
+  "seconds": 2.349,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.8-flash",
+  "run": 1,
+  "seconds": 4.115,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.8-flash",
+  "run": 2,
+  "seconds": 5.065,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.8-flash",
+  "run": 3,
+  "seconds": 6.469,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.8-flash",
+  "run": 4,
+  "seconds": 4.898,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.8-flash",
+  "run": 5,
+  "seconds": 5.371,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.8-flash",
+  "run": 6,
+  "seconds": 4.594,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.8-flash",
+  "run": 7,
+  "seconds": 5.292,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.8-flash",
+  "run": 8,
+  "seconds": 3.939,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.8-flash",
+  "run": 9,
+  "seconds": 4.915,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.8-flash",
+  "run": 10,
+  "seconds": 3.495,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.5-flash-lite",
+  "run": 1,
+  "seconds": 1.575,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.5-flash-lite",
+  "run": 2,
+  "seconds": 2.279,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.5-flash-lite",
+  "run": 3,
+  "seconds": 1.243,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.5-flash-lite",
+  "run": 4,
+  "seconds": 1.76,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.5-flash-lite",
+  "run": 5,
+  "seconds": 1.236,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.5-flash-lite",
+  "run": 6,
+  "seconds": 1.389,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.5-flash-lite",
+  "run": 7,
+  "seconds": 1.906,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.5-flash-lite",
+  "run": 8,
+  "seconds": 1.444,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.5-flash-lite",
+  "run": 9,
+  "seconds": 1.686,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ },
+ {
+  "vendor": "Google",
+  "model": "gemini-3.5-flash-lite",
+  "run": 10,
+  "seconds": 1.688,
+  "correct": true,
+  "answer": "Kimberly Powell",
+  "error": null
+ }
+]
