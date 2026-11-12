@@ -160,7 +160,7 @@ const ug=$('#usage');function U(){fetch('/api/usage').then(r=>r.ok?r.json():null
 U();
 // New search in place: no page load. A streaming answer loads the home page instead so it keeps saving.
 function fresh(){document.body.classList.remove('open');
- if(!S.id){ta.focus();return}
+ if(!S.id){ta.value='';fit();ta.focus();return}
  if(cur){location.href='/';return}
  S.id=null;S.msgs=[];S.title='QuickAsk';S.shares=[];log.innerHTML='';main.classList.add('home');
  const x=$('#shx');if(x)x.remove();side.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));
