@@ -16,7 +16,9 @@ const CSS = `
 body{font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;background:var(--bg);color:var(--fg);display:flex}
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 #side{width:260px;flex:none;background:var(--soft);height:100vh;overflow-y:auto;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
-#side .new{display:block;padding:8px 10px;border-radius:8px;color:var(--fg);font-weight:600;margin-bottom:8px}
+#side .new{display:flex;align-items:center;padding:8px 10px;border-radius:8px;color:var(--fg);font-weight:600;margin-bottom:8px}
+#side .new kbd{margin-left:auto;font:500 11px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--mute);background:var(--bg);border-radius:5px;padding:4px 6px}
+@media (hover:none){#side .new kbd{display:none}}
 #side .new:hover,#side .it:hover{background:var(--line);text-decoration:none}
 #side .it{display:flex;align-items:center;border-radius:8px;color:var(--fg);padding:6px 10px;font-size:14px}
 #side .it span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -129,6 +131,17 @@ const fit=()=>{ta.style.height='auto';const h=ta.scrollHeight+ta.offsetHeight-ta
 ta.addEventListener('input',fit);
 $('#tg').onclick=()=>document.body.classList.toggle('open');main.addEventListener('click',()=>document.body.classList.remove('open'));
 if(!S.streaming)ta.focus();
+// New search in place: no page load. A streaming answer loads the home page instead so it keeps saving.
+function fresh(){document.body.classList.remove('open');
+ if(!S.id){ta.focus();return}
+ if(cur){location.href='/';return}
+ S.id=null;S.msgs=[];S.title='Quick';S.shares=[];log.innerHTML='';main.classList.add('home');
+ const x=$('#shx');if(x)x.remove();side.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));
+ document.title='Quick';ta.placeholder='Ask anything';ta.value='';fit();history.pushState(null,'','/');ta.focus()}
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='k'){e.preventDefault();fresh()}});
+$('.new').addEventListener('click',e=>{if(e.metaKey||e.ctrlKey||e.shiftKey||e.button)return;e.preventDefault();fresh()});
+addEventListener('popstate',()=>location.reload());
+if(!/Mac|iPhone|iPad/.test(navigator.platform))$('.new kbd').textContent='Ctrl K';
 const shx=$('#shx'),sh=$('#sh'),sl=$('#sl'),sp=$('#sp'),shareUrl=id=>location.origin+'/s/'+id;
 const when=t=>new Date(t).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
 function SL(){if(!sl)return;const n=S.shares.length;sl.hidden=!n;sl.textContent=n+(n>1?' links':' link');if(!n)sp.hidden=true;
@@ -158,7 +171,7 @@ export function shell(o: { id: string | null; title: string; msgs: Msg[]; stream
 <link rel="search" type="application/opensearchdescription+xml" title="Quick" href="/opensearch.xml">
 <style>${CSS}</style></head>
 <body><button id="tg" aria-label="Chats">☰</button>
-<nav id="side"><a class="new" href="/">+ New chat</a><div id="list"></div>
+<nav id="side"><a class="new" href="/">+ New chat<kbd>⌘K</kbd></a><div id="list"></div>
 <div class="me"><span>${esc(o.user.n)}</span><a href="/auth/logout">Sign out</a></div></nav>
 <main class="${o.id ? "" : "home"}"><div id="log"></div>
 <form action="/" method="get"><textarea name="q" rows="1" placeholder="${o.id ? "Ask a follow-up" : "Ask anything"}" autocomplete="off"></textarea></form></main>
