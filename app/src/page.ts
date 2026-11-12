@@ -9,10 +9,14 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 /** A streamed instruction to the page: one inline script per event. */
 export const call = (fn: string, arg: unknown) => `<script>${fn}(${json(arg)})</script>\n`;
 
+/** iOS ignores user-scalable=no for pinch, so cancel WebKit gesture events and two-finger moves. */
+const NO_ZOOM = `<script>for(const t of ['gesturestart','gesturechange'])document.addEventListener(t,e=>e.preventDefault());
+document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false})</script>`;
+
 const CSS = `
 :root{--bg:#fff;--fg:#1d1d1f;--mute:#6e6e73;--soft:#f4f4f5;--line:#e4e4e7;--accent:#2563eb;color-scheme:light dark}
 @media (prefers-color-scheme:dark){:root{--bg:#18181b;--fg:#ececee;--mute:#9a9aa1;--soft:#232327;--line:#2f2f34;--accent:#7aa2ff}}
-*{box-sizing:border-box}html,body{margin:0;height:100%}
+*{box-sizing:border-box}html,body{margin:0;height:100%}html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 body{font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;background:var(--bg);color:var(--fg);display:flex}
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 #side{width:260px;flex:none;background:var(--soft);height:100vh;height:100dvh;overflow-y:auto;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
@@ -178,7 +182,7 @@ if(sh){SL();
 export function shell(o: { id: string | null; title: string; msgs: Msg[]; streaming: boolean; user: { u: string; n: string }; shares?: ShareRef[] }) {
   const state = { id: o.id, title: o.title, msgs: o.msgs, streaming: o.streaming, uid: o.user.u, shares: o.shares ?? [] };
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}
 <title>${esc(o.title)}</title>
 <link rel="search" type="application/opensearchdescription+xml" title="Quick" href="/opensearch.xml">
 <style>${CSS}</style></head>
@@ -203,7 +207,7 @@ export function adminPage(d: { today: Row; month: Row; byUser: Row[]; byDay: Row
   const card = (label: string, r: Row) => `<div class="card"><span>${label}</span><b>${usd(r.cost)}</b><span>${r.searches} searches · ${usd(r.searches ? r.cost / r.searches : 0)} each</span></div>`;
   const table = (head: string, rows: Row[], name: (r: Row) => string) => rows.length ? `<table><tr><th>${head}</th><th>Searches</th><th>Exa</th><th>Gemini</th><th>Total</th></tr>${
     rows.map((r) => `<tr><td>${esc(name(r))}</td><td>${r.searches}</td><td>${usd(r.exa)}</td><td>${usd(r.gemini)}</td><td>${usd(r.cost)}</td></tr>`).join("")}</table>` : "<p>No searches yet.</p>";
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}
 <title>Usage · Quick</title><meta name="robots" content="noindex"><style>${CSS}
 main.admin{padding:32px 24px;max-width:760px;margin:0 auto;display:block;height:auto}.admin h1{font-size:20px;margin:0 0 4px}.admin h2{font-size:15px;margin:28px 0 8px}
 .admin .note{color:var(--mute);font-size:13px;margin:0 0 16px}.admin .back{font-size:14px}
@@ -225,7 +229,7 @@ export function sharePage(s: { title: string; msgs: Msg[] }) {
   const summary = (answer?.text ?? "").replace(/!\[[^\]]*\]\([^)]*\)|[*#`>_]/g, "").replace(/\s+/g, " ").trim().slice(0, 200);
   const n = Number(answer?.text.match(/\]\(img:(\d+)\)/)?.[1] ?? 0);
   const image = n ? answer?.images?.[n - 1] : undefined;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}
 <title>${esc(s.title)}</title><meta name="robots" content="noindex">
 <meta property="og:site_name" content="Quick"><meta property="og:title" content="${esc(s.title)}"><meta property="og:description" content="${esc(summary)}">
 ${image ? `<meta property="og:image" content="${esc(image)}"><meta name="twitter:card" content="summary_large_image">` : ""}
@@ -233,7 +237,7 @@ ${image ? `<meta property="og:image" content="${esc(image)}"><meta name="twitter
 <script>const S=${json({ msgs: s.msgs })};${RENDER}for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images,m.sources))}}</script></body></html>`;
 }
 
-const page = (body: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+const page = (body: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}
 <title>Quick</title><style>${CSS}</style></head><body><main class="home">${body}</main></body></html>`;
 
 export const keyPage = (bad: boolean) => page(`<div id="log"></div>
