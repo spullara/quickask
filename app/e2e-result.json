@@ -1,0 +1,77 @@
+{
+ "base": "https://quick-quick-live-sam-bcofqz27ftvxjhus.spullara-f09.workers.dev",
+ "runs": [
+  {
+   "q": "what is the capital of australia",
+   "ttfb": 0.118,
+   "first_token": 0.684,
+   "total": 0.702
+  },
+  {
+   "q": "who is the latest person jensen huang had an affair with",
+   "ttfb": 0.101,
+   "first_token": 2.054,
+   "total": 2.369
+  },
+  {
+   "q": "weather in san francisco today",
+   "ttfb": 0.086,
+   "first_token": 1.162,
+   "total": 1.363
+  },
+  {
+   "q": "what is the capital of australia",
+   "ttfb": 0.099,
+   "first_token": 0.831,
+   "total": 0.85
+  },
+  {
+   "q": "who is the latest person jensen huang had an affair with",
+   "ttfb": 0.081,
+   "first_token": 1.837,
+   "total": 2.324
+  },
+  {
+   "q": "weather in san francisco today",
+   "ttfb": 0.09,
+   "first_token": 1.607,
+   "total": 1.816
+  },
+  {
+   "q": "what is the capital of australia",
+   "ttfb": 0.083,
+   "first_token": 0.97,
+   "total": 0.995
+  },
+  {
+   "q": "who is the latest person jensen huang had an affair with",
+   "ttfb": 0.099,
+   "first_token": 1.508,
+   "total": 1.759
+  },
+  {
+   "q": "weather in san francisco today",
+   "ttfb": 0.083,
+   "first_token": 1.277,
+   "total": 1.559
+  }
+ ],
+ "avg": {
+  "ttfb": 0.093,
+  "first_token": 1.326,
+  "total": 1.526
+ },
+ "followup_first_token": 1.244,
+ "checks": {
+  "streamed_answer_nonempty": true,
+  "done_event": true,
+  "sidebar_event": true,
+  "chat_saved": true,
+  "chat_page_has_answer": true,
+  "followup_streams": true,
+  "followup_mentions_healthcare": true,
+  "no_cookie_is_401": true,
+  "opensearch": true,
+  "delete": true
+ }
+}

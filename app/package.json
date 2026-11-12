@@ -1,0 +1,24 @@
+{
+  "name": "quick",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261112.1",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@alchemy.run/cloudflare": "^2.0.0-beta.85",
+    "@effect/platform-bun": "^4.1.4",
+    "@effect/platform-node": "^4.1.4",
+    "alchemy": "^2.0.0-beta.85",
+    "effect": "^4.1.4"
+  },
+  "scripts": {
+    "deploy": "alchemy deploy",
+    "destroy": "alchemy destroy",
+    "typecheck": "tsc --noEmit"
+  }
+}
