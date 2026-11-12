@@ -129,6 +129,9 @@ checks["login_twice_counter_ok"] = again.json("/auth/login/verify", alice_key.ge
 o = Browser().json("/auth/login/options")
 checks["unknown_passkey_rejected"] = "error" in Browser().json("/auth/login/verify", Authenticator().get(o))
 
+leads = []
+
+
 def answer(html):
     return "".join(json.loads(m) for m in re.findall(r"<script>T\((\".*?\")\)</script>", html))
 
@@ -141,11 +144,14 @@ for q in ["what is the capital of australia", "golden gate bridge",
     print(rows[-1], flush=True)
     if q == "golden gate bridge":
         bridge = html
+    if "jensen" in q:
+        leads.append(re.split(r"(?<=[.!?])\s", answer(html).strip(), 1)[0].lower())
 plain = answer(search(again, "what is 17 times 23")[3])
 
 chat_id = re.search(r'"id":"(\w+)"', bridge).group(1)
 checks["answer_streams"] = "<script>T(" in bridge and "<script>D(" in bridge
 checks["images_for_visual_query"] = "](img:" in answer(bridge)
+checks["latest_news_leads_with_powell"] = all("powell" in lead for lead in leads)
 checks["no_images_for_plain_fact"] = "391" in plain and "](img:" not in plain
 time.sleep(1.5)
 checks["chat_in_own_sidebar"] = chat_id in alice.chat_ids()
@@ -170,7 +176,8 @@ out = Browser()
 out.cookies = dict(alice.cookies)
 out.open("/auth/logout")
 checks["logout"] = "Sign in with passkey" in out.text("/")
-checks["opensearch"] = "{searchTerms}" in Browser(access_key=False).text("/opensearch.xml")
+osd = Browser(access_key=False).open("/opensearch.xml")
+checks["opensearch_inline"] = "{searchTerms}" in osd.read().decode() and osd.headers["content-type"].startswith("text/xml")
 
 for cid in alice.chat_ids():
     alice.open(f"/api/chats/{cid}", method="DELETE").read()

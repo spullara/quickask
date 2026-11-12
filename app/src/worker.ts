@@ -42,7 +42,9 @@ const SYSTEM = `You are a fast answer engine. Answer the latest question, using 
 Lead with the direct answer in the first sentence. Keep it short; add detail only when it helps. Use Markdown.
 Images: a search result can list image ids (img:N) from its page. When pictures would really help (people, places, products,
 animals, artworks, how something looks), put 1 to 3 of the most relevant on their own line as ![short caption](img:N).
-Use only listed ids. When pictures would not help, include none. Never write image URLs.`;
+Use only listed ids. When pictures would not help, include none. Never write image URLs.
+Results are sorted newest first and show publish dates. For questions about the latest, newest, current or most recent
+anything, the most recently published reports decide the answer: lead with what they say, then mention older context.`;
 
 /** Gemini with the search results attached to the latest question. No search tool: Exa already did the search. */
 function gemini(env: WorkerEnv, msgs: Msg[], found: Search) {
@@ -97,20 +99,21 @@ const newId = () => crypto.randomUUID().replaceAll("-", "").slice(0, 12);
 const titleOf = (q: string) => (q.length > 80 ? q.slice(0, 77) + "…" : q);
 
 type Search = { context: string; sources: Source[]; images: string[] };
-type ExaResult = { url: string; title?: string; publishedDate?: string; text?: string; image?: string; extras?: { imageLinks?: string[] } };
+type ExaResult = { url: string; title?: string; publishedDate?: string; highlights?: string[]; image?: string; extras?: { imageLinks?: string[] } };
 const NOT_A_PHOTO = /\.svg(\?|$)|\/\d{1,2}px-|logo|icon|favicon|sprite|avatar|badge|banner|slide|promo|hiring|advert/i;
 
-/** Exa search: page text for the model, plus each page's images as short ids (img:N) the model can place. */
+/** Exa search: the most query-relevant sentences of each page (anywhere in it, not just the top) for the model, plus each page's images as short ids (img:N) the model can place. */
 async function search(env: WorkerEnv, query: string): Promise<Search> {
   try {
     const res = await fetch("https://api.exa.ai/search", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": env.EXA_API_KEY },
-      body: JSON.stringify({ query, type: "fast", numResults: 6, contents: { text: { maxCharacters: 1000 }, extras: { imageLinks: 2 } } }),
+      body: JSON.stringify({ query, type: "fast", numResults: 10, contents: { highlights: { numSentences: 3, highlightsPerUrl: 3 }, extras: { imageLinks: 2 } } }),
       signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) throw new Error(`Exa ${res.status}`);
     const { results = [] } = (await res.json()) as { results?: ExaResult[] };
+    results.sort((a, b) => (b.publishedDate ?? "").localeCompare(a.publishedDate ?? ""));
     const images: string[] = [], sources: Source[] = [], parts: string[] = [];
     results.forEach((r, i) => {
       const host = new URL(r.url).hostname.replace(/^www\./, "");
@@ -120,7 +123,7 @@ async function search(env: WorkerEnv, query: string): Promise<Search> {
         if (images.length < 12 && u?.startsWith("https://") && !NOT_A_PHOTO.test(u) && !images.includes(u)) ids.push(`img:${images.push(u)}`);
       }
       const date = r.publishedDate ? `, ${r.publishedDate.slice(0, 10)}` : "";
-      parts.push(`[${i + 1}] ${r.title ?? host} (${host}${date})\n${(r.text ?? "").trim()}${ids.length ? `\nImages: ${ids.join(", ")}` : ""}`);
+      parts.push(`[${i + 1}] ${r.title ?? host} (${host}${date})\n${(r.highlights ?? []).join(" … ")}${ids.length ? `\nImages: ${ids.join(", ")}` : ""}`);
     });
     return { context: parts.join("\n\n"), sources, images };
   } catch {
@@ -158,7 +161,8 @@ export default {
     const q = url.searchParams.get("q")?.trim();
 
     if (path === "/opensearch.xml") {
-      return new Response(opensearch(url.origin), { headers: { "content-type": "application/opensearchdescription+xml" } });
+      // text/xml displays inline; the OpenSearch type makes some browsers download the file.
+      return new Response(opensearch(url.origin), { headers: { "content-type": "text/xml; charset=utf-8", "content-disposition": "inline" } });
     }
     if (path === "/favicon.ico") return new Response(null, { status: 204 });
 

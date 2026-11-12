@@ -17,7 +17,7 @@ need GEMINI_API_KEY ~/.env; need EXA_API_KEY ~/.env; need CLOUDFLARE_API_TOKEN "
 touch .env
 grep -q '^ACCESS_KEY=' .env || echo "ACCESS_KEY=$(openssl rand -hex 16)" >> .env
 grep -q '^SESSION_SECRET=' .env || echo "SESSION_SECRET=$(openssl rand -hex 32)" >> .env
-export ACCESS_KEY="$(get ACCESS_KEY .env)" SESSION_SECRET="$(get SESSION_SECRET .env)"
+export ACCESS_KEY="$(get ACCESS_KEY .env)" SESSION_SECRET="$(get SESSION_SECRET .env)" QUICK_DOMAIN="$(get QUICK_DOMAIN .env)"
 
 if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
   CLOUDFLARE_ACCOUNT_ID="$(curl -fsS https://api.cloudflare.com/client/v4/accounts \
@@ -28,7 +28,8 @@ fi
 bun install --frozen-lockfile >/dev/null
 if [ "${1:-}" = destroy ]; then exec bunx alchemy destroy --yes; fi
 bunx alchemy deploy --yes | tee "$TMPDIR/quick-deploy.log"
-url="$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' "$TMPDIR/quick-deploy.log" | tail -1)"
+url="${QUICK_DOMAIN:+https://$QUICK_DOMAIN}"
+url="${url:-$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' "$TMPDIR/quick-deploy.log" | tail -1)}"
 echo
 echo "App:          $url"
 echo "First visit:  $url/?k=$ACCESS_KEY"

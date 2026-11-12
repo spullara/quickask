@@ -1,0 +1,590 @@
+[
+ {
+  "model": "gemini-3.5-flash-lite (current prompt)",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.643,
+  "ok": true,
+  "lead": "jensen huang's most recently reported affair partner is kimberly powell, nvidia\u2019s vice president of healthcare, following earlier revelations regarding a relati"
+ },
+ {
+  "model": "gemini-3.5-flash-lite (current prompt)",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.587,
+  "ok": true,
+  "lead": "jensen huang's most recently reported affair partner is kimberly powell, nvidia\u2019s vice president of healthcare, following earlier reports regarding a relationsh"
+ },
+ {
+  "model": "gemini-3.5-flash-lite (current prompt)",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.541,
+  "ok": true,
+  "lead": "jensen huang's most recently reported affair partner is **kimberly powell**, nvidia\u2019s vice president of healthcare, following earlier reports regarding a relati"
+ },
+ {
+  "model": "gemini-3.5-flash-lite (current prompt)",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.521,
+  "ok": true,
+  "lead": "jensen huang's most recently reported affair partner is **kimberly powell**, nvidia\u2019s vice president of health care, following earlier revelations regarding a r"
+ },
+ {
+  "model": "gemini-3.5-flash-lite (current prompt)",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.663,
+  "ok": true,
+  "lead": "jensen huang's most recently reported affair partner is **kimberly powell**, nvidia\u2019s vice president of healthcare, following earlier reports regarding a relati"
+ },
+ {
+  "model": "gemini-3.5-flash-lite (current prompt)",
+  "q": "latest jensen huang scandal",
+  "ttft": 0.658,
+  "ok": false,
+  "lead": "nvidia ceo jensen huang is facing a major national security and leadership crisis after admitting to an extramarital affair with alice huang, a corporate execut"
+ },
+ {
+  "model": "gemini-3.5-flash-lite (current prompt)",
+  "q": "latest jensen huang scandal",
+  "ttft": 0.675,
+  "ok": false,
+  "lead": "nvidia ceo jensen huang is facing a major national security and leadership scandal after admitting to an extramarital affair with alice huang, a corporate execu"
+ },
+ {
+  "model": "gemini-3.5-flash-lite (current prompt)",
+  "q": "latest jensen huang scandal",
+  "ttft": 0.702,
+  "ok": false,
+  "lead": "nvidia ceo jensen huang is facing a major national security and corporate scandal after admitting to an extramarital affair with alice huang, a corporate execut"
+ },
+ {
+  "model": "gemini-3.5-flash-lite (current prompt)",
+  "q": "who runs healthcare at nvidia",
+  "ttft": 0.606,
+  "ok": true,
+  "lead": "healthcare at nvidia is run by **kimberly powell**, who serves as the vice president of healthcare and life sciences."
+ },
+ {
+  "model": "gemini-3.5-flash-lite (current prompt)",
+  "q": "who runs healthcare at nvidia",
+  "ttft": 0.502,
+  "ok": true,
+  "lead": "healthcare at nvidia is run by **kimberly powell**, who serves as the vice president of healthcare and life sciences."
+ },
+ {
+  "model": "gemini-3.5-flash-lite (current prompt)",
+  "q": "what is 17 times 23",
+  "ttft": 0.523,
+  "ok": true,
+  "lead": "17 times 23 is **391**."
+ },
+ {
+  "model": "gemini-3.5-flash-lite (current prompt)",
+  "q": "what is 17 times 23",
+  "ttft": 0.608,
+  "ok": true,
+  "lead": "17 times 23 is **391**."
+ },
+ {
+  "model": "gemini-3.5-flash-lite",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.892,
+  "ok": true,
+  "lead": "jensen huang's latest reported affair partner is kimberly powell, nvidia\u2019s vice president of health care, who reports directly to him."
+ },
+ {
+  "model": "gemini-3.5-flash-lite",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.473,
+  "ok": true,
+  "lead": "jensen huang's latest reported affair partner is kimberly powell, nvidia\u2019s vice president of healthcare, who reports directly to him."
+ },
+ {
+  "model": "gemini-3.5-flash-lite",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.725,
+  "ok": true,
+  "lead": "jensen huang's latest reported affair partner is kimberly powell, nvidia\u2019s vice president of healthcare, following a prior relationship with alice huang."
+ },
+ {
+  "model": "gemini-3.5-flash-lite",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.634,
+  "ok": true,
+  "lead": "jensen huang's latest reported affair was with kimberly powell, nvidia\u2019s vice president of healthcare, as revealed by *the new york times* in november 2026."
+ },
+ {
+  "model": "gemini-3.5-flash-lite",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.624,
+  "ok": true,
+  "lead": "jensen huang's latest reported affair partner is kimberly powell, nvidia\u2019s vice president of healthcare, who reports directly to him."
+ },
+ {
+  "model": "gemini-3.5-flash-lite",
+  "q": "latest jensen huang scandal",
+  "ttft": 0.762,
+  "ok": false,
+  "lead": "nvidia ceo jensen huang is facing a major national security and corporate governance scandal after admitting to an extramarital affair with alice huang, a tech "
+ },
+ {
+  "model": "gemini-3.5-flash-lite",
+  "q": "latest jensen huang scandal",
+  "ttft": 0.576,
+  "ok": false,
+  "lead": "nvidia ceo jensen huang is facing a major scandal after admitting to an extramarital affair with alice huang, a singapore-based executive whom u.s."
+ },
+ {
+  "model": "gemini-3.5-flash-lite",
+  "q": "latest jensen huang scandal",
+  "ttft": 0.905,
+  "ok": false,
+  "lead": "nvidia ceo jensen huang is facing a major national security and corporate scandal after admitting to an extramarital affair with megaspeed executive alice huang"
+ },
+ {
+  "model": "gemini-3.5-flash-lite",
+  "q": "who runs healthcare at nvidia",
+  "ttft": 1.107,
+  "ok": true,
+  "lead": "healthcare at nvidia is led by **kimberly powell**, who serves as the vice president of healthcare and life sciences."
+ },
+ {
+  "model": "gemini-3.5-flash-lite",
+  "q": "who runs healthcare at nvidia",
+  "ttft": 0.415,
+  "ok": true,
+  "lead": "healthcare at nvidia is run by **kimberly powell**, who serves as the vice president of healthcare and life sciences."
+ },
+ {
+  "model": "gemini-3.5-flash-lite",
+  "q": "what is 17 times 23",
+  "ttft": 0.911,
+  "ok": true,
+  "lead": "17 times 23 is **391**."
+ },
+ {
+  "model": "gemini-3.5-flash-lite",
+  "q": "what is 17 times 23",
+  "ttft": 0.52,
+  "ok": true,
+  "lead": "17 times 23 is **391**."
+ },
+ {
+  "model": "gemini-3.8-flash low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 2.077,
+  "ok": true,
+  "lead": "the latest person reported to have had an affair with jensen huang is **kimberly powell**, nvidia\u2019s vice president of healthcare, who reports directly to him."
+ },
+ {
+  "model": "gemini-3.8-flash low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 2.074,
+  "ok": true,
+  "lead": "according to reports from *the new york times*, jensen huang had an extramarital relationship with **kimberly powell**, nvidia\u2019s vice president of healthcare, w"
+ },
+ {
+  "model": "gemini-3.8-flash low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.506,
+  "ok": true,
+  "lead": "the latest person jensen huang has been reported to have had an affair with is **kimberly powell**, nvidia\u2019s vice president of healthcare, according to a novemb"
+ },
+ {
+  "model": "gemini-3.8-flash low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.214,
+  "ok": true,
+  "lead": "the latest person linked to an extramarital affair with jensen huang is **kimberly powell**, nvidia\u2019s vice president of healthcare, who directly reports to him."
+ },
+ {
+  "model": "gemini-3.8-flash low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 2.099,
+  "ok": true,
+  "lead": "according to reports published on november 11, 2026, by *the new york times*, the latest person jensen huang is reported to have had an extramarital affair with"
+ },
+ {
+  "model": "gemini-3.8-flash low",
+  "q": "latest jensen huang scandal",
+  "ttft": 1.402,
+  "ok": false,
+  "lead": "nvidia ceo jensen huang is facing an escalating scandal involving **extramarital affairs that have triggered national security investigations and calls for his "
+ },
+ {
+  "model": "gemini-3.8-flash low",
+  "q": "latest jensen huang scandal",
+  "ttft": 1.875,
+  "ok": false,
+  "lead": "nvidia ceo jensen huang is facing a major scandal involving extramarital affairs tied to national security concerns, leading to an fbi investigation, congressio"
+ },
+ {
+  "model": "gemini-3.8-flash low",
+  "q": "latest jensen huang scandal",
+  "ttft": 2.936,
+  "ok": false,
+  "lead": "the latest scandal involving nvidia ceo jensen huang revolves around extramarital affairs, an alleged national security breach involving a suspected chinese spy"
+ },
+ {
+  "model": "gemini-3.8-flash low",
+  "q": "who runs healthcare at nvidia",
+  "ttft": 1.934,
+  "ok": true,
+  "lead": "**kimberly powell** runs healthcare at nvidia, serving as the company's vice president and general manager of healthcare."
+ },
+ {
+  "model": "gemini-3.8-flash low",
+  "q": "who runs healthcare at nvidia",
+  "ttft": 1.142,
+  "ok": true,
+  "lead": "**kimberly powell** runs healthcare at nvidia, serving as the company's vice president of healthcare (and life sciences)."
+ },
+ {
+  "model": "gemini-3.8-flash low",
+  "q": "what is 17 times 23",
+  "ttft": 2.051,
+  "ok": true,
+  "lead": "**391** \n\na quick way to calculate it: \n$(20 - 3) \\times (20 + 3) = 20^2 - 3^2 = 400 - 9 = 391$"
+ },
+ {
+  "model": "gemini-3.8-flash low",
+  "q": "what is 17 times 23",
+  "ttft": 1.546,
+  "ok": true,
+  "lead": "**391** \n\na quick way to calculate it: \n$$(20 - 3) \\times (20 + 3) = 20^2 - 3^2 = 400 - 9 = 391$$"
+ },
+ {
+  "model": "claude-haiku-5.5",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.304,
+  "ok": true,
+  "lead": "the latest reported affair is with **kimberly powell**, nvidia's vice president of healthcare, according to a new york times report on november 11, 2026."
+ },
+ {
+  "model": "claude-haiku-5.5",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.31,
+  "ok": true,
+  "lead": "the latest reported affair is with **kimberly powell**, nvidia's vice president of healthcare, who reports directly to him."
+ },
+ {
+  "model": "claude-haiku-5.5",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.557,
+  "ok": true,
+  "lead": "the most recent report names **kimberly powell**, nvidia's vice president of healthcare, who reports directly to huang."
+ },
+ {
+  "model": "claude-haiku-5.5",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.45,
+  "ok": true,
+  "lead": "the latest name reported is **kimberly powell**, nvidia's vice president of healthcare."
+ },
+ {
+  "model": "claude-haiku-5.5",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.177,
+  "ok": true,
+  "lead": "the latest person reported is **kimberly powell**, nvidia's vice president of healthcare, who reports directly to huang."
+ },
+ {
+  "model": "claude-haiku-5.5",
+  "q": "latest jensen huang scandal",
+  "ttft": 1.757,
+  "ok": false,
+  "lead": "the latest development is that nvidia's board is reportedly preparing to oust ceo jensen huang, according to the wall street journal, on november 11, 2026."
+ },
+ {
+  "model": "claude-haiku-5.5",
+  "q": "latest jensen huang scandal",
+  "ttft": 1.775,
+  "ok": true,
+  "lead": "the latest development is that nvidia's board reportedly plans to meet to consider ousting ceo jensen huang, after a new york times report that he also had an a"
+ },
+ {
+  "model": "claude-haiku-5.5",
+  "q": "latest jensen huang scandal",
+  "ttft": 1.416,
+  "ok": false,
+  "lead": "the latest development is that nvidia's board is reportedly preparing to oust ceo jensen huang, after a second affair report on november 11, 2026."
+ },
+ {
+  "model": "claude-haiku-5.5",
+  "q": "who runs healthcare at nvidia",
+  "ttft": 1.86,
+  "ok": true,
+  "lead": "**kimberly powell** is nvidia's vice president of healthcare."
+ },
+ {
+  "model": "claude-haiku-5.5",
+  "q": "who runs healthcare at nvidia",
+  "ttft": 1.657,
+  "ok": true,
+  "lead": "**kimberly powell** is nvidia's vice president of healthcare, leading the company's worldwide healthcare business."
+ },
+ {
+  "model": "claude-haiku-5.5",
+  "q": "what is 17 times 23",
+  "ttft": 0.5,
+  "ok": true,
+  "lead": "17 times 23 is **391**."
+ },
+ {
+  "model": "claude-haiku-5.5",
+  "q": "what is 17 times 23",
+  "ttft": 0.461,
+  "ok": true,
+  "lead": "17 times 23 is **391**."
+ },
+ {
+  "model": "claude-sonnet-5.5",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 2.119,
+  "ok": true,
+  "lead": "**the most recently reported person is kimberly powell, nvidia's vice president of healthcare, according to a new york times report on nov."
+ },
+ {
+  "model": "claude-sonnet-5.5",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 2.002,
+  "ok": true,
+  "lead": "**the most recent person reported is kimberly powell, nvidia's vice president of healthcare, according to a new york times report on nov."
+ },
+ {
+  "model": "claude-sonnet-5.5",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 2.263,
+  "ok": true,
+  "lead": "**the most recently reported person is kimberly powell, nvidia's vice president of healthcare, according to a new york times report on nov."
+ },
+ {
+  "model": "claude-sonnet-5.5",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 2.451,
+  "ok": false,
+  "lead": "**the most recent report, from the new york times on nov."
+ },
+ {
+  "model": "claude-sonnet-5.5",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 2.187,
+  "ok": true,
+  "lead": "**the most recently reported name is kimberly powell, nvidia's vice president of healthcare, but this is unconfirmed.** the new york times reported it on nov."
+ },
+ {
+  "model": "claude-sonnet-5.5",
+  "q": "latest jensen huang scandal",
+  "ttft": 0.912,
+  "ok": false,
+  "lead": "**the latest development (nov 11, 2026): nvidia's board is reportedly preparing to oust ceo jensen huang after a second alleged affair was reported.** the wall "
+ },
+ {
+  "model": "claude-sonnet-5.5",
+  "q": "latest jensen huang scandal",
+  "ttft": 1.12,
+  "ok": false,
+  "lead": "the latest development (nov 11, 2026) is that nvidia's board is reportedly preparing to oust ceo jensen huang after a second alleged affair surfaced."
+ },
+ {
+  "model": "claude-sonnet-5.5",
+  "q": "latest jensen huang scandal",
+  "ttft": 0.864,
+  "ok": false,
+  "lead": "the latest development is that nvidia's board is reportedly preparing to oust ceo jensen huang after a second alleged affair surfaced on nov."
+ },
+ {
+  "model": "claude-sonnet-5.5",
+  "q": "who runs healthcare at nvidia",
+  "ttft": 0.561,
+  "ok": true,
+  "lead": "**kimberly powell** runs healthcare at nvidia."
+ },
+ {
+  "model": "claude-sonnet-5.5",
+  "q": "who runs healthcare at nvidia",
+  "ttft": 0.647,
+  "ok": true,
+  "lead": "**kimberly powell** runs healthcare at nvidia."
+ },
+ {
+  "model": "claude-sonnet-5.5",
+  "q": "what is 17 times 23",
+  "ttft": 0.877,
+  "ok": true,
+  "lead": "**17 \u00d7 23 = 391**\n\nquick check: (20 \u2212 3)(20 + 3) = 400 \u2212 9 = 391."
+ },
+ {
+  "model": "claude-sonnet-5.5",
+  "q": "what is 17 times 23",
+  "ttft": 0.912,
+  "ok": true,
+  "lead": "**17 \u00d7 23 = 391**\n\nquick check: (20 \u2212 3)(20 + 3) = 400 \u2212 9 = 391."
+ },
+ {
+  "model": "gpt-6-luna low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.007,
+  "ok": true,
+  "lead": "the latest reported affair was with **kimberly powell**, nvidia\u2019s vice president of healthcare, according to a nov."
+ },
+ {
+  "model": "gpt-6-luna low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.599,
+  "ok": true,
+  "lead": "the latest report names **kimberly powell**, nvidia\u2019s vice president of healthcare, as someone jensen huang allegedly had an affair with."
+ },
+ {
+  "model": "gpt-6-luna low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.713,
+  "ok": true,
+  "lead": "the latest reports name **kimberly powell**, nvidia\u2019s vice president of healthcare, as someone jensen huang allegedly had an affair with."
+ },
+ {
+  "model": "gpt-6-luna low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.704,
+  "ok": true,
+  "lead": "the latest reported affair was with **kimberly powell**, nvidia\u2019s vice president of healthcare, according to a *new york times* report published nov."
+ },
+ {
+  "model": "gpt-6-luna low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 0.658,
+  "ok": true,
+  "lead": "the latest reported affair was with **kimberly powell**, nvidia\u2019s vice president of healthcare, according to a *new york times* report published nov."
+ },
+ {
+  "model": "gpt-6-luna low",
+  "q": "latest jensen huang scandal",
+  "ttft": 0.803,
+  "ok": false,
+  "lead": "the latest reports say jensen huang is facing mounting pressure over **two reported affairs**\u2014one with alice huang, a business executive whom u.s."
+ },
+ {
+  "model": "gpt-6-luna low",
+  "q": "latest jensen huang scandal",
+  "ttft": 0.66,
+  "ok": false,
+  "lead": "the latest reports say nvidia\u2019s board is reportedly weighing whether to remove ceo jensen huang after a second alleged affair was reported\u2014this one with a senio"
+ },
+ {
+  "model": "gpt-6-luna low",
+  "q": "latest jensen huang scandal",
+  "ttft": 0.73,
+  "ok": false,
+  "lead": "the latest reports (nov."
+ },
+ {
+  "model": "gpt-6-luna low",
+  "q": "who runs healthcare at nvidia",
+  "ttft": 0.698,
+  "ok": true,
+  "lead": "kimberly powell runs nvidia\u2019s worldwide healthcare business as its vice president of healthcare."
+ },
+ {
+  "model": "gpt-6-luna low",
+  "q": "who runs healthcare at nvidia",
+  "ttft": 0.8,
+  "ok": true,
+  "lead": "kimberly powell runs nvidia\u2019s healthcare business as its vice president of healthcare, overseeing its global healthcare strategy and products."
+ },
+ {
+  "model": "gpt-6-luna low",
+  "q": "what is 17 times 23",
+  "ttft": 0.728,
+  "ok": true,
+  "lead": "17 \u00d7 23 = **391**."
+ },
+ {
+  "model": "gpt-6-luna low",
+  "q": "what is 17 times 23",
+  "ttft": 0.558,
+  "ok": true,
+  "lead": "17 \u00d7 23 = **391**."
+ },
+ {
+  "model": "gpt-6.1-sol low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.269,
+  "ok": true,
+  "lead": "the latest **reported allegation** names **kimberly powell, nvidia\u2019s vice president of healthcare**, according to the november 11 reports supplied here."
+ },
+ {
+  "model": "gpt-6.1-sol low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.634,
+  "ok": true,
+  "lead": "the latest **reported allegation** names **kimberly powell, nvidia\u2019s vice president of healthcare**, according to the november 11 reports supplied here."
+ },
+ {
+  "model": "gpt-6.1-sol low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.744,
+  "ok": true,
+  "lead": "the latest **reported allegation** names **kimberly powell, nvidia\u2019s vice president of healthcare**, according to the november 11 reports provided."
+ },
+ {
+  "model": "gpt-6.1-sol low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.463,
+  "ok": true,
+  "lead": "**kimberly powell, nvidia\u2019s vice president of healthcare, is the latest person named in the reports you provided**, dated november 11, 2026."
+ },
+ {
+  "model": "gpt-6.1-sol low",
+  "q": "who is the latest person jensen huang had an affair with",
+  "ttft": 1.154,
+  "ok": true,
+  "lead": "the latest **reported allegation** names **kimberly powell, nvidia\u2019s vice president of healthcare**, according to november 11, 2026 reporting summarized by tech"
+ },
+ {
+  "model": "gpt-6.1-sol low",
+  "q": "latest jensen huang scandal",
+  "ttft": 1.21,
+  "ok": false,
+  "lead": "**the latest supplied report, dated nov."
+ },
+ {
+  "model": "gpt-6.1-sol low",
+  "q": "latest jensen huang scandal",
+  "ttft": 1.132,
+  "ok": false,
+  "lead": "**the latest supplied reports, dated november 11, say nvidia\u2019s board is considering jensen huang\u2019s future as ceo amid an affair scandal and alleged national-sec"
+ },
+ {
+  "model": "gpt-6.1-sol low",
+  "q": "latest jensen huang scandal",
+  "ttft": 1.444,
+  "ok": false,
+  "lead": "**the latest supplied report, dated nov."
+ },
+ {
+  "model": "gpt-6.1-sol low",
+  "q": "who runs healthcare at nvidia",
+  "ttft": 1.228,
+  "ok": true,
+  "lead": "**kimberly powell runs nvidia\u2019s healthcare business** as its vice president of healthcare."
+ },
+ {
+  "model": "gpt-6.1-sol low",
+  "q": "who runs healthcare at nvidia",
+  "ttft": 1.348,
+  "ok": true,
+  "lead": "**kimberly powell runs nvidia\u2019s healthcare business** as its vice president of healthcare."
+ },
+ {
+  "model": "gpt-6.1-sol low",
+  "q": "what is 17 times 23",
+  "ttft": 1.054,
+  "ok": true,
+  "lead": "17 \u00d7 23 = **391**."
+ },
+ {
+  "model": "gpt-6.1-sol low",
+  "q": "what is 17 times 23",
+  "ttft": 1.124,
+  "ok": true,
+  "lead": "17 \u00d7 23 = **391**."
+ }
+]

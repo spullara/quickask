@@ -3,53 +3,53 @@
  "runs": [
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.085,
-   "first_token": 1.096,
-   "total": 1.123,
+   "ttfb": 0.11,
+   "first_token": 0.977,
+   "total": 1.013,
    "inline_images": 0
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.147,
-   "first_token": 1.275,
-   "total": 1.562,
+   "ttfb": 0.149,
+   "first_token": 1.082,
+   "total": 1.284,
    "inline_images": 1
   },
   {
    "q": "who is the latest person jensen huang had an affair with",
-   "ttfb": 0.098,
-   "first_token": 1.215,
-   "total": 1.348,
+   "ttfb": 0.141,
+   "first_token": 1.345,
+   "total": 1.533,
    "inline_images": 0
   },
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.085,
-   "first_token": 0.609,
-   "total": 0.644,
-   "inline_images": 1
+   "ttfb": 0.267,
+   "first_token": 0.905,
+   "total": 0.929,
+   "inline_images": 0
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.088,
-   "first_token": 0.658,
-   "total": 0.822,
+   "ttfb": 0.104,
+   "first_token": 0.606,
+   "total": 0.846,
    "inline_images": 1
   },
   {
    "q": "who is the latest person jensen huang had an affair with",
-   "ttfb": 0.097,
-   "first_token": 0.88,
-   "total": 0.919,
-   "inline_images": 1
+   "ttfb": 0.107,
+   "first_token": 0.992,
+   "total": 1.14,
+   "inline_images": 0
   }
  ],
  "avg": {
-  "ttfb": 0.1,
-  "first_token": 0.956,
-  "total": 1.07
+  "ttfb": 0.146,
+  "first_token": 0.985,
+  "total": 1.124
  },
- "followup_first_token": 0.834,
+ "followup_first_token": 1.024,
  "checks": {
   "no_access_key_is_401": true,
   "access_key_shows_passkey_page": true,
@@ -59,6 +59,7 @@
   "unknown_passkey_rejected": true,
   "answer_streams": true,
   "images_for_visual_query": true,
+  "latest_news_leads_with_powell": true,
   "no_images_for_plain_fact": true,
   "chat_in_own_sidebar": true,
   "chat_not_in_other_sidebar": true,
@@ -66,7 +67,7 @@
   "saved_chat_has_images": true,
   "followup_frames": true,
   "logout": true,
-  "opensearch": true,
+  "opensearch_inline": true,
   "delete": true
  }
 }

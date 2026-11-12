@@ -11,6 +11,8 @@ export const Worker = Cloudflare.Worker("Quick", {
   compatibility: { date: "2026-11-01" },
   observability: { enabled: true },
   build: { output: { minify: true } },
+  // Passkeys bind to this hostname. Set QUICK_DOMAIN in app/.env once the domain is in this Cloudflare account.
+  ...(process.env.QUICK_DOMAIN ? { domain: process.env.QUICK_DOMAIN } : {}),
   env: {
     CHATS: Cloudflare.DurableObject<Chats>("Chats", { className: "Chats" }),
     AUTH: Cloudflare.DurableObject<Auth>("Auth", { className: "Auth" }),
