@@ -41,6 +41,7 @@ export class Usage extends DurableObject<WorkerEnv> {
        exa = exa + excluded.exa, tokens_in = tokens_in + excluded.tokens_in, tokens_out = tokens_out + excluded.tokens_out`,
       new Date().toISOString().slice(0, 10), user, m.exa, m.tokensIn, m.tokensOut,
     );
+    return this.totals(new Date().toISOString().slice(0, 8) + "01")[0]!;
   }
 
   /** Totals since a day (inclusive), grouped by "day", "user" or nothing. */

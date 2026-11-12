@@ -114,7 +114,7 @@ function paint(){raf=0;cur.el.innerHTML=md(cur.buf.replace(/!\\[[^\\]\\n]*(\\]\\
 const main=$('main');let nearEnd=true;main.addEventListener('scroll',()=>{nearEnd=main.scrollHeight-main.scrollTop-main.clientHeight<80});
 new ResizeObserver(()=>{if(nearEnd)main.scrollTop=main.scrollHeight}).observe(log);
 function T(t){cur.buf+=t;if(!raf)raf=requestAnimationFrame(paint)}
-function D(s){cur.src=s;paint();cur.el.classList.remove('wait');if(!ug.hidden)setTimeout(U,1500);
+function D(s){cur.src=s;paint();cur.el.classList.remove('wait');
  S.msgs.push({role:'model',text:cur.buf});cur=null;busy=false}
 function I(u){cur.imgs=u}
 function E(m){cur.el.classList.remove('wait');cur.el.insertAdjacentHTML('beforeend','<p class="err">'+E1(m)+'</p>');cur=null;busy=false}
@@ -157,7 +157,8 @@ ta.addEventListener('input',fit);
 $('#tg').onclick=()=>document.body.classList.toggle('open');main.addEventListener('click',()=>document.body.classList.remove('open'));
 if(!S.streaming)ta.focus();
 // Admin only: the server answers 404 to everyone else, and the line stays hidden.
-const ug=$('#usage');function U(){fetch('/api/usage').then(r=>r.ok?r.json():null).then(j=>{if(!j||!j.month)return;ug.hidden=false;ug.textContent='$'+j.month.cost.toFixed(2)+' this month · '+j.month.searches+' searches'},()=>{})}
+const ug=$('#usage');function cost(m){ug.hidden=false;ug.textContent='$'+m.cost.toFixed(2)+' this month · '+m.searches+' searches'}
+function U(){fetch('/api/usage').then(r=>r.ok?r.json():null).then(j=>{if(j&&j.month)cost(j.month)},()=>{})}
 U();
 // New search in place: no page load. A streaming answer loads the home page instead so it keeps saving.
 function fresh(){document.body.classList.remove('open');
@@ -177,6 +178,7 @@ let live=null;function connect(){if(live&&live.readyState<2)return;live=new WebS
  live.onmessage=e=>{try{const m=JSON.parse(e.data);
   if(m.deleted&&m.deleted===S.id&&!busy)fresh();
   if(m.list&&!sw)L(m.list);
+  if(m.usage)cost(m.usage);
   if(m.changed&&m.changed===S.id&&m.n>S.msgs.length&&!busy)sync()}catch{}};
  live.onclose=()=>{if(document.visibilityState==='visible')setTimeout(connect,3000)}}
 if(document.readyState==='complete')connect();else addEventListener('load',connect);

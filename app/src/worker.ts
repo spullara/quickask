@@ -37,14 +37,19 @@ export class Chats extends DurableObject<WorkerEnv> {
     } catch {}
   }
 
-  /** Push the list to every open page, with what changed so a page showing that chat can refresh it. */
-  private notify(change: { changed: string; n: number } | { deleted: string }) {
-    const msg = JSON.stringify({ list: this.list(), ...change });
+  /** Send a message to every open page of this user. */
+  broadcast(msg: object) {
+    const text = JSON.stringify(msg);
     for (const ws of this.ctx.getWebSockets()) {
       try {
-        ws.send(msg);
+        ws.send(text);
       } catch {}
     }
+  }
+
+  /** Push the list to every open page, with what changed so a page showing that chat can refresh it. */
+  private notify(change: { changed: string; n: number } | { deleted: string }) {
+    this.broadcast({ list: this.list(), ...change });
   }
 
   list() {
@@ -186,10 +191,17 @@ const shareKey = (origin: string, id: string) => new Request(`${origin}/s/${id}?
 
 /** The admin is the oldest account named ADMIN_NAME. Names are unique for new accounts, so it cannot be copied. */
 let adminId: string | undefined;
-async function isAdmin(env: WorkerEnv, user: string) {
-  if (!env.ADMIN_NAME) return false;
-  adminId ??= (await env.AUTH.get(env.AUTH.idFromName("auth")).firstNamed(env.ADMIN_NAME)) ?? undefined;
-  return user === adminId;
+async function adminIdOf(env: WorkerEnv) {
+  if (env.ADMIN_NAME) adminId ??= (await env.AUTH.get(env.AUTH.idFromName("auth")).firstNamed(env.ADMIN_NAME)) ?? undefined;
+  return adminId;
+}
+const isAdmin = async (env: WorkerEnv, user: string) => user === (await adminIdOf(env));
+
+/** Record a turn's cost and push the new month total to the admin's open pages. Runs after the stream. */
+async function charge(env: WorkerEnv, user: string, meter: Meter) {
+  const month = await env.USAGE.get(env.USAGE.idFromName("global")).record(user, meter);
+  const admin = await adminIdOf(env);
+  if (admin) await env.CHATS.get(env.CHATS.idFromName(admin)).broadcast({ usage: month });
 }
 
 const png = (b64: string) => () => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
@@ -319,7 +331,7 @@ export default {
         const result = await turn(env, msgs, searching, (t, v) => out.send(call(t, v)));
         await list.catch(() => {});
         await out.close();
-        if (result) await Promise.all([chats.save(id, title, [...msgs, result.msg]), usage.record(user.u, result.meter)]);
+        if (result) await Promise.all([chats.save(id, title, [...msgs, result.msg]), charge(env, user.u, result.meter)]);
       })());
       return new Response(out.readable, { headers });
     }
@@ -384,7 +396,7 @@ export default {
         await out.close();
         // Save stored history plus this turn. The client's copy of earlier answers is never written back.
         const base = await stored(chats, api[1]!, body.msgs.length - 1);
-        if (result) await usage.record(user.u, result.meter);
+        if (result) await charge(env, user.u, result.meter);
         if (result && base) await chats.save(api[1]!, base.title, [...base.msgs, body.msgs.at(-1)!, result.msg]);
       })());
       return new Response(out.readable, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
