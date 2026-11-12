@@ -1,7 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 import { cookie, session } from "./session.ts";
-import { PAGE_VERSION, call, keyPage, opensearch, sharePage, shell, signIn, type Msg, type Result, type Source } from "./page.ts";
+import { PAGE_VERSION, call, keyPage, opensearch, sharePage, shell, signIn, type Msg, type Source } from "./page.ts";
 
 export { Auth } from "./auth-store.ts";
 
@@ -148,10 +148,8 @@ const shareKey = (origin: string, id: string) => new Request(`${origin}/s/${id}?
 const newId = () => crypto.randomUUID().replaceAll("-", "").slice(0, 12);
 const titleOf = (q: string) => (q.length > 80 ? q.slice(0, 77) + "…" : q);
 
-type Search = { context: string; sources: Source[]; images: string[]; results: Result[] };
+type Search = { context: string; sources: Source[]; images: string[] };
 type ExaResult = { url: string; title?: string; publishedDate?: string; highlights?: string[]; image?: string; extras?: { imageLinks?: string[] } };
-/** Highlights are page Markdown; strip the marks for display. */
-const plain = (t: string) => t.replace(/(^|\s)#{1,6}(?=\s|$)/g, "$1").replace(/\*\*|__|`/g, "").replace(/\s+/g, " ").trim();
 const NOT_A_PHOTO = /\.svg(\?|$)|\/\d{1,2}px-|logo|icon|favicon|sprite|avatar|badge|banner|slide|promo|hiring|advert/i;
 
 /** Exa search: the most query-relevant sentences of each page (anywhere in it, not just the top) for the model, plus each page's images as short ids (img:N) the model can place. */
@@ -166,7 +164,7 @@ async function search(env: WorkerEnv, query: string): Promise<Search> {
     if (!res.ok) throw new Error(`Exa ${res.status}`);
     const { results = [] } = (await res.json()) as { results?: ExaResult[] };
     results.sort((a, b) => (b.publishedDate ?? "").localeCompare(a.publishedDate ?? ""));
-    const images: string[] = [], sources: Source[] = [], parts: string[] = [], shown: Result[] = [];
+    const images: string[] = [], sources: Source[] = [], parts: string[] = [];
     results.forEach((r, i) => {
       const host = new URL(r.url).hostname.replace(/^www\./, "");
       sources.push({ title: host, uri: r.url });
@@ -175,12 +173,11 @@ async function search(env: WorkerEnv, query: string): Promise<Search> {
         if (images.length < 12 && u?.startsWith("https://") && !NOT_A_PHOTO.test(u) && !images.includes(u)) ids.push(`img:${images.push(u)}`);
       }
       const date = r.publishedDate ? `, ${r.publishedDate.slice(0, 10)}` : "";
-      shown.push({ title: r.title ?? host, url: r.url, date: r.publishedDate?.slice(0, 10), text: plain((r.highlights ?? []).join(" … ")).slice(0, 600) });
       parts.push(`[${i + 1}] ${r.title ?? host} (${host}${date})\n${(r.highlights ?? []).join(" … ")}${ids.length ? `\nImages: ${ids.join(", ")}` : ""}`);
     });
-    return { context: parts.join("\n\n"), sources, images, results: shown };
+    return { context: parts.join("\n\n"), sources, images };
   } catch {
-    return { context: "", sources: [], images: [], results: [] };
+    return { context: "", sources: [], images: [] };
   }
 }
 
@@ -191,17 +188,16 @@ function queryOf(msgs: Msg[]) {
   return last.split(/\s+/).length < 8 && asked.length > 1 ? `${asked.at(-2)} ${last}` : last;
 }
 
-type Emit = (type: "T" | "I" | "R" | "D" | "E", value: unknown) => void;
+type Emit = (type: "T" | "I" | "D" | "E", value: unknown) => void;
 
-/** One answer turn as events: I image ids, R search results, T text delta, D done with sources, E error. Returns what to save. */
+/** One answer turn as events: I image ids, T text delta, D done with sources, E error. Returns what to save. */
 async function turn(env: WorkerEnv, msgs: Msg[], searching: Promise<Search>, emit: Emit) {
   try {
     const found = await searching;
     if (found.images.length) emit("I", found.images);
-    if (found.results.length) emit("R", found.results);
     const text = await relay(gemini(env, msgs, found), (t) => emit("T", t));
     emit("D", found.sources);
-    return { text, sources: found.sources, images: found.images, results: found.results };
+    return { text, sources: found.sources, images: found.images };
   } catch (e) {
     emit("E", (e as Error).message);
     return null;
@@ -288,9 +284,7 @@ export default {
       const chat = await stored(chats, share[1]!, n);
       if (!chat) return new Response("Not found", { status: 404 });
       const id = newId();
-      // Search results stay private to the chat page.
-      const msgs = chat.msgs.map(({ results: _, ...m }) => m);
-      const created = await shares.put(id, `${user.u}/${share[1]}`, chat.title, msgs);
+      const created = await shares.put(id, `${user.u}/${share[1]}`, chat.title, chat.msgs);
       return Response.json({ url: `${url.origin}/s/${id}`, id, created });
     }
 

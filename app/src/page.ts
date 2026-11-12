@@ -1,6 +1,5 @@
 export type Source = { title: string; uri: string };
-export type Result = { title: string; url: string; date?: string; text: string };
-export type Msg = { role: "user" | "model"; text: string; sources?: Source[]; images?: string[]; results?: Result[] };
+export type Msg = { role: "user" | "model"; text: string; sources?: Source[]; images?: string[] };
 export type ShareRef = { id: string; created: number };
 
 const json = (v: unknown) => JSON.stringify(v).replace(/</g, "\\u003c").replace(/\u2028|\u2029/g, "");
@@ -45,9 +44,6 @@ textarea:focus{border-color:var(--mute)}
 .sr{display:flex;align-items:center;gap:4px;padding:4px 8px;font-size:13px}.sr span{flex:1;color:var(--mute)}
 .sr button{border:0;background:none;color:var(--accent);cursor:pointer;font:inherit;font-size:13px;padding:2px 6px;border-radius:6px}.sr button:hover{background:var(--soft)}
 .sr button[data-d]{color:var(--mute)}.sr button[data-d]:hover{color:#dc2626}
-.res{margin:0 0 10px}.res summary{cursor:pointer;color:var(--mute);font-size:13px;width:fit-content}.res summary:hover{color:var(--fg)}
-.res .r{margin:12px 0 0;font-size:14px}.res .r a{font-weight:500}.res .r span{display:block;color:var(--mute);font-size:12px}
-.res .r p{margin:2px 0 0;font-size:13px;line-height:1.5}
 .gal{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
 .m img.mi{height:180px;max-width:100%;object-fit:cover;border-radius:10px;display:block;background:var(--soft)}
 .m p img.mi{margin:6px 0}
@@ -88,10 +84,6 @@ function blk(p){let o='',l=null,pa=[],ga=[];
  fp();fg();return o}
 const md=(s,im,src)=>{IM=im||[];SRC=src||[];return s.split('\`\`\`').map((p,i)=>i%2?'<pre><code>'+E1(p.replace(/^[^\\n]*\\n/,''))+'</code></pre>':blk(p)).join('')};
 function add(c,html){const d=document.createElement('div');d.className=c;d.innerHTML=html;log.append(d);return d}
-function resl(r,after){if(!r||!r.length)return;const d=document.createElement('details');d.className='res';
- d.innerHTML='<summary>Search results</summary>'+r.map(x=>'<div class="r"><a href="'+E1(x.url)+'" target="_blank" rel="noopener">'+E1(x.title||x.url)+'</a><span>'
-  +E1(x.url.split('/')[2].replace(/^www\\./,'')+(x.date?' · '+x.date:''))+'</span><p>'+E1(x.text)+'</p></div>').join('');
- after?after.after(d):log.append(d)}
 function srcs(s){s=(s||[]).filter((x,i,a)=>a.findIndex(y=>y.title===x.title)===i);if(s.length)add('src',s.map(x=>'<a href="'+E1(x.uri)+'" target="_blank" rel="noopener">'+E1(x.title)+'</a>').join(''))}`;
 
 const JS = `
@@ -106,7 +98,6 @@ function D(s){cur.src=s;paint();cur.el.classList.remove('wait');srcs(s);
  add('t','first token '+(cur.first/1000).toFixed(2)+' s · done '+((performance.now()-cur.t0)/1000).toFixed(2)+' s');
  S.msgs.push({role:'model',text:cur.buf});cur=null;busy=false}
 function I(u){cur.imgs=u}
-function R(r){resl(r,cur.el)}
 function E(m){cur.el.classList.remove('wait');cur.el.insertAdjacentHTML('beforeend','<p class="err">'+E1(m)+'</p>');cur=null;busy=false}
 function L(list){if(S.id&&!list.some(c=>c.id===S.id))list.unshift({id:S.id,title:S.title});
  try{localStorage['chats:'+S.uid]=JSON.stringify(list.slice(0,300))}catch{}
@@ -114,7 +105,7 @@ function L(list){if(S.id&&!list.some(c=>c.id===S.id))list.unshift({id:S.id,title
 side.addEventListener('click',e=>{const id=e.target.dataset&&e.target.dataset.id;if(!id)return;e.preventDefault();
  fetch('/api/chats/'+id,{method:'DELETE'});e.target.closest('a').remove();if(id===S.id)location.href='/'});
 try{L(JSON.parse(localStorage['chats:'+S.uid]||'[]'))}catch{}
-for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images,m.sources));resl(m.results);srcs(m.sources)}}
+for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images,m.sources));srcs(m.sources)}}
 S.msgs=S.msgs.map(({role,text})=>({role,text}));
 let busy=false;
 if(S.streaming){busy=true;start(0);history.replaceState(null,'','/c/'+S.id)}
@@ -123,7 +114,7 @@ async function ask(q){if(busy)return;busy=true;S.msgs.push({role:'user',text:q})
   if(!r.ok)throw new Error('HTTP '+r.status);
   const rd=r.body.pipeThrough(new TextDecoderStream()).getReader();let buf='';
   for(;;){const {value,done}=await rd.read();if(done)break;buf+=value;const parts=buf.split('\\u0000');buf=parts.pop();
-   for(const p of parts){const k=p[0],v=p.slice(1);if(k==='T')T(v);else if(k==='I')I(JSON.parse(v));else if(k==='R')R(JSON.parse(v));else if(k==='D')D(JSON.parse(v));else if(k==='E')E(v)}}
+   for(const p of parts){const k=p[0],v=p.slice(1);if(k==='T')T(v);else if(k==='I')I(JSON.parse(v));else if(k==='D')D(JSON.parse(v));else if(k==='E')E(v)}}
   if(cur)E('Connection closed.')}catch(e){E(String(e.message||e))}}
 $('form').addEventListener('submit',e=>{const q=ta.value.trim();if(!S.id)return;e.preventDefault();if(!q||busy)return;ta.value='';fit();if(matchMedia('(hover:none)').matches)ta.blur();ask(q)});
 ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('form').requestSubmit()}});

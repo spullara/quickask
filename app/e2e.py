@@ -180,9 +180,6 @@ share_path = "/s/" + link.rsplit("/", 1)[1]
 public = Browser(access_key=False).text(share_path)
 checks["share_link_public"] = link.startswith(BASE) and "golden gate" in public.lower() and "](img:" in public
 checks["share_page_read_only"] = 'id="side"' not in public and "<textarea" not in public and "og:title" in public
-checks["search_results_streamed"] = "<script>R(" in bridge
-checks["search_results_saved"] = '"results":[{' in alice.text(f"/c/{chat_id}")
-checks["search_results_not_shared"] = '"results"' not in public
 share_id = share_path.rsplit("/", 1)[1]
 checks["chat_page_lists_links"] = f'"shares":[{{"id":"{share_id}"' in alice.text(f"/c/{chat_id}")
 extra = alice.json(f"/api/chats/{chat_id}/share", {"n": 2})["id"]
