@@ -32,6 +32,8 @@ main{flex:1;height:100vh;height:100dvh;overflow-y:auto;display:flex;flex-directi
 .m.wait:empty::after,.m.wait>:last-child::after{content:"";display:inline-block;width:8px;height:8px;margin-left:4px;border-radius:50%;background:var(--mute);animation:p 1s infinite}
 @keyframes p{50%{opacity:.25}}
 .err{color:#dc2626}
+.m sup a{position:relative;text-decoration:none;padding:0 1px}
+.m sup a:hover::after{content:attr(data-t);position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);white-space:nowrap;background:var(--fg);color:var(--bg);font-size:12px;font-weight:500;line-height:1;padding:5px 8px;border-radius:6px;pointer-events:none;z-index:2}
 form{width:100%;max-width:760px;margin:0 auto;padding:8px 24px 20px;position:sticky;bottom:0;background:var(--bg)}
 textarea{width:100%;resize:none;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;background:var(--bg);color:var(--fg);outline:none;max-height:200px;overflow-y:hidden;display:block}
 textarea:focus{border-color:var(--mute)}
@@ -69,7 +71,7 @@ const pic=(u,alt)=>u?'<a href="'+u+'" target="_blank" rel="noopener"><img class=
 const inl=s=>E1(s).replace(/\`([^\`]+)\`/g,'<code>$1</code>').replace(/\\*\\*([^*]+)\\*\\*/g,'<b>$1</b>')
  .replace(/!\\[([^\\]]*)\\]\\((?:img:(\\d+)|(https:[^)\\s]+))\\)/g,(_,a,n,u)=>pic(n?E1(IM[n-1]||''):u,a))
  .replace(/\\[([^\\]]+)\\]\\((https?:[^)\\s]+)\\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
- .replace(/\\[(\\d+(?:,\\s*\\d+)*)\\](?!\\()/g,(m,l)=>SRC.length?'<sup>'+l.split(/,\\s*/).map(n=>SRC[n-1]?'<a href="'+E1(SRC[n-1].uri)+'" target="_blank" rel="noopener">'+n+'</a>':n).join(',')+'</sup>':m);
+ .replace(/\\[(\\d+(?:,\\s*\\d+)*)\\](?!\\()/g,(m,l)=>SRC.length?'<sup>'+l.split(/,\\s*/).map(n=>SRC[n-1]?'<a href="'+E1(SRC[n-1].uri)+'" target="_blank" rel="noopener" data-t="'+E1(SRC[n-1].title)+'" aria-label="'+E1(SRC[n-1].title)+'">'+n+'</a>':n).join(',')+'</sup>':m);
 function blk(p){let o='',l=null,pa=[],ga=[];
  const fp=()=>{if(pa.length){o+='<p>'+pa.map(inl).join('<br>')+'</p>';pa=[]}if(l){o+='</'+l+'>';l=null}};
  const fg=()=>{if(ga.length){o+='<div class="gal">'+ga.map(inl).join('')+'</div>';ga=[]}};
