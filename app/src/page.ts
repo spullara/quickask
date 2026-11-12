@@ -138,7 +138,8 @@ side.addEventListener('click',e=>{const id=e.target.dataset&&e.target.dataset.id
  if(id){e.preventDefault();del(id);return}
  if(swiped||opened){e.preventDefault();if(opened)shut(opened)}});
 try{L(JSON.parse(localStorage['chats:'+S.uid]||'[]'))}catch{}
-for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images,m.sources))}}
+function show(msgs){log.innerHTML='';for(const m of msgs){if(m.role==='user')add('u',E1(m.text));else add('m',md(m.text,m.images,m.sources))}}
+show(S.msgs);
 S.msgs=S.msgs.map(({role,text})=>({role,text}));
 let busy=false;
 if(S.streaming){busy=true;start();history.replaceState(null,'','/c/'+S.id)}
@@ -168,9 +169,15 @@ function fresh(){document.body.classList.remove('open');
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='k'){e.preventDefault();fresh()}});
 $('.new').addEventListener('click',e=>{if(e.metaKey||e.ctrlKey||e.shiftKey||e.button)return;e.preventDefault();fresh()});
 addEventListener('popstate',()=>location.reload());
+// Another window added to this chat: load the saved copy and redraw it.
+function sync(){const id=S.id;fetch('/api/chats/'+id).then(r=>r.ok?r.json():null).then(c=>{if(!c||S.id!==id||busy)return;
+ S.title=c.title;show(c.msgs);S.msgs=c.msgs.map(({role,text})=>({role,text}))},()=>{})}
 // Live sidebar: the server pushes the chat list when any tab or device changes it.
 let live=null;function connect(){if(live&&live.readyState<2)return;live=new WebSocket(location.origin.replace(/^http/,'ws')+'/api/live');
- live.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.list&&!sw)L(m.list)}catch{}};
+ live.onmessage=e=>{try{const m=JSON.parse(e.data);
+  if(m.deleted&&m.deleted===S.id&&!busy)fresh();
+  if(m.list&&!sw)L(m.list);
+  if(m.changed&&m.changed===S.id&&m.n>S.msgs.length&&!busy)sync()}catch{}};
  live.onclose=()=>{if(document.visibilityState==='visible')setTimeout(connect,3000)}}
 if(document.readyState==='complete')connect();else addEventListener('load',connect);
 setInterval(()=>{if(live&&live.readyState===1)live.send('ping')},50000);
@@ -252,7 +259,8 @@ export function sharePage(s: { title: string; msgs: Msg[] }) {
 <meta property="og:site_name" content="QuickAsk"><meta property="og:title" content="${esc(s.title)}"><meta property="og:description" content="${esc(summary)}">
 ${image ? `<meta property="og:image" content="${esc(image)}"><meta name="twitter:card" content="summary_large_image">` : ""}
 <style>${CSS}</style></head><body style="display:block;overflow:auto"><main style="height:auto;display:block"><div class="sbrand">${mark(22)}QuickAsk</div><div id="log"></div></main>
-<script>const S=${json({ msgs: s.msgs })};${RENDER}for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images,m.sources))}}</script></body></html>`;
+<script>const S=${json({ msgs: s.msgs })};${RENDER}function show(msgs){log.innerHTML='';for(const m of msgs){if(m.role==='user')add('u',E1(m.text));else add('m',md(m.text,m.images,m.sources))}}
+show(S.msgs);</script></body></html>`;
 }
 
 const page = (body: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}

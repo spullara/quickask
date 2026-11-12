@@ -37,8 +37,9 @@ export class Chats extends DurableObject<WorkerEnv> {
     } catch {}
   }
 
-  private notify() {
-    const msg = JSON.stringify({ list: this.list() });
+  /** Push the list to every open page, with what changed so a page showing that chat can refresh it. */
+  private notify(change: { changed: string; n: number } | { deleted: string }) {
+    const msg = JSON.stringify({ list: this.list(), ...change });
     for (const ws of this.ctx.getWebSockets()) {
       try {
         ws.send(msg);
@@ -60,12 +61,12 @@ export class Chats extends DurableObject<WorkerEnv> {
       "INSERT INTO chats VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET title = excluded.title, updated = excluded.updated, msgs = excluded.msgs",
       id, title, Date.now(), JSON.stringify(msgs),
     );
-    this.notify();
+    this.notify({ changed: id, n: msgs.length });
   }
 
   remove(id: string) {
     this.sql.exec("DELETE FROM chats WHERE id = ?", id);
-    this.notify();
+    this.notify({ deleted: id });
   }
 }
 
@@ -387,6 +388,10 @@ export default {
         if (result && base) await chats.save(api[1]!, base.title, [...base.msgs, body.msgs.at(-1)!, result.msg]);
       })());
       return new Response(out.readable, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
+    }
+    if (api && req.method === "GET") {
+      const chat = await chats.get(api[1]!);
+      return chat ? Response.json(chat) : new Response("Not found", { status: 404 });
     }
     if (api && req.method === "DELETE") {
       const [, gone] = await Promise.all([chats.remove(api[1]!), shares.remove(`${user.u}/${api[1]}`)]);
