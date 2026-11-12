@@ -180,6 +180,21 @@ share_path = "/s/" + link.rsplit("/", 1)[1]
 public = Browser(access_key=False).text(share_path)
 checks["share_link_public"] = link.startswith(BASE) and "golden gate" in public.lower() and "](img:" in public
 checks["share_page_read_only"] = 'id="side"' not in public and "<textarea" not in public and "og:title" in public
+checks["search_results_streamed"] = "<script>R(" in bridge
+checks["search_results_saved"] = '"results":[{' in alice.text(f"/c/{chat_id}")
+checks["search_results_not_shared"] = '"results"' not in public
+share_id = share_path.rsplit("/", 1)[1]
+checks["chat_page_lists_links"] = f'"shares":[{{"id":"{share_id}"' in alice.text(f"/c/{chat_id}")
+extra = alice.json(f"/api/chats/{chat_id}/share", {"n": 2})["id"]
+checks["bob_cannot_delete_link"] = bob.open(f"/api/chats/{chat_id}/shares/{extra}", method="DELETE").getcode() == 204 and \
+    "golden gate" in Browser(access_key=False).text(f"/s/{extra}").lower()
+alice.open(f"/api/chats/{chat_id}/shares/{extra}", method="DELETE").read()
+time.sleep(1)
+try:
+    Browser(access_key=False).open(f"/s/{extra}")
+    checks["delete_one_link"] = False
+except urllib.error.HTTPError as e:
+    checks["delete_one_link"] = e.code == 404 and f'"id":"{extra}"' not in alice.text(f"/c/{chat_id}")
 anon = Browser().open(f"/api/chats/{chat_id}/share", {"n": 2}, "POST").read().decode()
 checks["share_needs_account"] = '"url"' not in anon
 try:
@@ -198,7 +213,12 @@ checks["opensearch_inline"] = "{searchTerms}" in osd.read().decode() and osd.hea
 for cid in alice.chat_ids():
     alice.open(f"/api/chats/{cid}", method="DELETE").read()
 checks["delete"] = alice.chat_ids() == []
-checks["share_outlives_chat"] = "golden gate" in Browser(access_key=False).text(share_path).lower()
+time.sleep(1)
+try:
+    Browser(access_key=False).open(share_path)
+    checks["deleting_chat_removes_links"] = False
+except urllib.error.HTTPError as e:
+    checks["deleting_chat_removes_links"] = e.code == 404
 
 avg = {k: round(statistics.mean(r[k] for r in rows), 3) for k in ("ttfb", "first_token", "total")}
 json.dump({"base": BASE, "runs": rows, "avg": avg, "followup_first_token": round(followup_ft, 3), "checks": checks},

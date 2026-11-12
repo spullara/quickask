@@ -3,53 +3,53 @@
  "runs": [
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.079,
-   "first_token": 0.683,
-   "total": 0.7,
-   "inline_images": 0
+   "ttfb": 0.08,
+   "first_token": 0.95,
+   "total": 1.143,
+   "inline_images": 1
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.06,
-   "first_token": 0.804,
-   "total": 1.234,
+   "ttfb": 0.072,
+   "first_token": 1.448,
+   "total": 1.67,
    "inline_images": 1
   },
   {
    "q": "who is the latest person jensen huang had an affair with",
-   "ttfb": 0.062,
-   "first_token": 0.957,
-   "total": 1.134,
+   "ttfb": 0.145,
+   "first_token": 1.157,
+   "total": 1.194,
    "inline_images": 0
   },
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.072,
-   "first_token": 0.725,
-   "total": 0.747,
+   "ttfb": 0.35,
+   "first_token": 0.972,
+   "total": 0.99,
    "inline_images": 0
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.076,
-   "first_token": 0.74,
-   "total": 1.342,
+   "ttfb": 0.102,
+   "first_token": 1.138,
+   "total": 1.668,
    "inline_images": 1
   },
   {
    "q": "who is the latest person jensen huang had an affair with",
-   "ttfb": 0.072,
-   "first_token": 0.633,
-   "total": 0.718,
+   "ttfb": 0.099,
+   "first_token": 0.627,
+   "total": 0.763,
    "inline_images": 0
   }
  ],
  "avg": {
-  "ttfb": 0.07,
-  "first_token": 0.757,
-  "total": 0.979
+  "ttfb": 0.141,
+  "first_token": 1.049,
+  "total": 1.238
  },
- "followup_first_token": 0.932,
+ "followup_first_token": 1.025,
  "checks": {
   "no_access_key_is_401": true,
   "access_key_shows_passkey_page": true,
@@ -69,11 +69,17 @@
   "followup_cannot_rewrite_history": true,
   "share_link_public": true,
   "share_page_read_only": true,
+  "search_results_streamed": true,
+  "search_results_saved": true,
+  "search_results_not_shared": true,
+  "chat_page_lists_links": true,
+  "bob_cannot_delete_link": true,
+  "delete_one_link": true,
   "share_needs_account": true,
   "unknown_share_404": true,
   "logout": true,
   "opensearch_inline": true,
   "delete": true,
-  "share_outlives_chat": true
+  "deleting_chat_removes_links": true
  }
 }

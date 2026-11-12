@@ -1,7 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 import { cookie, session } from "./session.ts";
-import { PAGE_VERSION, call, keyPage, opensearch, sharePage, shell, signIn, type Msg, type Source } from "./page.ts";
+import { PAGE_VERSION, call, keyPage, opensearch, sharePage, shell, signIn, type Msg, type Result, type Source } from "./page.ts";
 
 export { Auth } from "./auth-store.ts";
 
@@ -54,10 +54,29 @@ export class Shares extends DurableObject<WorkerEnv> {
   constructor(ctx: DurableObjectState, env: WorkerEnv) {
     super(ctx, env);
     this.sql.exec("CREATE TABLE IF NOT EXISTS shares (id TEXT PRIMARY KEY, title TEXT, msgs TEXT, created INTEGER)");
+    if (!this.sql.exec("SELECT name FROM pragma_table_info('shares') WHERE name = 'chat'").toArray().length) {
+      this.sql.exec("ALTER TABLE shares ADD COLUMN chat TEXT");
+    }
+    this.sql.exec("CREATE INDEX IF NOT EXISTS shares_chat ON shares (chat)");
   }
 
-  put(id: string, title: string, msgs: Msg[]) {
-    this.sql.exec("INSERT INTO shares VALUES (?, ?, ?, ?)", id, title, JSON.stringify(msgs), Date.now());
+  /** chat is "<user id>/<chat id>", so every change below is scoped to the owner. */
+  put(id: string, chat: string, title: string, msgs: Msg[]) {
+    const created = Date.now();
+    this.sql.exec("INSERT INTO shares (id, title, msgs, created, chat) VALUES (?, ?, ?, ?, ?)", id, title, JSON.stringify(msgs), created, chat);
+    return created;
+  }
+
+  list(chat: string) {
+    return this.sql.exec<{ id: string; created: number }>("SELECT id, created FROM shares WHERE chat = ? ORDER BY created DESC", chat).toArray();
+  }
+
+  remove(chat: string, id?: string) {
+    const gone = this.sql.exec<{ id: string }>(
+      id ? "DELETE FROM shares WHERE chat = ? AND id = ? RETURNING id" : "DELETE FROM shares WHERE chat = ? RETURNING id",
+      ...(id ? [chat, id] : [chat]),
+    ).toArray();
+    return gone.map((r) => r.id);
   }
 
   get(id: string) {
@@ -124,11 +143,15 @@ async function stored(chats: DurableObjectStub<Chats>, id: string, n: number) {
   return chat;
 }
 
+const shareKey = (origin: string, id: string) => new Request(`${origin}/s/${id}?v=${PAGE_VERSION}`);
+
 const newId = () => crypto.randomUUID().replaceAll("-", "").slice(0, 12);
 const titleOf = (q: string) => (q.length > 80 ? q.slice(0, 77) + "…" : q);
 
-type Search = { context: string; sources: Source[]; images: string[] };
+type Search = { context: string; sources: Source[]; images: string[]; results: Result[] };
 type ExaResult = { url: string; title?: string; publishedDate?: string; highlights?: string[]; image?: string; extras?: { imageLinks?: string[] } };
+/** Highlights are page Markdown; strip the marks for display. */
+const plain = (t: string) => t.replace(/(^|\s)#{1,6}(?=\s|$)/g, "$1").replace(/\*\*|__|`/g, "").replace(/\s+/g, " ").trim();
 const NOT_A_PHOTO = /\.svg(\?|$)|\/\d{1,2}px-|logo|icon|favicon|sprite|avatar|badge|banner|slide|promo|hiring|advert/i;
 
 /** Exa search: the most query-relevant sentences of each page (anywhere in it, not just the top) for the model, plus each page's images as short ids (img:N) the model can place. */
@@ -143,7 +166,7 @@ async function search(env: WorkerEnv, query: string): Promise<Search> {
     if (!res.ok) throw new Error(`Exa ${res.status}`);
     const { results = [] } = (await res.json()) as { results?: ExaResult[] };
     results.sort((a, b) => (b.publishedDate ?? "").localeCompare(a.publishedDate ?? ""));
-    const images: string[] = [], sources: Source[] = [], parts: string[] = [];
+    const images: string[] = [], sources: Source[] = [], parts: string[] = [], shown: Result[] = [];
     results.forEach((r, i) => {
       const host = new URL(r.url).hostname.replace(/^www\./, "");
       sources.push({ title: host, uri: r.url });
@@ -152,11 +175,12 @@ async function search(env: WorkerEnv, query: string): Promise<Search> {
         if (images.length < 12 && u?.startsWith("https://") && !NOT_A_PHOTO.test(u) && !images.includes(u)) ids.push(`img:${images.push(u)}`);
       }
       const date = r.publishedDate ? `, ${r.publishedDate.slice(0, 10)}` : "";
+      shown.push({ title: r.title ?? host, url: r.url, date: r.publishedDate?.slice(0, 10), text: plain((r.highlights ?? []).join(" … ")).slice(0, 600) });
       parts.push(`[${i + 1}] ${r.title ?? host} (${host}${date})\n${(r.highlights ?? []).join(" … ")}${ids.length ? `\nImages: ${ids.join(", ")}` : ""}`);
     });
-    return { context: parts.join("\n\n"), sources, images };
+    return { context: parts.join("\n\n"), sources, images, results: shown };
   } catch {
-    return { context: "", sources: [], images: [] };
+    return { context: "", sources: [], images: [], results: [] };
   }
 }
 
@@ -167,16 +191,17 @@ function queryOf(msgs: Msg[]) {
   return last.split(/\s+/).length < 8 && asked.length > 1 ? `${asked.at(-2)} ${last}` : last;
 }
 
-type Emit = (type: "T" | "I" | "D" | "E", value: unknown) => void;
+type Emit = (type: "T" | "I" | "R" | "D" | "E", value: unknown) => void;
 
-/** One answer turn as events: I image ids, T text delta, D done with sources, E error. Returns what to save. */
+/** One answer turn as events: I image ids, R search results, T text delta, D done with sources, E error. Returns what to save. */
 async function turn(env: WorkerEnv, msgs: Msg[], searching: Promise<Search>, emit: Emit) {
   try {
     const found = await searching;
     if (found.images.length) emit("I", found.images);
+    if (found.results.length) emit("R", found.results);
     const text = await relay(gemini(env, msgs, found), (t) => emit("T", t));
     emit("D", found.sources);
-    return { text, sources: found.sources, images: found.images };
+    return { text, sources: found.sources, images: found.images, results: found.results };
   } catch (e) {
     emit("E", (e as Error).message);
     return null;
@@ -195,15 +220,15 @@ export default {
     }
     if (path === "/favicon.ico") return new Response(null, { status: 204 });
 
-    // Share links are public: no access key, no account. Snapshots never change, so the edge caches them.
+    // Share links are public: no access key, no account. The edge caches them for a minute, so a deleted link dies everywhere within a minute.
     const shared = path.match(/^\/s\/(\w+)$/);
     if (shared) {
-      const key = new Request(`${url.origin}${path}?v=${PAGE_VERSION}`);
+      const key = shareKey(url.origin, shared[1]!);
       const hit = await caches.default.match(key);
       if (hit) return hit;
       const snap = await env.SHARES.get(env.SHARES.idFromName("shares")).get(shared[1]!);
       if (!snap) return new Response("This link does not exist.", { status: 404 });
-      const res = new Response(sharePage(snap), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60, s-maxage=86400" } });
+      const res = new Response(sharePage(snap), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60, s-maxage=60" } });
       ctx.waitUntil(caches.default.put(key, res.clone()));
       return res;
     }
@@ -225,6 +250,7 @@ export default {
     const msgs: Msg[] = q ? [{ role: "user", text: q }] : [];
     const searching = q ? search(env, q) : null;
     const chats = env.CHATS.get(env.CHATS.idFromName(user.u));
+    const shares = env.SHARES.get(env.SHARES.idFromName("shares"));
 
     // New chat from the search box: one response carries the page and the streamed answer.
     if (path === "/" && searching && q) {
@@ -249,9 +275,9 @@ export default {
 
     const chatPage = path.match(/^\/c\/(\w+)$/);
     if (chatPage) {
-      const [chat, list] = await Promise.all([chats.get(chatPage[1]!), chats.list()]);
+      const [chat, list, links] = await Promise.all([chats.get(chatPage[1]!), chats.list(), shares.list(`${user.u}/${chatPage[1]}`)]);
       if (!chat) return Response.redirect(url.origin + "/", 302);
-      return new Response(shell({ ...chat, streaming: false, user }) + call("L", list), { headers });
+      return new Response(shell({ ...chat, streaming: false, user, shares: links }) + call("L", list), { headers });
     }
 
     const share = path.match(/^\/api\/chats\/(\w+)\/share$/);
@@ -262,8 +288,17 @@ export default {
       const chat = await stored(chats, share[1]!, n);
       if (!chat) return new Response("Not found", { status: 404 });
       const id = newId();
-      await env.SHARES.get(env.SHARES.idFromName("shares")).put(id, chat.title, chat.msgs);
-      return Response.json({ url: `${url.origin}/s/${id}` });
+      // Search results stay private to the chat page.
+      const msgs = chat.msgs.map(({ results: _, ...m }) => m);
+      const created = await shares.put(id, `${user.u}/${share[1]}`, chat.title, msgs);
+      return Response.json({ url: `${url.origin}/s/${id}`, id, created });
+    }
+
+    const shareItem = path.match(/^\/api\/chats\/(\w+)\/shares\/(\w+)$/);
+    if (shareItem && req.method === "DELETE") {
+      const gone = await shares.remove(`${user.u}/${shareItem[1]}`, shareItem[2]!);
+      ctx.waitUntil(Promise.all(gone.map((id) => caches.default.delete(shareKey(url.origin, id)))));
+      return new Response(null, { status: 204 });
     }
 
     const api = path.match(/^\/api\/chats\/(\w+)$/);
@@ -283,7 +318,8 @@ export default {
       return new Response(out.readable, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
     }
     if (api && req.method === "DELETE") {
-      await chats.remove(api[1]!);
+      const [, gone] = await Promise.all([chats.remove(api[1]!), shares.remove(`${user.u}/${api[1]}`)]);
+      ctx.waitUntil(Promise.all(gone.map((id) => caches.default.delete(shareKey(url.origin, id)))));
       return new Response(null, { status: 204 });
     }
     return new Response("Not found", { status: 404 });
