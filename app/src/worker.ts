@@ -1,6 +1,9 @@
 import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
-import { call, login, opensearch, shell, type Msg, type Source } from "./page.ts";
+import { cookie, session } from "./session.ts";
+import { call, keyPage, opensearch, shell, signIn, type Msg, type Source } from "./page.ts";
+
+export { Auth } from "./auth-store.ts";
 
 const MODEL = "gemini-3.5-flash-lite";
 const GEMINI = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:streamGenerateContent?alt=sse`;
@@ -90,78 +93,111 @@ function stream() {
 const newId = () => crypto.randomUUID().replaceAll("-", "").slice(0, 12);
 const titleOf = (q: string) => (q.length > 80 ? q.slice(0, 77) + "…" : q);
 
+/** Image URLs for a query from Exa. Runs in parallel with the model, so it adds nothing to time to first token. */
+async function images(env: WorkerEnv, query: string): Promise<string[]> {
+  const res = await fetch("https://api.exa.ai/search", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-api-key": env.EXA_API_KEY },
+    body: JSON.stringify({ query, type: "fast", numResults: 8, contents: { extras: { imageLinks: 2 } } }),
+    signal: AbortSignal.timeout(4000),
+  });
+  if (!res.ok) return [];
+  const data = (await res.json()) as { results?: { image?: string; extras?: { imageLinks?: string[] } }[] };
+  // Each page's share image is the best signal; in-page images (often sliders and ads) come second, one per page.
+  const ranked = [...(data.results ?? []).map((r) => r.image), ...(data.results ?? []).map((r) => r.extras?.imageLinks?.[0])];
+  const out = new Set<string>();
+  for (const u of ranked) {
+    if (u?.startsWith("https://") && !/\.svg(\?|$)|\/\d{1,2}px-|logo|icon|favicon|sprite|avatar|badge|banner|slide|promo|hiring|advert/i.test(u)) out.add(u);
+  }
+  return [...out].slice(0, 8);
+}
+
+type Emit = (type: "T" | "I" | "D" | "E", value: unknown) => void;
+
+/** One answer turn as events: T text delta, I images, D done with sources, E error. Returns what to save. */
+async function turn(upstream: Promise<Response>, pics: Promise<string[]>, emit: Emit) {
+  const shown = pics.then((i) => (i.length && emit("I", i), i), () => [] as string[]);
+  try {
+    const result = await relay(upstream, (t) => emit("T", t));
+    const images = await shown;
+    emit("D", result.sources);
+    return { ...result, images };
+  } catch (e) {
+    await shown;
+    emit("E", (e as Error).message);
+    return null;
+  }
+}
+
 export default {
   async fetch(req: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
     const path = url.pathname;
     const q = url.searchParams.get("q")?.trim();
-    const auth = (req.headers.get("cookie") ?? "").includes(`k=${env.ACCESS_KEY}`);
-    const keyParam = url.searchParams.get("k") === env.ACCESS_KEY;
-
-    // Start the model call before any other work: it is the critical path.
-    const msgs: Msg[] = q && (auth || keyParam) ? [{ role: "user", text: q }] : [];
-    const upstream = msgs.length ? gemini(env, msgs) : null;
 
     if (path === "/opensearch.xml") {
       return new Response(opensearch(url.origin), { headers: { "content-type": "application/opensearchdescription+xml" } });
     }
     if (path === "/favicon.ico") return new Response(null, { status: 204 });
-    if (!auth && !keyParam) return new Response(login(url.searchParams.has("k")), { status: 401, headers: HTML });
 
+    const hasKey = cookie(req, "k") === env.ACCESS_KEY;
+    const keyParam = url.searchParams.get("k") === env.ACCESS_KEY;
+    if (!hasKey && !keyParam) return new Response(keyPage(url.searchParams.has("k")), { status: 401, headers: HTML });
     const headers: Record<string, string> = { ...HTML };
-    if (keyParam && !auth) headers["set-cookie"] = `k=${env.ACCESS_KEY}; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Lax`;
-    const chats = env.CHATS.get(env.CHATS.idFromName("me"));
+    if (keyParam && !hasKey) headers["set-cookie"] = `k=${env.ACCESS_KEY}; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Lax`;
+
+    if (path.startsWith("/auth/")) {
+      const res = await (await import("./auth.ts")).authRoute(req, env, url);
+      if (res) return res;
+    }
+    const user = await session(req, env);
+    if (!user) return new Response(signIn(), { headers });
+
+    // Start the model call and the image search before any other work: they are the critical path.
+    const msgs: Msg[] = q ? [{ role: "user", text: q }] : [];
+    const upstream = q ? gemini(env, msgs) : null;
+    const pics = q ? images(env, q) : null;
+    const chats = env.CHATS.get(env.CHATS.idFromName(user.u));
 
     // New chat from the search box: one response carries the page and the streamed answer.
-    if (path === "/" && upstream && q) {
+    if (path === "/" && upstream && pics && q) {
       const id = newId(), title = titleOf(q);
       const list = chats.list();
       const out = stream();
-      out.send(shell({ id, title, msgs, streaming: true }));
+      out.send(shell({ id, title, msgs, streaming: true, user }));
       ctx.waitUntil((async () => {
         list.then((l) => out.send(call("L", l)), () => {});
-        let result;
-        try {
-          result = await relay(upstream, (t) => out.send(call("T", t)));
-          out.send(call("D", result.sources));
-        } catch (e) {
-          out.send(call("E", (e as Error).message));
-        }
+        const result = await turn(upstream, pics, (t, v) => out.send(call(t, v)));
         await list.catch(() => {});
         await out.close();
-        if (result?.text) await chats.save(id, title, [...msgs, { role: "model", ...result }]);
+        if (result) await chats.save(id, title, [...msgs, { role: "model", ...result }]);
       })());
       return new Response(out.readable, { headers });
     }
 
     if (path === "/") {
       const list = await chats.list();
-      return new Response(shell({ id: null, title: "Quick", msgs: [], streaming: false }) + call("L", list), { headers });
+      return new Response(shell({ id: null, title: "Quick", msgs: [], streaming: false, user }) + call("L", list), { headers });
     }
 
     const chatPage = path.match(/^\/c\/(\w+)$/);
     if (chatPage) {
       const [chat, list] = await Promise.all([chats.get(chatPage[1]!), chats.list()]);
       if (!chat) return Response.redirect(url.origin + "/", 302);
-      return new Response(shell({ ...chat, streaming: false }) + call("L", list), { headers });
+      return new Response(shell({ ...chat, streaming: false, user }) + call("L", list), { headers });
     }
 
     const api = path.match(/^\/api\/chats\/(\w+)$/);
     if (api && req.method === "POST") {
       // Follow-up: the client sends the history it already has, so no storage read is on the critical path.
       const body = (await req.json()) as { title: string; msgs: Msg[] };
-      const up = gemini(env, body.msgs);
+      const last = body.msgs.at(-1)?.text ?? "";
       const out = stream();
       ctx.waitUntil((async () => {
-        try {
-          const result = await relay(up, out.send);
-          out.send("\u0000" + JSON.stringify(result.sources));
-          await out.close();
-          await chats.save(api[1]!, body.title, [...body.msgs, { role: "model", ...result }]);
-        } catch (e) {
-          out.send("\u0001" + (e as Error).message);
-          await out.close();
-        }
+        const result = await turn(gemini(env, body.msgs), images(env, last),
+          (t, v) => out.send(t + (typeof v === "string" ? v : JSON.stringify(v)) + "\u0000"));
+        await out.close();
+        if (result) await chats.save(api[1]!, body.title, [...body.msgs, { role: "model", ...result }]);
       })());
       return new Response(out.readable, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
     }

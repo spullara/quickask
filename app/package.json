@@ -13,12 +13,13 @@
     "@alchemy.run/cloudflare": "^2.0.0-beta.85",
     "@effect/platform-bun": "^4.1.4",
     "@effect/platform-node": "^4.1.4",
+    "@simplewebauthn/server": "^14.1.0",
     "alchemy": "^2.0.0-beta.85",
     "effect": "^4.1.4"
   },
   "scripts": {
-    "deploy": "alchemy deploy",
-    "destroy": "alchemy destroy",
+    "deploy": "./deploy.sh",
+    "destroy": "./deploy.sh destroy",
     "typecheck": "tsc --noEmit"
   }
 }

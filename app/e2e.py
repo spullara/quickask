@@ -1,20 +1,103 @@
-"""E2E check of the deployed app. Usage: python3 -I e2e.py <url> <access_key>. Writes e2e-result.json."""
-import json, re, ssl, statistics, sys, time, urllib.parse, urllib.request
+"""E2E check of the deployed app with a software passkey authenticator.
+Usage: python3 -I e2e.py <url> <access_key>. Writes e2e-result.json. Exit code 0 when every check passes."""
+import base64, hashlib, json, os, re, ssl, statistics, sys, time, urllib.error, urllib.request
+from urllib.parse import quote
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
 
 BASE, KEY = sys.argv[1].rstrip("/"), sys.argv[2]
 CTX = ssl.create_default_context(cafile="/etc/ssl/cert.pem")
 UA = {"User-Agent": "Mozilla/5.0 quick-e2e", "Accept-Encoding": "identity"}
-COOKIE = {**UA, "Cookie": f"k={KEY}"}
 
 
-def open_(path, data=None, method=None, headers=COOKIE):
-    req = urllib.request.Request(BASE + path, data, headers, method=method)
-    return urllib.request.urlopen(req, timeout=60, context=CTX)
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args): return None
 
 
-def search(q):
+OPENER = urllib.request.build_opener(NoRedirect, urllib.request.HTTPSHandler(context=CTX))
+
+
+def b64u(b): return base64.urlsafe_b64encode(b).rstrip(b"=").decode()
+
+
+def cbor(v):
+    def head(major, n):
+        if n < 24: return bytes([major << 5 | n])
+        if n < 256: return bytes([major << 5 | 24, n])
+        return bytes([major << 5 | 25]) + n.to_bytes(2, "big")
+    if isinstance(v, int): return head(0, v) if v >= 0 else head(1, -1 - v)
+    if isinstance(v, bytes): return head(2, len(v)) + v
+    if isinstance(v, str): return head(3, len(v.encode())) + v.encode()
+    return head(5, len(v)) + b"".join(cbor(k) + cbor(x) for k, x in v.items())
+
+
+class Authenticator:
+    """A platform authenticator in software: P-256 key, "none" attestation, user verified."""
+    def __init__(self):
+        self.key, self.id, self.count, self.user = ec.generate_private_key(ec.SECP256R1()), os.urandom(16), 0, None
+
+    def _client_data(self, kind, challenge):
+        return json.dumps({"type": kind, "challenge": challenge, "origin": BASE, "crossOrigin": False}).encode()
+
+    def create(self, o):
+        self.user = o["user"]["id"]
+        n = self.key.public_key().public_numbers()
+        cose = cbor({1: 2, 3: -7, -1: 1, -2: n.x.to_bytes(32, "big"), -3: n.y.to_bytes(32, "big")})
+        auth = (hashlib.sha256(o["rp"]["id"].encode()).digest() + bytes([0x45]) + bytes(4) + bytes(16)
+                + len(self.id).to_bytes(2, "big") + self.id + cose)
+        return {"id": b64u(self.id), "rawId": b64u(self.id), "type": "public-key", "clientExtensionResults": {},
+                "response": {"clientDataJSON": b64u(self._client_data("webauthn.create", o["challenge"])),
+                             "attestationObject": b64u(cbor({"fmt": "none", "attStmt": {}, "authData": auth})),
+                             "transports": ["internal"]}}
+
+    def get(self, o):
+        self.count += 1
+        auth = hashlib.sha256(o["rpId"].encode()).digest() + bytes([0x05]) + self.count.to_bytes(4, "big")
+        cd = self._client_data("webauthn.get", o["challenge"])
+        sig = self.key.sign(auth + hashlib.sha256(cd).digest(), ec.ECDSA(hashes.SHA256()))
+        return {"id": b64u(self.id), "rawId": b64u(self.id), "type": "public-key", "clientExtensionResults": {},
+                "response": {"clientDataJSON": b64u(cd), "authenticatorData": b64u(auth),
+                             "signature": b64u(sig), "userHandle": self.user}}
+
+
+class Browser:
+    """Keeps cookies like a browser does."""
+    def __init__(self, access_key=True):
+        self.cookies = {"k": KEY} if access_key else {}
+
+    def open(self, path, body=None, method=None):
+        headers = {**UA, "Cookie": "; ".join(f"{k}={v}" for k, v in self.cookies.items())}
+        data = None if body is None else json.dumps(body).encode()
+        if data: headers["content-type"] = "application/json"
+        try:
+            r = OPENER.open(urllib.request.Request(BASE + path, data, headers, method=method), timeout=60)
+        except urllib.error.HTTPError as e:
+            if e.code not in (301, 302): raise
+            r = e
+        for c in r.headers.get_all("Set-Cookie") or []:
+            name, value = c.split(";")[0].split("=", 1)
+            self.cookies[name] = value
+        return r
+
+    def json(self, path, body=None):
+        return json.load(self.open(path, body, "POST"))
+
+    def text(self, path):
+        return self.open(path).read().decode()
+
+    def chat_ids(self):
+        return re.findall(r'"id":"(\w+)"', re.search(r"<script>L\((.*?)\)</script>", self.text("/")).group(1))
+
+
+def signup(name):
+    b, a = Browser(), Authenticator()
+    o = b.json("/auth/register/options", {"name": name})
+    return b, a, b.json("/auth/register/verify", a.create(o)).get("ok") is True
+
+
+def search(b, q):
     t = time.perf_counter()
-    r = open_("/?q=" + urllib.parse.quote(q))
+    r = b.open("/?q=" + quote(q))
     ttfb = first = None
     body = b""
     while chunk := r.read1(65536):
@@ -27,45 +110,70 @@ def search(q):
 
 
 checks, rows = {}, []
-for q in ["what is the capital of australia", "who is the latest person jensen huang had an affair with",
-          "weather in san francisco today"] * 3:
-    ttfb, first, total, html = search(q)
-    rows.append({"q": q, "ttfb": round(ttfb, 3), "first_token": round(first or -1, 3), "total": round(total, 3)})
-    print(rows[-1], flush=True)
-
-answer = "".join(json.loads(m) for m in re.findall(r"<script>T\((\".*?\")\)</script>", html))
-chat_id = re.search(r'"id":"(\w+)"', html).group(1)
-checks["streamed_answer_nonempty"] = len(answer) > 0
-checks["done_event"] = "<script>D(" in html
-checks["sidebar_event"] = "<script>L(" in html
-
-time.sleep(1.5)
-checks["chat_saved"] = chat_id in open_("/").read().decode()
-page = open_(f"/c/{chat_id}").read().decode()
-checks["chat_page_has_answer"] = answer[:20] in page
-
-msgs = [{"role": "user", "text": "who is the latest person jensen huang had an affair with"},
-        {"role": "model", "text": "Kimberly Powell"}, {"role": "user", "text": "what is her job?"}]
-t = time.perf_counter()
-r = open_(f"/api/chats/{chat_id}", json.dumps({"title": "e2e", "msgs": msgs}).encode(), "POST")
-first = r.read1(64); ft = time.perf_counter() - t
-rest = (first + r.read()).decode()
-checks["followup_streams"] = "\u0000" in rest and len(rest.split("\u0000")[0]) > 0
-checks["followup_mentions_healthcare"] = "health" in rest.lower()
-print("follow-up first token", round(ft, 3), "s:", rest.split("\u0000")[0][:100])
-
 try:
-    open_("/", headers=UA)
-    checks["no_cookie_is_401"] = False
+    Browser(access_key=False).open("/")
+    checks["no_access_key_is_401"] = False
 except urllib.error.HTTPError as e:
-    checks["no_cookie_is_401"] = e.code == 401
-checks["opensearch"] = "{searchTerms}" in open_("/opensearch.xml", headers=UA).read().decode()
-open_(f"/api/chats/{chat_id}", method="DELETE").read()
-checks["delete"] = chat_id not in open_("/").read().decode()
+    checks["no_access_key_is_401"] = e.code == 401
+checks["access_key_shows_passkey_page"] = "Sign in with passkey" in Browser().text("/")
 
-summary = {k: round(statistics.mean(r[k] for r in rows), 3) for k in ("ttfb", "first_token", "total")}
-json.dump({"base": BASE, "runs": rows, "avg": summary, "followup_first_token": round(ft, 3), "checks": checks},
+alice, alice_key, ok_a = signup("e2e-alice")
+bob, _, ok_b = signup("e2e-bob")
+checks["register_passkey"] = ok_a and ok_b
+
+again = Browser()
+o = again.json("/auth/login/options")
+checks["login_with_passkey"] = again.json("/auth/login/verify", alice_key.get(o)).get("ok") is True
+o = again.json("/auth/login/options")
+checks["login_twice_counter_ok"] = again.json("/auth/login/verify", alice_key.get(o)).get("ok") is True
+o = Browser().json("/auth/login/options")
+checks["unknown_passkey_rejected"] = "error" in Browser().json("/auth/login/verify", Authenticator().get(o))
+
+for q in ["what is the capital of australia", "golden gate bridge",
+          "who is the latest person jensen huang had an affair with"] * 2:
+    ttfb, first, total, html = search(again, q)
+    rows.append({"q": q, "ttfb": round(ttfb, 3), "first_token": round(first or -1, 3), "total": round(total, 3),
+                 "images": len(json.loads(m)) if (m := re.search(r"<script>I\((.*?)\)</script>", html) and
+                                                  re.search(r"<script>I\((.*?)\)</script>", html).group(1)) else 0})
+    print(rows[-1], flush=True)
+    if q == "golden gate bridge":
+        bridge = html
+
+chat_id = re.search(r'"id":"(\w+)"', bridge).group(1)
+checks["answer_streams"] = "<script>T(" in bridge and "<script>D(" in bridge
+checks["images_for_visual_query"] = "<script>I(" in bridge
+time.sleep(1.5)
+checks["chat_in_own_sidebar"] = chat_id in alice.chat_ids()
+checks["chat_not_in_other_sidebar"] = chat_id not in bob.chat_ids()
+checks["other_user_cannot_open_chat"] = bob.open(f"/c/{chat_id}").getcode() == 302
+checks["saved_chat_has_images"] = '"images":["https' in alice.text(f"/c/{chat_id}")
+
+msgs = [{"role": "user", "text": "golden gate bridge"}, {"role": "model", "text": "It is a suspension bridge in San Francisco."},
+        {"role": "user", "text": "how long is it?"}]
+t = time.perf_counter()
+r = alice.open(f"/api/chats/{chat_id}", {"title": "e2e", "msgs": msgs}, "POST")
+raw = b""
+followup_ft = None
+while chunk := r.read1(65536):
+    raw += chunk
+    if followup_ft is None and (b"\x00T" in raw or raw.startswith(b"T")):
+        followup_ft = time.perf_counter() - t
+frames = raw.decode().split("\u0000")
+checks["followup_frames"] = any(f.startswith("T") for f in frames) and any(f.startswith("D") for f in frames)
+
+out = Browser()
+out.cookies = dict(alice.cookies)
+out.open("/auth/logout")
+checks["logout"] = "Sign in with passkey" in out.text("/")
+checks["opensearch"] = "{searchTerms}" in Browser(access_key=False).text("/opensearch.xml")
+
+for cid in alice.chat_ids():
+    alice.open(f"/api/chats/{cid}", method="DELETE").read()
+checks["delete"] = alice.chat_ids() == []
+
+avg = {k: round(statistics.mean(r[k] for r in rows), 3) for k in ("ttfb", "first_token", "total")}
+json.dump({"base": BASE, "runs": rows, "avg": avg, "followup_first_token": round(followup_ft, 3), "checks": checks},
           open("e2e-result.json", "w"), indent=1)
-print("avg", summary)
+print("avg", avg, "follow-up first token", round(followup_ft, 3))
 print(json.dumps(checks, indent=1))
 sys.exit(0 if all(checks.values()) else 1)
