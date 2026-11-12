@@ -9,6 +9,12 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 /** A streamed instruction to the page: one inline script per event. */
 export const call = (fn: string, arg: unknown) => `<script>${fn}(${json(arg)})</script>\n`;
 
+import { LOGO_SVG } from "./icons.ts";
+
+const ICON_LINKS = `<link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png">`;
+const mark = (px: number) => LOGO_SVG.replace("<svg ", `<svg width="${px}" height="${px}" aria-hidden="true" `);
+const BRAND = `<div class="brand">${mark(44)}<span>QuickAsk</span></div>`;
+
 /** iOS ignores user-scalable=no for pinch, so cancel WebKit gesture events and two-finger moves. */
 const NO_ZOOM = `<script>for(const t of ['gesturestart','gesturechange'])document.addEventListener(t,e=>e.preventDefault());
 document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false})</script>`;
@@ -26,6 +32,7 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 #side .new:hover,#side .it:hover{background:var(--line);text-decoration:none}
 #side .it{position:relative;display:flex;align-items:center;border-radius:8px;color:var(--fg);padding:6px 10px;font-size:14px;background:var(--soft);transition:transform .2s ease;touch-action:pan-y}
 .row{position:relative;overflow:hidden;border-radius:8px;flex:none}
+.row:not(.sw) .del{visibility:hidden}
 .row .del{position:absolute;top:0;right:0;bottom:0;width:80px;border:0;background:#dc2626;color:#fff;font:inherit;font-size:14px;font-weight:500}
 #side .it span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #side .it.on{background:var(--line)}
@@ -47,6 +54,9 @@ textarea{width:100%;resize:none;border:1px solid var(--line);border-radius:14px;
 textarea:focus{border-color:var(--mute)}
 .home{display:flex;flex-direction:column;justify-content:center}.home #log{flex:none;padding:0}.home form{position:static}
 #tg{display:none}
+.brand{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 0 24px}.brand span{font-size:28px;font-weight:700;letter-spacing:-.02em}
+#brand{display:none}.home #brand{display:flex}
+.sbrand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;max-width:760px;margin:0 auto;padding:20px 24px 0}
 #shx{position:fixed;top:10px;right:14px;z-index:1;display:flex;gap:6px}
 #shx>button{border:0;background:var(--soft);color:var(--fg);border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}#shx>button:hover{background:var(--line)}
 #sp{position:absolute;top:38px;right:0;min-width:270px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:4px;box-shadow:0 8px 24px #0002}
@@ -113,14 +123,14 @@ function L(list){if(S.id&&!list.some(c=>c.id===S.id))list.unshift({id:S.id,title
  side.innerHTML=list.map(c=>'<div class="row"><button class="del" data-id="'+c.id+'">Delete</button><a class="it'+(c.id===S.id?' on':'')+'" href="/c/'+c.id+'"><span>'+E1(c.title)+'</span><button data-id="'+c.id+'" title="Delete">×</button></a></div>').join('')}
 function del(id){fetch('/api/chats/'+id,{method:'DELETE'});const r=side.querySelector('[data-id="'+id+'"]');if(r)r.closest('.row').remove();if(id===S.id)location.href='/'}
 // Swipe left on a row (touch): reveal Delete; a long swipe deletes; swipe back or tap to close.
-let sw=null,opened=null,swiped=false;const shut=it=>{it.style.transform='';if(opened===it)opened=null};
+let sw=null,opened=null,swiped=false;const shut=it=>{it.style.transform='';if(opened===it)opened=null;setTimeout(()=>{if(!it.style.transform)it.parentNode.classList.remove('sw')},220)};
 side.addEventListener('touchstart',e=>{const it=e.target.closest('.it');if(!it)return;if(opened&&opened!==it)shut(opened);
- const t=e.touches[0];sw={it,x:t.clientX,y:t.clientY,dx:0,dir:null,base:it===opened?-80:0};it.style.transition='none'},{passive:true});
+ const t=e.touches[0];sw={it,x:t.clientX,y:t.clientY,dx:0,dir:null,base:it===opened?-80:0};it.style.transition='none';it.parentNode.classList.add('sw')},{passive:true});
 side.addEventListener('touchmove',e=>{if(!sw)return;const t=e.touches[0],dx=t.clientX-sw.x,dy=t.clientY-sw.y;
  if(!sw.dir){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;sw.dir=Math.abs(dx)>Math.abs(dy)?'x':'y'}
- if(sw.dir!=='x'){sw.it.style.transition='';sw=null;return}
+ if(sw.dir!=='x'){sw.it.style.transition='';if(opened!==sw.it)sw.it.parentNode.classList.remove('sw');sw=null;return}
  e.preventDefault();sw.dx=Math.min(0,sw.base+dx);sw.it.style.transform='translateX('+sw.dx+'px)'},{passive:false});
-side.addEventListener('touchend',()=>{if(!sw)return;const {it,dx,dir}=sw;sw=null;it.style.transition='';if(dir!=='x')return;
+side.addEventListener('touchend',()=>{if(!sw)return;const {it,dx,dir}=sw;sw=null;it.style.transition='';if(dir!=='x'){if(opened!==it)it.parentNode.classList.remove('sw');return}
  swiped=true;setTimeout(()=>swiped=false,350);const id=it.querySelector('[data-id]').dataset.id;
  if(-dx>it.offsetWidth*.6){it.style.transform='translateX(-100%)';setTimeout(()=>del(id),200)}
  else if(-dx>40){it.style.transform='translateX(-80px)';opened=it}else shut(it)});
@@ -152,9 +162,9 @@ U();
 function fresh(){document.body.classList.remove('open');
  if(!S.id){ta.focus();return}
  if(cur){location.href='/';return}
- S.id=null;S.msgs=[];S.title='Quick';S.shares=[];log.innerHTML='';main.classList.add('home');
+ S.id=null;S.msgs=[];S.title='QuickAsk';S.shares=[];log.innerHTML='';main.classList.add('home');
  const x=$('#shx');if(x)x.remove();side.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));
- document.title='Quick';ta.placeholder='Ask anything';ta.value='';fit();history.pushState(null,'','/');ta.focus()}
+ document.title='QuickAsk';ta.placeholder='Ask anything';ta.value='';fit();history.pushState(null,'','/');ta.focus()}
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='k'){e.preventDefault();fresh()}});
 $('.new').addEventListener('click',e=>{if(e.metaKey||e.ctrlKey||e.shiftKey||e.button)return;e.preventDefault();fresh()});
 addEventListener('popstate',()=>location.reload());
@@ -183,15 +193,15 @@ if(sh){SL();
 export function shell(o: { id: string | null; title: string; msgs: Msg[]; streaming: boolean; user: { u: string; n: string }; shares?: ShareRef[] }) {
   const state = { id: o.id, title: o.title, msgs: o.msgs, streaming: o.streaming, uid: o.user.u, shares: o.shares ?? [] };
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}
 <title>${esc(o.title)}</title>
-<link rel="search" type="application/opensearchdescription+xml" title="Quick" href="/opensearch.xml">
+<link rel="search" type="application/opensearchdescription+xml" title="QuickAsk" href="/opensearch.xml">
 <style>${CSS}</style></head>
 <body><button id="tg" aria-label="Chats">☰</button>
 <nav id="side"><a class="new" href="/">+ New chat<kbd>⌘K</kbd></a><div id="list"></div>
 <a id="usage" href="/admin" hidden></a>
 <div class="me"><span>${esc(o.user.n)}</span><a href="/auth/logout">Sign out</a></div></nav>
-<main class="${o.id ? "" : "home"}"><div id="log"></div>
+<main class="${o.id ? "" : "home"}"><div id="brand" class="brand">${mark(44)}<span>QuickAsk</span></div><div id="log"></div>
 <form action="/" method="get"><textarea name="q" rows="1" placeholder="${o.id ? "Ask a follow-up" : "Ask anything"}" autocomplete="off"></textarea></form></main>
 ${o.id ? '<div id="shx"><button id="sl" hidden></button><button id="sh">Share</button><div id="sp" hidden></div></div>' : ""}
 <script>const S=${json(state)};${RENDER}${JS}</script>
@@ -208,15 +218,15 @@ export function adminPage(d: { today: Row; month: Row; byUser: Row[]; byDay: Row
   const card = (label: string, r: Row) => `<div class="card"><span>${label}</span><b>${usd(r.cost)}</b><span>${r.searches} searches · ${usd(r.searches ? r.cost / r.searches : 0)} each</span></div>`;
   const table = (head: string, rows: Row[], name: (r: Row) => string) => rows.length ? `<table><tr><th>${head}</th><th>Searches</th><th>Exa</th><th>Gemini</th><th>Total</th></tr>${
     rows.map((r) => `<tr><td>${esc(name(r))}</td><td>${r.searches}</td><td>${usd(r.exa)}</td><td>${usd(r.gemini)}</td><td>${usd(r.cost)}</td></tr>`).join("")}</table>` : "<p>No searches yet.</p>";
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}
-<title>Usage · Quick</title><meta name="robots" content="noindex"><style>${CSS}
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}
+<title>Usage · QuickAsk</title><meta name="robots" content="noindex"><style>${CSS}
 main.admin{padding:32px 24px;max-width:760px;margin:0 auto;display:block;height:auto}.admin h1{font-size:20px;margin:0 0 4px}.admin h2{font-size:15px;margin:28px 0 8px}
 .admin .note{color:var(--mute);font-size:13px;margin:0 0 16px}.admin .back{font-size:14px}
 .cards{display:flex;gap:12px;flex-wrap:wrap}.card{flex:1;min-width:200px;background:var(--soft);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:2px}
 .card span{color:var(--mute);font-size:13px}.card b{font-size:24px;font-weight:600}
 table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}th{text-align:left;color:var(--mute);font-weight:500;font-size:13px}
 th,td{padding:6px 8px 6px 0}td+td,th+th{text-align:right}tr+tr td{border-top:1px solid var(--line)}
-</style></head><body style="display:block;overflow:auto"><main class="admin"><a class="back" href="/">← Quick</a>
+</style></head><body style="display:block;overflow:auto"><main class="admin"><a class="back" href="/">← QuickAsk</a>
 <h1>Usage</h1><p class="note">Exa and Gemini charges, recorded per search. Cloudflare's $5/month plan is not included.</p>
 <div class="cards">${card("Today", d.today)}${card("This month", d.month)}</div>
 <h2>This month by user</h2>${table("User", d.byUser, (r) => d.names[r.user ?? ""] ?? "(deleted)")}
@@ -230,18 +240,18 @@ export function sharePage(s: { title: string; msgs: Msg[] }) {
   const summary = (answer?.text ?? "").replace(/!\[[^\]]*\]\([^)]*\)|[*#`>_]/g, "").replace(/\s+/g, " ").trim().slice(0, 200);
   const n = Number(answer?.text.match(/\]\(img:(\d+)\)/)?.[1] ?? 0);
   const image = n ? answer?.images?.[n - 1] : undefined;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}
 <title>${esc(s.title)}</title><meta name="robots" content="noindex">
-<meta property="og:site_name" content="Quick"><meta property="og:title" content="${esc(s.title)}"><meta property="og:description" content="${esc(summary)}">
+<meta property="og:site_name" content="QuickAsk"><meta property="og:title" content="${esc(s.title)}"><meta property="og:description" content="${esc(summary)}">
 ${image ? `<meta property="og:image" content="${esc(image)}"><meta name="twitter:card" content="summary_large_image">` : ""}
-<style>${CSS}</style></head><body><main><div id="log"></div></main>
+<style>${CSS}</style></head><body style="display:block;overflow:auto"><main style="height:auto;display:block"><div class="sbrand">${mark(22)}QuickAsk</div><div id="log"></div></main>
 <script>const S=${json({ msgs: s.msgs })};${RENDER}for(const m of S.msgs){if(m.role==='user')add('u',E1(m.text));else{add('m',md(m.text,m.images,m.sources))}}</script></body></html>`;
 }
 
-const page = (body: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}
-<title>Quick</title><style>${CSS}</style></head><body><main class="home">${body}</main></body></html>`;
+const page = (body: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}
+<title>QuickAsk</title><style>${CSS}</style></head><body><main class="home">${body}</main></body></html>`;
 
-export const keyPage = (bad: boolean) => page(`<div id="log"></div>
+export const keyPage = (bad: boolean) => page(`${BRAND}<div id="log"></div>
 <form action="/" method="get"><textarea name="k" rows="1" placeholder="${bad ? "Wrong key. Try again" : "Access key"}"></textarea></form>
 <script>const t=document.querySelector('textarea');t.focus();t.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();t.form.submit()}}</script>`);
 
@@ -265,7 +275,7 @@ document.getElementById('up').onsubmit=e=>{e.preventDefault();const n=e.target.n
    transports:r.getTransports?r.getTransports():[]}})})};
 `;
 
-export const signIn = () => page(`<div class="auth"><h1>Quick</h1>
+export const signIn = () => page(`<div class="auth">${BRAND}
 <button id="in" class="btn">Sign in with passkey</button>
 <div class="or">New here? Create an account</div>
 <form id="up"><input name="n" placeholder="Your name" autocomplete="username webauthn"><button>Create</button></form>
@@ -273,6 +283,6 @@ export const signIn = () => page(`<div class="auth"><h1>Quick</h1>
 
 export const opensearch = (origin: string) => `<?xml version="1.0" encoding="UTF-8"?>
 <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
-<ShortName>Quick</ShortName><Description>Fast answers with web search</Description><InputEncoding>UTF-8</InputEncoding>
+<ShortName>QuickAsk</ShortName><Description>Fast answers with web search</Description><InputEncoding>UTF-8</InputEncoding>
 <Url type="text/html" method="get" template="${origin}/?q={searchTerms}"/>
 </OpenSearchDescription>`;

@@ -4,6 +4,8 @@ import { cookie, session } from "./session.ts";
 import { PAGE_VERSION, adminPage, call, keyPage, opensearch, sharePage, shell, signIn, type Msg, type Source } from "./page.ts";
 import type { Meter } from "./usage.ts";
 
+import { APPLE_ICON_PNG, FAVICON_PNG, LOGO_SVG } from "./icons.ts";
+
 export { Auth } from "./auth-store.ts";
 export { Usage } from "./usage.ts";
 
@@ -162,6 +164,13 @@ async function isAdmin(env: WorkerEnv, user: string) {
   return user === adminId;
 }
 
+const png = (b64: string) => () => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+const ICONS: Record<string, [() => string | Uint8Array<ArrayBuffer>, string]> = {
+  "/icon.svg": [() => LOGO_SVG, "image/svg+xml"],
+  "/favicon.ico": [png(FAVICON_PNG), "image/png"],
+  "/apple-touch-icon.png": [png(APPLE_ICON_PNG), "image/png"],
+};
+
 const newId = () => crypto.randomUUID().replaceAll("-", "").slice(0, 12);
 const titleOf = (q: string) => (q.length > 80 ? q.slice(0, 77) + "…" : q);
 
@@ -235,7 +244,8 @@ export default {
       // text/xml displays inline; the OpenSearch type makes some browsers download the file.
       return new Response(opensearch(url.origin), { headers: { "content-type": "text/xml; charset=utf-8", "content-disposition": "inline" } });
     }
-    if (path === "/favicon.ico") return new Response(null, { status: 204 });
+    const icon = ICONS[path];
+    if (icon) return new Response(icon[0](), { headers: { "content-type": icon[1], "cache-control": "public, max-age=604800" } });
 
     // Share links are public: no access key, no account. The edge caches them for a minute, so a deleted link dies everywhere within a minute.
     const shared = path.match(/^\/s\/(\w+)$/);
@@ -288,7 +298,7 @@ export default {
 
     if (path === "/") {
       const list = await chats.list();
-      return new Response(shell({ id: null, title: "Quick", msgs: [], streaming: false, user }) + call("L", list), { headers });
+      return new Response(shell({ id: null, title: "QuickAsk", msgs: [], streaming: false, user }) + call("L", list), { headers });
     }
 
     const chatPage = path.match(/^\/c\/(\w+)$/);
