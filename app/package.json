@@ -21,5 +21,6 @@
     "deploy": "./deploy.sh",
     "destroy": "./deploy.sh destroy",
     "typecheck": "tsc --noEmit"
-  }
+  },
+  "license": "MIT"
 }

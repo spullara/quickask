@@ -184,3 +184,7 @@ The scripts at the repo root are how the stack was chosen. They read API keys fr
   same Exa results. Better search context fixed accuracy more than a bigger model did.
 - `tool_eval.py`: direct search compared with letting the model call search as a tool.
   The tool adds about 0.6 to 0.9 s and did not improve accuracy on the test questions.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
