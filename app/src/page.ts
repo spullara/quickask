@@ -30,7 +30,8 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 #side .it span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #side .it.on{background:var(--line)}
 #side .it button{visibility:hidden;border:0;background:none;color:var(--mute);cursor:pointer;font-size:16px;padding:0 0 0 6px}
-#side .it:hover button{visibility:visible}
+@media (hover:hover){#side .it:hover button{visibility:visible}}
+@media (hover:none){#side .it button{display:none}}
 main{flex:1;height:100vh;height:100dvh;overflow-y:auto;display:flex;flex-direction:column}
 #log{width:100%;max-width:760px;margin:0 auto;padding:32px 24px 8px;flex:1}
 .u{background:var(--soft);border-radius:14px;padding:8px 14px;margin:24px 0 12px auto;width:fit-content;max-width:85%;white-space:pre-wrap}
