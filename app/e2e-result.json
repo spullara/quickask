@@ -3,60 +3,62 @@
  "runs": [
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.109,
-   "first_token": 1.243,
-   "total": 1.362,
+   "ttfb": 0.133,
+   "first_token": 1.159,
+   "total": 1.319,
    "inline_images": 1
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.095,
-   "first_token": 0.706,
-   "total": 1.386,
+   "ttfb": 0.061,
+   "first_token": 0.99,
+   "total": 1.728,
    "inline_images": 1
   },
   {
    "q": "how old was the ceo of amd when nvidia was founded",
-   "ttfb": 0.072,
-   "first_token": 0.905,
-   "total": 1.189,
+   "ttfb": 0.089,
+   "first_token": 0.949,
+   "total": 1.355,
    "inline_images": 0
   },
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.071,
-   "first_token": 0.721,
-   "total": 0.893,
+   "ttfb": 0.074,
+   "first_token": 0.614,
+   "total": 0.741,
    "inline_images": 1
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.071,
-   "first_token": 0.7,
-   "total": 1.203,
+   "ttfb": 0.086,
+   "first_token": 0.82,
+   "total": 1.237,
    "inline_images": 1
   },
   {
    "q": "how old was the ceo of amd when nvidia was founded",
    "ttfb": 0.066,
-   "first_token": 0.958,
-   "total": 1.257,
+   "first_token": 0.818,
+   "total": 1.158,
    "inline_images": 0
   }
  ],
  "avg": {
-  "ttfb": 0.081,
-  "first_token": 0.872,
-  "total": 1.215
+  "ttfb": 0.085,
+  "first_token": 0.892,
+  "total": 1.256
  },
- "followup_first_token": 1.6,
+ "followup_first_token": 1.943,
  "checks": {
   "public_page_offers_waitlist": true,
   "register_passkey": true,
+  "passkey_without_user_verification": true,
   "early_signup_refused": true,
   "link_puts_on_waitlist": true,
   "waiting_cannot_register": true,
   "approved_sees_create": true,
+  "older_link_still_works": true,
   "email_must_be_unique": true,
   "resend_waits": true,
   "bad_link_refused": true,

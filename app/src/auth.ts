@@ -95,6 +95,9 @@ async function route(req: Request, env: WorkerEnv, url: URL): Promise<Response |
       if (!entry?.u || !entry.n) return json({ error: "Sign-up expired. Try again." });
       const { verified, registrationInfo: info } = await verifyRegistrationResponse({
         response: body, expectedChallenge: entry.ch, expectedOrigin: origin, expectedRPID: rpID,
+        // The options ask for user verification as "preferred". Some phones and password managers make passkeys
+        // without it, so the checks must not require it (the library requires it by default).
+        requireUserVerification: false,
       });
       if (!verified) return json({ error: "Passkey not verified." });
       if (await store.nameTaken(entry.n)) return json({ error: "That email address already has an account." });
@@ -118,7 +121,7 @@ async function route(req: Request, env: WorkerEnv, url: URL): Promise<Response |
       const cred = await store.getCred(response.id);
       if (!cred) return json({ error: "This passkey is not registered here." });
       const { verified, authenticationInfo } = await verifyAuthenticationResponse({
-        response, expectedChallenge: entry.ch, expectedOrigin: origin, expectedRPID: rpID,
+        response, expectedChallenge: entry.ch, expectedOrigin: origin, expectedRPID: rpID, requireUserVerification: false,
         credential: { id: cred.id, publicKey: isoBase64URL.toBuffer(cred.publicKey), counter: cred.counter, transports: JSON.parse(cred.transports) },
       });
       if (!verified) return json({ error: "Passkey not verified." });

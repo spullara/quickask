@@ -43,6 +43,7 @@ class Authenticator:
     """A platform authenticator in software: P-256 key, "none" attestation, user verified."""
     def __init__(self):
         self.key, self.id, self.count, self.user = ec.generate_private_key(ec.SECP256R1()), os.urandom(16), 0, None
+        self.uv = 0x04  # user verified; 0 for a passkey app that skips Face ID or a PIN
 
     def _client_data(self, kind, challenge):
         return json.dumps({"type": kind, "challenge": challenge, "origin": BASE, "crossOrigin": False}).encode()
@@ -51,7 +52,7 @@ class Authenticator:
         self.user = o["user"]["id"]
         n = self.key.public_key().public_numbers()
         cose = cbor({1: 2, 3: -7, -1: 1, -2: n.x.to_bytes(32, "big"), -3: n.y.to_bytes(32, "big")})
-        auth = (hashlib.sha256(o["rp"]["id"].encode()).digest() + bytes([0x45]) + bytes(4) + bytes(16)
+        auth = (hashlib.sha256(o["rp"]["id"].encode()).digest() + bytes([0x41 | self.uv]) + bytes(4) + bytes(16)
                 + len(self.id).to_bytes(2, "big") + self.id + cose)
         return {"id": b64u(self.id), "rawId": b64u(self.id), "type": "public-key", "clientExtensionResults": {},
                 "response": {"clientDataJSON": b64u(self._client_data("webauthn.create", o["challenge"])),
@@ -60,7 +61,7 @@ class Authenticator:
 
     def get(self, o):
         self.count += 1
-        auth = hashlib.sha256(o["rpId"].encode()).digest() + bytes([0x05]) + self.count.to_bytes(4, "big")
+        auth = hashlib.sha256(o["rpId"].encode()).digest() + bytes([0x01 | self.uv]) + self.count.to_bytes(4, "big")
         cd = self._client_data("webauthn.get", o["challenge"])
         sig = self.key.sign(auth + hashlib.sha256(cd).digest(), ec.ECDSA(hashes.SHA256()))
         return {"id": b64u(self.id), "rawId": b64u(self.id), "type": "public-key", "clientExtensionResults": {},
@@ -110,10 +111,11 @@ def status(b, path):
         return e.code
 
 
-def signup(name):
+def signup(name, uv=True):
     """Waitlist sign-up: email link, admin approval, then a software passkey. Accounts are named by email address."""
     name = name if "@" in name else f"{name}@example.com"
     b, a = Browser(e2e=True), Authenticator()
+    a.uv = 0x04 if uv else 0
     link = b.json("/auth/waitlist", {"email": name}).get("link", "")
     WAIT["early_signup_refused"] = "not approved" in b.json("/auth/register/options", {"name": name}).get("error", "")
     b.open(link[len(BASE):])
@@ -151,6 +153,9 @@ RUN = os.urandom(3).hex()
 alice, alice_key, ok_a = signup(f"e2e-alice-{RUN}")
 bob, _, ok_b = signup(f"e2e-bob-{RUN}")
 checks["register_passkey"] = ok_a and ok_b
+_, dave_key, ok_d = signup(f"e2e-dave-{RUN}", uv=False)
+o = (dave := Browser()).json("/auth/login/options")
+checks["passkey_without_user_verification"] = ok_d and dave.json("/auth/login/verify", dave_key.get(o)).get("ok") is True
 checks.update(WAIT)
 checks["email_must_be_unique"] = "already has an account" in Browser().json("/auth/waitlist", {"email": f"E2E-ALICE-{RUN}@EXAMPLE.COM"}).get("error", "")
 carol = Browser(e2e=True)
