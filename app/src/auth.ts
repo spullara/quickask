@@ -30,9 +30,10 @@ export async function authRoute(req: Request, env: WorkerEnv, url: URL): Promise
   switch (url.pathname) {
     case "/auth/register/options": {
       const { name } = (await req.json()) as { name: string };
-      const userName = name.trim().slice(0, 60);
-      if (!userName) return json({ error: "Enter a name." });
-      if (await store.nameTaken(userName)) return json({ error: "That name is taken." });
+      // Accounts are named by email address (not verified; it identifies the account and its passkey).
+      const userName = String(name ?? "").trim().toLowerCase();
+      if (userName.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userName)) return json({ error: "Enter a valid email address." });
+      if (await store.nameTaken(userName)) return json({ error: "That email address already has an account." });
       const userId = isoBase64URL.fromBuffer(crypto.getRandomValues(new Uint8Array(16)));
       const options = await generateRegistrationOptions({
         rpName: "Quick", rpID, userName, userID: isoBase64URL.toBuffer(userId), attestationType: "none",

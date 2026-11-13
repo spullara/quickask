@@ -91,6 +91,8 @@ class Browser:
 
 
 def signup(name):
+    """Create an account with a software passkey. Accounts are named by email address."""
+    name = name if "@" in name else f"{name}@example.com"
     b, a = Browser(), Authenticator()
     o = b.json("/auth/register/options", {"name": name})
     return b, a, b.json("/auth/register/verify", a.create(o)).get("ok") is True
@@ -122,7 +124,8 @@ RUN = os.urandom(3).hex()
 alice, alice_key, ok_a = signup(f"e2e-alice-{RUN}")
 bob, _, ok_b = signup(f"e2e-bob-{RUN}")
 checks["register_passkey"] = ok_a and ok_b
-checks["name_must_be_unique"] = Browser().json("/auth/register/options", {"name": f"E2E-ALICE-{RUN}"}).get("error") == "That name is taken."
+checks["email_must_be_unique"] = Browser().json("/auth/register/options", {"name": f"E2E-ALICE-{RUN}@EXAMPLE.COM"}).get("error") == "That email address already has an account."
+checks["name_must_be_email"] = Browser().json("/auth/register/options", {"name": "not an email"}).get("error") == "Enter a valid email address."
 def status(b, path):
     try:
         return b.open(path).getcode()

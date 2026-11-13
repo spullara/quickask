@@ -413,7 +413,7 @@ document.getElementById('up').onsubmit=e=>{e.preventDefault();const n=e.target.n
 export const signIn = () => page(`<div class="auth">${BRAND}
 <button id="in" class="btn">Sign in with passkey</button>
 <div class="or">New here? Create an account</div>
-<form id="up"><input name="n" placeholder="Your name" autocomplete="username webauthn"><button>Create</button></form>
+<form id="up"><input name="n" type="email" inputmode="email" placeholder="Email address" autocomplete="email" autocapitalize="off" spellcheck="false"><button>Create</button></form>
 <p id="msg" class="err"></p></div><script>${AUTH_JS}</script>`);
 
 export const opensearch = (origin: string) => `<?xml version="1.0" encoding="UTF-8"?>

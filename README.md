@@ -98,7 +98,7 @@ sequenceDiagram
    ```
 
 4. Open the **First visit** link once in each browser. It stores the access key in a
-   cookie. Then create an account with a passkey.
+   cookie. Then create an account with your email address and a passkey.
 
 5. Add the **Search URL** as a search engine (see below).
 
@@ -135,7 +135,7 @@ Passkeys are tied to a hostname. Pick the domain before people create accounts.
 | `EXA_API_KEY` | yes | Web search and images. |
 | `CLOUDFLARE_ACCOUNT_ID` | no | Needed only when the token can see more than one account. |
 | `QUICK_DOMAIN` | no | Custom domain, for example `ask.example.com`. |
-| `ADMIN_NAME` | no | Account name that can see costs. The oldest account with this name is the admin. |
+| `ADMIN_NAME` | no | Account (email address) that can see costs. The oldest account with this name is the admin. |
 | `ACCESS_KEY`, `SESSION_SECRET` | created for you | Change `SESSION_SECRET` to sign everyone out. |
 
 ### Keep `app/.alchemy/`
@@ -163,7 +163,7 @@ python3 e2e.py https://<your app> "$(grep ^ACCESS_KEY= .env | cut -d= -f2)"
 
 It checks the access gate, passkey sign-up and sign-in, streaming, images, separate
 histories per account, follow-ups, share links and deletes. It writes `e2e-result.json`.
-Each run creates two test accounts (`e2e-alice-<random>`, `e2e-bob-<random>`).
+Each run creates two test accounts (`e2e-alice-<random>@example.com`, `e2e-bob-<random>@example.com`).
 
 ## Project layout
 
