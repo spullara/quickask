@@ -212,6 +212,20 @@ try:
 except urllib.error.HTTPError as e:
     checks["unknown_share_404"] = e.code == 404
 
+# Switch a chat to Gemini 4 Carbon: rerun replaces the last answer, and the chat remembers the model.
+small = search(alice, "what is the capital of australia")[3]
+small_id = re.search(r'"id":"(\w+)"', small).group(1)
+time.sleep(1.5)
+t = time.perf_counter()
+rerun = alice.open(f"/api/chats/{small_id}", {"title": "capital", "msgs": [{"role": "user", "text": "what is the capital of australia"}],
+                                               "model": "carbon", "cid": "e2e"}, "POST").read().decode()
+carbon_s = time.perf_counter() - t
+time.sleep(1.5)
+saved = alice.text(f"/c/{small_id}")
+checks["carbon_rerun_answers"] = "canberra" in rerun.lower() and "\u0000D" in rerun
+checks["carbon_rerun_replaces_answer"] = '"model":"carbon"' in saved and saved.count('"role":"model"') == 1
+print("gemini 4 carbon rerun took", round(carbon_s, 1), "s")
+
 out = Browser()
 out.cookies = dict(alice.cookies)
 out.open("/auth/logout")

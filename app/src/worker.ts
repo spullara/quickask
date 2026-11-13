@@ -2,15 +2,13 @@ import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 import { cookie, session } from "./session.ts";
 import { PAGE_VERSION, adminPage, call, keyPage, opensearch, sharePage, shell, signIn, type Msg, type Source } from "./page.ts";
-import type { Meter } from "./usage.ts";
+import { MODELS, modelKey, type Meter, type ModelKey } from "./usage.ts";
 
 import { APPLE_ICON_PNG, FAVICON_PNG, LOGO_SVG } from "./icons.ts";
 
 export { Auth } from "./auth-store.ts";
 export { Usage } from "./usage.ts";
 
-const MODEL = "gemini-3.5-flash-lite";
-const GEMINI = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:streamGenerateContent?alt=sse`;
 const HTML = { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" };
 
 export class Chats extends DurableObject<WorkerEnv> {
@@ -19,6 +17,9 @@ export class Chats extends DurableObject<WorkerEnv> {
   constructor(ctx: DurableObjectState, env: WorkerEnv) {
     super(ctx, env);
     this.sql.exec("CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, title TEXT, updated INTEGER, msgs TEXT)");
+    if (!this.sql.exec("SELECT 1 FROM pragma_table_info('chats') WHERE name = 'model'").toArray().length) {
+      this.sql.exec("ALTER TABLE chats ADD COLUMN model TEXT");
+    }
     // Keep-alive pings get an answer without waking the object.
     this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
   }
@@ -48,7 +49,7 @@ export class Chats extends DurableObject<WorkerEnv> {
   }
 
   /** Push the list to every open page, with what changed so a page showing that chat can refresh it. */
-  private notify(change: { changed: string; n: number } | { deleted: string }) {
+  private notify(change: { changed: string; n: number; origin?: string } | { deleted: string }) {
     this.broadcast({ list: this.list(), ...change });
   }
 
@@ -57,16 +58,18 @@ export class Chats extends DurableObject<WorkerEnv> {
   }
 
   get(id: string) {
-    const row = this.sql.exec<{ title: string; msgs: string }>("SELECT title, msgs FROM chats WHERE id = ?", id).toArray()[0];
-    return row ? { id, title: row.title, msgs: JSON.parse(row.msgs) as Msg[] } : null;
+    const row = this.sql.exec<{ title: string; msgs: string; model: string | null }>("SELECT title, msgs, model FROM chats WHERE id = ?", id).toArray()[0];
+    return row ? { id, title: row.title, msgs: JSON.parse(row.msgs) as Msg[], model: modelKey(row.model) } : null;
   }
 
-  save(id: string, title: string, msgs: Msg[]) {
+  /** origin is the page that made the change, so it can skip the update it already has. */
+  save(id: string, title: string, msgs: Msg[], model?: ModelKey, origin?: string) {
     this.sql.exec(
-      "INSERT INTO chats VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET title = excluded.title, updated = excluded.updated, msgs = excluded.msgs",
-      id, title, Date.now(), JSON.stringify(msgs),
+      `INSERT INTO chats (id, title, updated, msgs, model) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET
+       title = excluded.title, updated = excluded.updated, msgs = excluded.msgs, model = COALESCE(excluded.model, chats.model)`,
+      id, title, Date.now(), JSON.stringify(msgs), model ?? null,
     );
-    this.notify({ changed: id, n: msgs.length });
+    this.notify({ changed: id, n: msgs.length, origin });
   }
 
   remove(id: string) {
@@ -123,9 +126,10 @@ export class Shares extends DurableObject<WorkerEnv> {
   }
 }
 
-function gemini(env: WorkerEnv, msgs: Msg[], found: Search) {
+function gemini(env: WorkerEnv, msgs: Msg[], found: Search, model: ModelKey) {
   const results = found.context ? `<search_results>\n${found.context}\n</search_results>` : "(No search results.)";
-  return fetch(GEMINI, {
+  const m = MODELS[model];
+  return fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m.id}:streamGenerateContent?alt=sse`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
     body: JSON.stringify({
@@ -134,7 +138,7 @@ function gemini(env: WorkerEnv, msgs: Msg[], found: Search) {
         role: m.role,
         parts: [{ text: i === msgs.length - 1 ? `${m.text}\n\n${results}` : m.text }],
       })),
-      generationConfig: { thinkingConfig: { thinkingLevel: "minimal" } },
+      generationConfig: { thinkingConfig: { thinkingLevel: m.thinking } },
     }),
   });
 }
@@ -174,7 +178,12 @@ function stream() {
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
   const writer = writable.getWriter();
   const enc = new TextEncoder();
-  return { readable, send: (s: string) => void writer.write(enc.encode(s)), close: () => writer.close() };
+  // The page can go away mid-answer; ignore that so the answer is still saved and charged.
+  return {
+    readable,
+    send: (s: string) => void writer.write(enc.encode(s)).catch(() => {}),
+    close: () => writer.close().catch(() => {}),
+  };
 }
 
 /** A chat as stored, waiting up to 3 s for a save still in flight to reach at least n messages. */
@@ -261,13 +270,14 @@ function queryOf(msgs: Msg[]) {
 type Emit = (type: "T" | "I" | "D" | "E", value: unknown) => void;
 
 /** One answer turn as events: I image ids, T text delta, D done with sources, E error. Returns what to save and what it cost. */
-async function turn(env: WorkerEnv, msgs: Msg[], searching: Promise<Search>, emit: Emit): Promise<{ msg: Msg; meter: Meter } | null> {
+async function turn(env: WorkerEnv, msgs: Msg[], searching: Promise<Search>, emit: Emit, model: ModelKey = "lite"): Promise<{ msg: Msg; meter: Meter } | null> {
   try {
     const found = await searching;
     if (found.images.length) emit("I", found.images);
-    const { text, tokensIn, tokensOut } = await relay(gemini(env, msgs, found), (t) => emit("T", t));
+    const { text, tokensIn, tokensOut } = await relay(gemini(env, msgs, found, model), (t) => emit("T", t));
     emit("D", found.sources);
-    return { msg: { role: "model", text, sources: found.sources, images: found.images }, meter: { exa: found.exa, tokensIn, tokensOut } };
+    const gemini$ = tokensIn * MODELS[model].in + tokensOut * MODELS[model].out;
+    return { msg: { role: "model", text, sources: found.sources, images: found.images }, meter: { exa: found.exa, tokensIn, tokensOut, gemini: gemini$ } };
   } catch (e) {
     emit("E", (e as Error).message);
     return null;
@@ -411,18 +421,23 @@ export default {
 
     const api = path.match(/^\/api\/chats\/(\w+)$/);
     if (api && req.method === "POST") {
-      // Follow-up: the client sends the history it already has, so no storage read is on the critical path.
-      const body = (await req.json()) as { title: string; msgs: Msg[] };
+      // Follow-up, or a rerun of the last question: the client sends the history it already has (ending with the
+      // question to answer), so no storage read is on the critical path. model is the chat's chosen model.
+      const body = (await req.json()) as { title: string; msgs: Msg[]; model?: string; cid?: string };
+      const model = modelKey(body.model);
       const searching = search(env, queryOf(body.msgs));
       const out = stream();
       ctx.waitUntil((async () => {
         const result = await turn(env, body.msgs, searching,
-          (t, v) => out.send(t + (typeof v === "string" ? v : JSON.stringify(v)) + "\u0000"));
+          (t, v) => out.send(t + (typeof v === "string" ? v : JSON.stringify(v)) + "\u0000"), model);
         await out.close();
-        // Save stored history plus this turn. The client's copy of earlier answers is never written back.
+        // Save the stored history up to this question, plus this turn. A rerun drops the old answer. The client's copy
+        // of earlier answers is never written back.
         const base = await stored(chats, api[1]!, body.msgs.length - 1);
         if (result) await charge(env, user.u, result.meter);
-        if (result && base) await chats.save(api[1]!, base.title, [...base.msgs, body.msgs.at(-1)!, result.msg]);
+        if (result && base) {
+          await chats.save(api[1]!, base.title, [...base.msgs.slice(0, body.msgs.length - 1), body.msgs.at(-1)!, result.msg], model, body.cid);
+        }
       })());
       return new Response(out.readable, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });
     }

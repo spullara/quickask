@@ -59,6 +59,7 @@ textarea:focus{border-color:var(--mute)}
 .sbrand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;max-width:760px;margin:0 auto;padding:20px 24px 0}
 #shx{position:fixed;top:10px;right:14px;z-index:1;display:flex;gap:6px}
 #shx>button{border:0;background:var(--soft);color:var(--fg);border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}#shx>button:hover{background:var(--line)}
+#shx>button.on{background:var(--fg);color:var(--bg)}
 #sp{position:absolute;top:38px;right:0;min-width:270px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:4px;box-shadow:0 8px 24px #0002}
 .sr{display:flex;align-items:center;gap:4px;padding:4px 8px;font-size:13px}.sr span{flex:1;color:var(--mute)}
 .sr button{border:0;background:none;color:var(--accent);cursor:pointer;font:inherit;font-size:13px;padding:2px 6px;border-radius:6px}.sr button:hover{background:var(--soft)}
@@ -143,8 +144,14 @@ show(S.msgs);
 S.msgs=S.msgs.map(({role,text})=>({role,text}));
 let busy=false;
 if(S.streaming){busy=true;start();history.replaceState(null,'','/c/'+S.id)}
-async function ask(q){if(busy)return;busy=true;S.msgs.push({role:'user',text:q});add('u',E1(q));start();main.scrollTop=main.scrollHeight;
- try{const r=await fetch('/api/chats/'+S.id,{method:'POST',body:JSON.stringify({title:S.title,msgs:S.msgs})});
+// This page's id, so live updates it caused itself are skipped.
+const CID=Math.random().toString(36).slice(2);
+async function ask(q){if(busy)return;busy=true;S.msgs.push({role:'user',text:q});add('u',E1(q));run()}
+// Rerun the last question (after a model switch): drop the old answer and answer again.
+function rerun(){if(busy)return;let i=S.msgs.length-1;while(i>=0&&S.msgs[i].role!=='user')i--;if(i<0)return;
+ S.msgs=S.msgs.slice(0,i+1);const us=log.querySelectorAll('.u'),lu=us[us.length-1];while(lu&&lu.nextSibling)lu.nextSibling.remove();busy=true;run()}
+async function run(){start();main.scrollTop=main.scrollHeight;
+ try{const r=await fetch('/api/chats/'+S.id,{method:'POST',body:JSON.stringify({title:S.title,msgs:S.msgs,model:S.model,cid:CID})});
   if(!r.ok)throw new Error('HTTP '+r.status);
   const rd=r.body.pipeThrough(new TextDecoderStream()).getReader();let buf='';
   for(;;){const {value,done}=await rd.read();if(done)break;buf+=value;const parts=buf.split('\\u0000');buf=parts.pop();
@@ -164,7 +171,7 @@ U();
 function fresh(){document.body.classList.remove('open');
  if(!S.id){ta.value='';fit();ta.focus();return}
  if(cur){location.href='/';return}
- S.id=null;S.msgs=[];S.title='QuickAsk';S.shares=[];log.innerHTML='';main.classList.add('home');
+ S.id=null;S.msgs=[];S.title='QuickAsk';S.model='lite';S.shares=[];log.innerHTML='';main.classList.add('home');
  const x=$('#shx');if(x)x.remove();side.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));
  document.title='QuickAsk';ta.placeholder='Ask anything';ta.value='';fit();history.pushState(null,'','/');ta.focus()}
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='k'){e.preventDefault();fresh()}});
@@ -172,19 +179,23 @@ $('.new').addEventListener('click',e=>{if(e.metaKey||e.ctrlKey||e.shiftKey||e.bu
 addEventListener('popstate',()=>location.reload());
 // Another window added to this chat: load the saved copy and redraw it.
 function sync(){const id=S.id;fetch('/api/chats/'+id).then(r=>r.ok?r.json():null).then(c=>{if(!c||S.id!==id||busy)return;
- S.title=c.title;show(c.msgs);S.msgs=c.msgs.map(({role,text})=>({role,text}))},()=>{})}
+ S.title=c.title;S.model=c.model;ML();show(c.msgs);S.msgs=c.msgs.map(({role,text})=>({role,text}))},()=>{})}
 // Live sidebar: the server pushes the chat list when any tab or device changes it.
 let live=null;function connect(){if(live&&live.readyState<2)return;live=new WebSocket(location.origin.replace(/^http/,'ws')+'/api/live');
  live.onmessage=e=>{try{const m=JSON.parse(e.data);
   if(m.deleted&&m.deleted===S.id&&!busy)fresh();
   if(m.list&&!sw)L(m.list);
   if(m.usage)cost(m.usage);
-  if(m.changed&&m.changed===S.id&&m.n>S.msgs.length&&!busy)sync()}catch{}};
+  if(m.changed&&m.changed===S.id&&m.origin!==CID&&!busy)sync()}catch{}};
  live.onclose=()=>{if(document.visibilityState==='visible')setTimeout(connect,3000)}}
 if(document.readyState==='complete')connect();else addEventListener('load',connect);
 setInterval(()=>{if(live&&live.readyState===1)live.send('ping')},50000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')connect()});
 if(!/Mac|iPhone|iPad/.test(navigator.platform))$('.new kbd').textContent='Ctrl K';
+// Model switch: rerun the last answer with Gemini 4 Carbon; follow-ups in this chat then use it. Click again to go back.
+const mdl=$('#mdl');function ML(){if(!mdl)return;const c=S.model==='carbon';mdl.classList.toggle('on',c);mdl.textContent=(c?'✓ ':'')+'Gemini 4 Carbon';
+ mdl.title=c?'Answering with Gemini 4 Carbon. Click to go back to Flash Lite and rerun.':'Rerun with Gemini 4 Carbon and use it for follow-ups'}
+ML();if(mdl)mdl.onclick=()=>{if(busy)return;S.model=S.model==='carbon'?'lite':'carbon';ML();rerun()};
 const shx=$('#shx'),sh=$('#sh'),sl=$('#sl'),sp=$('#sp'),shareUrl=id=>location.origin+'/s/'+id;
 const when=t=>new Date(t).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
 function SL(){if(!sl)return;const n=S.shares.length;sl.hidden=!n;sl.textContent=n+(n>1?' links':' link');if(!n)sp.hidden=true;
@@ -206,8 +217,8 @@ if(sh){SL();
    :plain()).then(()=>show('Link copied'),()=>show('Could not copy'))}}
 `;
 
-export function shell(o: { id: string | null; title: string; msgs: Msg[]; streaming: boolean; user: { u: string; n: string }; shares?: ShareRef[] }) {
-  const state = { id: o.id, title: o.title, msgs: o.msgs, streaming: o.streaming, uid: o.user.u, shares: o.shares ?? [] };
+export function shell(o: { id: string | null; title: string; msgs: Msg[]; streaming: boolean; user: { u: string; n: string }; shares?: ShareRef[]; model?: string }) {
+  const state = { id: o.id, title: o.title, msgs: o.msgs, streaming: o.streaming, uid: o.user.u, shares: o.shares ?? [], model: o.model ?? "lite" };
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}
 <title>${esc(o.title)}</title>
@@ -219,7 +230,7 @@ export function shell(o: { id: string | null; title: string; msgs: Msg[]; stream
 <div class="me"><span>${esc(o.user.n)}</span><a href="/auth/logout">Sign out</a></div></nav>
 <main class="${o.id ? "" : "home"}"><div id="brand" class="brand">${mark(44)}<span>QuickAsk</span></div><div id="log"></div>
 <form action="/" method="get"><textarea name="q" rows="1" placeholder="${o.id ? "Ask a follow-up" : "Ask anything"}" autocomplete="off"></textarea></form></main>
-${o.id ? '<div id="shx"><button id="sl" hidden></button><button id="sh">Share</button><div id="sp" hidden></div></div>' : ""}
+${o.id ? '<div id="shx"><button id="sl" hidden></button><button id="mdl"></button><button id="sh">Share</button><div id="sp" hidden></div></div>' : ""}
 <script>const S=${json(state)};${RENDER}${JS}</script>
 `;
 }
