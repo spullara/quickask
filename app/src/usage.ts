@@ -14,17 +14,12 @@ export const modelKey = (m: unknown): ModelKey => (m === "carbon" ? "carbon" : "
 
 const LITE_IN = MODELS.lite.in, LITE_OUT = MODELS.lite.out;
 
-/** Exa allows this many searches per second for the whole app. */
-const RATE = 10;
-
 export type Meter = { exa: number; tokensIn: number; tokensOut: number; gemini: number };
 export type Totals = { searches: number; exa: number; gemini: number; cost: number; tokensIn: number; tokensOut: number };
 
-/** One global instance: the Exa rate limiter and the cost ledger. */
+/** One global instance: the cost ledger. Written after each answer, so it is never on the search path. */
 export class Usage extends DurableObject<WorkerEnv> {
   sql = this.ctx.storage.sql;
-  tokens = RATE;
-  refilled = Date.now();
 
   constructor(ctx: DurableObjectState, env: WorkerEnv) {
     super(ctx, env);
@@ -34,18 +29,6 @@ export class Usage extends DurableObject<WorkerEnv> {
     if (!this.sql.exec("SELECT 1 FROM pragma_table_info('usage') WHERE name = 'gemini'").toArray().length) {
       this.sql.exec("ALTER TABLE usage ADD COLUMN gemini REAL");
     }
-  }
-
-  /**
-   * Token bucket: RATE tokens, refilled at RATE per second. A caller always gets a slot;
-   * the return value is how many ms to wait for it. Tokens go negative to queue callers in order.
-   */
-  acquire(): number {
-    const now = Date.now();
-    this.tokens = Math.min(RATE, this.tokens + ((now - this.refilled) * RATE) / 1000);
-    this.refilled = now;
-    this.tokens -= 1;
-    return this.tokens >= 0 ? 0 : Math.ceil((-this.tokens * 1000) / RATE);
   }
 
   record(user: string, m: Meter) {

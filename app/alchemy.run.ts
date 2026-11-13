@@ -28,6 +28,8 @@ export const Worker = Cloudflare.Worker("Quick", {
     AUTH: Cloudflare.DurableObject<Auth>("Auth", { className: "Auth" }),
     SHARES: Cloudflare.DurableObject<Shares>("Shares", { className: "Shares" }),
     USAGE: Cloudflare.DurableObject<Usage>("Usage", { className: "Usage" }),
+    // Exa allows 10 searches a second. Counted in each Cloudflare location, so it needs no long-distance call.
+    EXA_LIMIT: Cloudflare.RateLimit("EXA_LIMIT", { namespaceId: 2001, simple: { limit: 100, period: 10 } }),
     GEMINI_API_KEY: Config.Redacted("GEMINI_API_KEY"),
     EXA_API_KEY: Config.Redacted("EXA_API_KEY"),
     ACCESS_KEY: Config.Redacted("ACCESS_KEY"),

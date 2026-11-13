@@ -305,10 +305,12 @@ const NOT_A_PHOTO = /\.svg(\?|$)|\/\d{1,2}px-|logo|icon|favicon|sprite|avatar|ba
 async function search(env: WorkerEnv, query: string, loc: Loc = {}): Promise<Search> {
   if (LOCAL.test(query) && loc.city) query = `${query} in ${[loc.city, loc.region].filter(Boolean).join(", ")}`;
   try {
-    // Global 10 searches/s limit. Over a 3 s queue, answer without search instead of making the user wait.
-    const wait = await env.USAGE.get(env.USAGE.idFromName("global")).acquire();
-    if (wait > 3000) throw new Error("Exa queue full");
-    if (wait) await new Promise((r) => setTimeout(r, wait));
+    // Exa rate limit: 100 per 10 s per Cloudflare location. Over budget, retry for up to 3 s, then answer without search.
+    // If the limiter itself fails, let the search through.
+    for (let waited = 0; !(await env.EXA_LIMIT.limit({ key: "exa" }).catch(() => ({ success: true }))).success; waited += 250) {
+      if (waited >= 3000) throw new Error("Exa rate limit");
+      await new Promise((r) => setTimeout(r, 250));
+    }
     const res = await fetch("https://api.exa.ai/search", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": env.EXA_API_KEY },
