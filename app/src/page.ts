@@ -28,6 +28,14 @@ body{font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,s
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 #side{width:260px;flex:none;background:var(--soft);height:100vh;height:100dvh;overflow-y:auto;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
 #side .new{display:flex;align-items:center;padding:8px 10px;border-radius:8px;color:var(--fg);font-weight:600;margin-bottom:8px}
+#side .top{display:flex;align-items:center;gap:2px;margin-bottom:8px}#side .top .new{flex:1;margin-bottom:0}
+#fs{border:0;background:none;color:var(--mute);width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}#fs:hover{background:var(--line);color:var(--fg)}
+#find{display:flex;align-items:center;gap:4px;margin:0 0 8px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:0 4px 0 10px}#find[hidden]{display:none}
+#find input{flex:1;min-width:0;border:0;outline:none;background:none;color:var(--fg);font:inherit;font-size:14px;padding:7px 0}
+#find button{border:0;background:none;color:var(--mute);font-size:16px;cursor:pointer;padding:2px 6px}
+@media (hover:none){#find input{font-size:16px}}
+#side .it small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;color:var(--mute);font-size:12px;line-height:1.4;margin-top:2px}
+#side .it small b{color:var(--fg);font-weight:600}#side .none{color:var(--mute);font-size:13px;padding:6px 10px}
 #side .new kbd{margin-left:auto;font:500 11px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--mute);background:var(--bg);border-radius:5px;padding:4px 6px}
 @media (hover:none){#side .new kbd{display:none}textarea{font-size:16px}}
 #side .new:hover,#side .it:hover{background:var(--line);text-decoration:none}
@@ -137,10 +145,32 @@ function D(s){cur.src=s;paint();cur.el.classList.remove('wait');
 function R(r){cur.res=r}
 function I(u){cur.imgs=u}
 function E(m){cur.el.classList.remove('wait');cur.el.insertAdjacentHTML('beforeend','<p class="err">'+E1(m)+'</p>');cur=null;busy=false}
-function L(list){if(S.id&&!list.some(c=>c.id===S.id))list.unshift({id:S.id,title:S.title});
- try{localStorage['chats:'+S.uid]=JSON.stringify(list.slice(0,300))}catch{}
- side.innerHTML=list.map(c=>'<div class="row"><button class="del" data-id="'+c.id+'">Delete</button><a class="it'+(c.id===S.id?' on':'')+'" href="/c/'+c.id+'"><span>'+E1(c.title)+'</span><button data-id="'+c.id+'" title="Delete">×</button></a></div>').join('')}
-function del(id){fetch('/api/chats/'+id,{method:'DELETE'});const r=side.querySelector('[data-id="'+id+'"]');if(r)r.closest('.row').remove();if(id===S.id)location.href='/'}
+// Sidebar: base is the loaded list (newest first, 50 per page, more on scroll). A search shows its own results instead.
+let base=[],more=false,findQ='',found=[],findMore=false,loading=false;const PAGE=50,sideEl=$('#side');
+const row=c=>'<div class="row"><button class="del" data-id="'+c.id+'">Delete</button><a class="it'+(c.id===S.id?' on':'')+'" href="/c/'+c.id+'"><span>'+E1(c.title)
+ +(c.snip?'<small>'+E1(c.snip).replace(/\\u0001/g,'<b>').replace(/\\u0002/g,'</b>')+'</small>':'')+'</span><button data-id="'+c.id+'" title="Delete">×</button></a></div>';
+function paintList(){const items=findQ?found:base;side.innerHTML=items.length?items.map(row).join(''):(findQ?'<div class="none">No matching chats</div>':'');
+ if(sideEl.scrollHeight<=sideEl.clientHeight+200)page()}
+// The first page, from the server or a live push. Older pages already loaded stay; anything newer that is gone was deleted.
+function L(list){const ids=new Set(list.map(c=>c.id));
+ if(list.length<PAGE){base=list;more=false}else{const oldest=list[list.length-1].updated;const older=base.filter(c=>!ids.has(c.id)&&c.updated<oldest);if(!older.length)more=true;base=list.concat(older)}
+ if(S.id&&!base.some(c=>c.id===S.id))base.unshift({id:S.id,title:S.title,updated:Date.now()});
+ try{localStorage['chats:'+S.uid]=JSON.stringify(base.slice(0,PAGE))}catch{}
+ paintList()}
+function page(){const q=findQ,items=q?found:base;if(loading||!(q?findMore:more)||!items.length)return;loading=true;
+ fetch('/api/chats?before='+items[items.length-1].updated+(q?'&q='+encodeURIComponent(q):'')).then(r=>r.json()).then(p=>{loading=false;if(q!==findQ)return;
+  const ids=new Set(items.map(c=>c.id)),add=p.filter(c=>!ids.has(c.id));if(q){found=found.concat(add);findMore=p.length>=PAGE}else{base=base.concat(add);more=p.length>=PAGE}paintList()},()=>{loading=false})}
+sideEl.addEventListener('scroll',()=>{if(sideEl.scrollTop+sideEl.clientHeight>sideEl.scrollHeight-200)page()});
+// Search chats: keywords match titles and message text; every word must match, as a prefix.
+const find=$('#find'),fi=find.querySelector('input');let ft;
+function closeFind(){find.hidden=true;fi.value='';findQ='';found=[];paintList()}
+$('#fs').onclick=()=>{if(find.hidden){find.hidden=false;fi.focus()}else closeFind()};
+find.querySelector('button').onclick=closeFind;
+fi.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();closeFind()}});
+fi.addEventListener('input',()=>{clearTimeout(ft);ft=setTimeout(()=>{const q=fi.value.trim();findQ=q;if(!q){found=[];paintList();return}
+ fetch('/api/chats?q='+encodeURIComponent(q)).then(r=>r.json()).then(p=>{if(q!==findQ)return;found=p;findMore=p.length>=PAGE;sideEl.scrollTop=0;paintList()},()=>{})},150)});
+function del(id){fetch('/api/chats/'+id,{method:'DELETE'});base=base.filter(c=>c.id!==id);found=found.filter(c=>c.id!==id);
+ const r=side.querySelector('[data-id="'+id+'"]');if(r)r.closest('.row').remove();if(id===S.id)location.href='/'}
 // Swipe left on a row (touch): reveal Delete; a long swipe deletes; swipe back or tap to close.
 let sw=null,opened=null,swiped=false;const shut=it=>{it.style.transform='';if(opened===it)opened=null;setTimeout(()=>{if(!it.style.transform)it.parentNode.classList.remove('sw')},220)};
 side.addEventListener('touchstart',e=>{const it=e.target.closest('.it');if(!it)return;if(opened&&opened!==it)shut(opened);
@@ -204,7 +234,7 @@ function sync(){const id=S.id;fetch('/api/chats/'+id).then(r=>r.ok?r.json():null
 // Live sidebar: the server pushes the chat list when any tab or device changes it.
 let live=null;function connect(){if(live&&live.readyState<2)return;live=new WebSocket(location.origin.replace(/^http/,'ws')+'/api/live');
  live.onmessage=e=>{try{const m=JSON.parse(e.data);
-  if(m.deleted&&m.deleted===S.id&&!busy)fresh();
+  if(m.deleted){base=base.filter(c=>c.id!==m.deleted);found=found.filter(c=>c.id!==m.deleted);if(m.deleted===S.id&&!busy)fresh()}
   if(m.list&&!sw)L(m.list);
   if(m.usage)cost(m.usage);
   if(m.changed&&m.changed===S.id&&m.origin!==CID&&!busy)sync()}catch{}};
@@ -265,7 +295,8 @@ export function shell(o: { id: string | null; title: string; msgs: Msg[]; stream
 <link rel="search" type="application/opensearchdescription+xml" title="QuickAsk" href="/opensearch.xml">
 <style>${CSS}</style></head>
 <body><button id="tg" aria-label="Chats">☰</button>
-<nav id="side"><a class="new" href="/">+ New chat<kbd>⌘K</kbd></a><div id="list"></div>
+<nav id="side"><div class="top"><a class="new" href="/">+ New chat<kbd>⌘K</kbd></a><button id="fs" aria-label="Search chats" title="Search chats"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button></div>
+<div id="find" hidden><input placeholder="Search chats" autocomplete="off" enterkeyhint="search"><button aria-label="Close search">×</button></div><div id="list"></div>
 <a id="usage" href="/admin" hidden></a>
 <div class="me"><span>${esc(o.user.n)}</span><a href="/auth/logout">Sign out</a></div></nav>
 <main class="${o.id ? "" : "home"}"><div id="brand" class="brand">${mark(44)}<span>QuickAsk</span></div><div id="log"></div>

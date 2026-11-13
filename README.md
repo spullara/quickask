@@ -10,6 +10,7 @@ with sources and, when they help, pictures.
 - Searches the web with [Exa](https://exa.ai) and answers with Gemini 3.5 Flash Lite.
 - Each search is a chat. Previous chats are in the sidebar, one history per account.
 - The sidebar updates live across tabs and devices over a hibernating WebSocket.
+- Search your chats from the sidebar (keywords across titles and messages, SQLite FTS5); the list loads 50 at a time as you scroll.
 - Passkey accounts, behind a shared access key.
 - Read-only share links that anyone can open, with no account. Links show a rich preview card on X, iMessage and Slack.
 - Press ⌘K (Ctrl K) for a new search.

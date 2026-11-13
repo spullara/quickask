@@ -11,6 +11,9 @@ export { Usage } from "./usage.ts";
 
 const HTML = { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" };
 
+/** Sidebar page size. */
+const PAGE = 50;
+
 export class Chats extends DurableObject<WorkerEnv> {
   sql = this.ctx.storage.sql;
 
@@ -20,8 +23,35 @@ export class Chats extends DurableObject<WorkerEnv> {
     if (!this.sql.exec("SELECT 1 FROM pragma_table_info('chats') WHERE name = 'model'").toArray().length) {
       this.sql.exec("ALTER TABLE chats ADD COLUMN model TEXT");
     }
+    // Full-text index of titles and message text for sidebar search; filled from existing chats the first time.
+    this.sql.exec("CREATE VIRTUAL TABLE IF NOT EXISTS chats_fts USING fts5(id UNINDEXED, title, body, tokenize = 'porter unicode61')");
+    if (!this.sql.exec("SELECT 1 FROM chats_fts LIMIT 1").toArray().length) {
+      for (const c of this.sql.exec<{ id: string; title: string; msgs: string }>("SELECT id, title, msgs FROM chats").toArray()) {
+        this.index(c.id, c.title, JSON.parse(c.msgs));
+      }
+    }
     // Keep-alive pings get an answer without waking the object.
     this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
+  }
+
+  private index(id: string, title: string, msgs: Msg[]) {
+    this.sql.exec("DELETE FROM chats_fts WHERE id = ?", id);
+    this.sql.exec("INSERT INTO chats_fts (id, title, body) VALUES (?, ?, ?)", id, title, msgs.map((m) => m.text).join("\n"));
+  }
+
+  /**
+   * Keyword search, newest first, 50 at a time before an updated time. Every word must match, as a prefix, so results
+   * appear while typing. snip marks matches with \u0001...\u0002.
+   */
+  search(q: string, before = Number.MAX_SAFE_INTEGER) {
+    const words = q.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+    if (!words.length) return this.list(before);
+    return this.sql.exec<{ id: string; title: string; updated: number; snip: string }>(
+      `SELECT c.id, c.title, c.updated, snippet(chats_fts, 2, char(1), char(2), '…', 10) AS snip
+       FROM chats_fts JOIN chats c ON c.id = chats_fts.id
+       WHERE chats_fts MATCH ? AND c.updated < ? ORDER BY c.updated DESC LIMIT ${PAGE}`,
+      words.map((w) => `"${w}"*`).join(" "), before,
+    ).toArray();
   }
 
   /** Live sidebar: open pages hold a hibernatable WebSocket and get the list whenever it changes. */
@@ -53,8 +83,11 @@ export class Chats extends DurableObject<WorkerEnv> {
     this.broadcast({ list: this.list(), ...change });
   }
 
-  list() {
-    return this.sql.exec<{ id: string; title: string }>("SELECT id, title FROM chats ORDER BY updated DESC LIMIT 300").toArray();
+  /** The sidebar, newest first, a page at a time before an updated time. */
+  list(before = Number.MAX_SAFE_INTEGER) {
+    return this.sql.exec<{ id: string; title: string; updated: number }>(
+      `SELECT id, title, updated FROM chats WHERE updated < ? ORDER BY updated DESC LIMIT ${PAGE}`, before,
+    ).toArray();
   }
 
   get(id: string) {
@@ -69,11 +102,13 @@ export class Chats extends DurableObject<WorkerEnv> {
        title = excluded.title, updated = excluded.updated, msgs = excluded.msgs, model = COALESCE(excluded.model, chats.model)`,
       id, title, Date.now(), JSON.stringify(msgs), model ?? null,
     );
+    this.index(id, title, msgs);
     this.notify({ changed: id, n: msgs.length, origin });
   }
 
   remove(id: string) {
     this.sql.exec("DELETE FROM chats WHERE id = ?", id);
+    this.sql.exec("DELETE FROM chats_fts WHERE id = ?", id);
     this.notify({ deleted: id });
   }
 }
@@ -390,6 +425,12 @@ export default {
       const [chat, list, links] = await Promise.all([chats.get(chatPage[1]!), chats.list(), shares.list(`${user.u}/${chatPage[1]}`)]);
       if (!chat) return Response.redirect(url.origin + "/", 302);
       return new Response(shell({ ...chat, streaming: false, user, shares: links }) + call("L", list), { headers });
+    }
+
+    // Sidebar pages: ?before=<updated> for the next page, ?q= to search.
+    if (path === "/api/chats" && req.method === "GET") {
+      const q = url.searchParams.get("q")?.trim() ?? "", before = Number(url.searchParams.get("before")) || undefined;
+      return Response.json(q ? await chats.search(q, before) : await chats.list(before));
     }
 
     if (path === "/api/live") {

@@ -2,6 +2,7 @@
 Usage: python3 -I e2e.py <url> <access_key>. Writes e2e-result.json. Exit code 0 when every check passes."""
 import base64, hashlib, json, os, re, ssl, statistics, sys, time, urllib.error, urllib.request
 from urllib.parse import quote
+import urllib.parse
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 
@@ -169,6 +170,11 @@ checks["plain_question_no_link"] = not re.match(NAV_LINE, plain.strip().split("\
 time.sleep(1.5)
 checks["chat_in_own_sidebar"] = chat_id in alice.chat_ids()
 checks["chat_not_in_other_sidebar"] = chat_id not in bob.chat_ids()
+find = lambda who, q: [c["id"] for c in json.load(who.open("/api/chats?q=" + urllib.parse.quote(q)))]
+word = max(re.findall(r"[A-Za-z]{7,}", answer(bridge)), key=len)
+checks["search_by_title_prefix"] = chat_id in find(alice, "golden gat")
+checks["search_by_answer_word"] = chat_id in find(alice, word)
+checks["search_only_own_chats"] = chat_id not in find(bob, "golden gat")
 checks["other_user_cannot_open_chat"] = bob.open(f"/c/{chat_id}").getcode() == 302
 checks["saved_chat_has_images"] = '"images":["https' in alice.text(f"/c/{chat_id}")
 
