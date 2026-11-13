@@ -46,16 +46,18 @@ async function link(env: WorkerEnv, origin: string, email: string) {
 }
 
 async function mail(env: WorkerEnv, to: string, subject: string, intro: string, button: string, url: string, outro: string) {
+  const site = new URL(url).origin, host = new URL(url).host;
   if (TEST_ADDRESS.test(to)) throw new Error("test address");
   const { messageId } = await env.EMAIL!.send({
     from: { name: "QuickAsk", email: env.SENDER },
     to,
     subject,
-    text: `${intro}\n\n${url}\n\n${outro}`,
+    text: `${intro}\n\n${url}\n\n${outro}\n\n--\nQuickAsk, fast answers from the web. ${site}`,
     html: `<div style="font:15px/1.5 -apple-system,system-ui,sans-serif;color:#111;max-width:480px">
 <p>${esc(intro)}</p>
 <p style="margin:20px 0"><a href="${esc(url)}" style="background:#111;color:#fff;text-decoration:none;padding:10px 16px;border-radius:10px;font-weight:600;display:inline-block">${esc(button)}</a></p>
-<p style="color:#666;font-size:13px">${esc(outro)}</p></div>`,
+<p style="color:#666;font-size:13px">${esc(outro)}</p>
+<p style="color:#999;font-size:12px;border-top:1px solid #eee;padding-top:12px;margin-top:24px">QuickAsk, fast answers from the web. <a href="${esc(site)}" style="color:#999">${esc(host)}</a></p></div>`,
   });
   // Shows in Workers logs; the same message is in Compute → Email Service → Activity log.
   console.log(JSON.stringify({ email: "sent", subject, messageId }));

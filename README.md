@@ -147,6 +147,7 @@ To keep the access key and open sign-up instead, add `WAITLIST=off` to `app/.env
 | `CLOUDFLARE_ACCOUNT_ID` | no | Needed only when the token can see more than one account. |
 | `QUICK_DOMAIN` | no | Custom domain, for example `ask.example.com`. |
 | `WAITLIST` | no | `off` uses the access key and open sign-up even with a custom domain. |
+| `MAIL_FORWARD_TO` | no | With the waitlist: your own address. The domain then receives mail (MX and SPF records), and mail to any address at it is forwarded to you. Spam filters trust a domain that can receive mail more. Confirm the email Cloudflare sends you, then run `./deploy.sh` again. |
 | `DAILY_QUERIES` | no | Questions a day for each user. Default 100. The admin has no limit. |
 | `ADMIN_NAME` | no | Account (email address) that can see costs. The oldest account with this name is the admin. |
 | `ACCESS_KEY`, `SESSION_SECRET` | created for you | The access key is used only without the waitlist. Change `SESSION_SECRET` to sign everyone out. |

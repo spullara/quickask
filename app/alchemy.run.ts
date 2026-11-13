@@ -22,6 +22,18 @@ const DOMAIN = process.env.QUICK_DOMAIN, ZONE = process.env.QUICK_ZONE_ID;
  */
 export const SENDER = DOMAIN && ZONE && process.env.WAITLIST !== "off" ? `login@${DOMAIN}` : undefined;
 const Sending = SENDER ? Cloudflare.Email.SendingSubdomain("Sending", { zoneId: ZONE!, name: DOMAIN! }) : undefined;
+/**
+ * A sending domain that can also receive mail looks legitimate to spam filters: Email Routing gives it MX and SPF records,
+ * and every address at the domain (login@, support@, dmarc@ ...) forwards to MAIL_FORWARD_TO. DMARC reports show how
+ * receivers judge the mail.
+ */
+const FORWARD = process.env.MAIL_FORWARD_TO;
+const Inbound = SENDER && FORWARD ? [
+  Cloudflare.Email.Routing("Routing", { zone: ZONE! }),
+  Cloudflare.Email.Address("ForwardTo", { email: FORWARD }),
+  Cloudflare.Email.CatchAll("CatchAll", { zone: ZONE!, actions: [{ type: "forward", value: [FORWARD] }] }),
+] : [];
+const Dmarc = SENDER ? Cloudflare.Email.DmarcReports("Dmarc", { zone: ZONE! }) : undefined;
 
 export const Worker = Cloudflare.Worker("Quick", {
   main: "./src/worker.ts",
@@ -62,6 +74,8 @@ export default Alchemy.Stack(
   { providers: Cloudflare.providers(), state: State.localState() },
   Effect.gen(function* () {
     if (Sending) yield* Sending;
+    for (const r of Inbound) yield* r;
+    if (Dmarc) yield* Dmarc;
     yield* CardWorker;
     const worker = yield* Worker;
     return { url: worker.url };

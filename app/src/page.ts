@@ -411,7 +411,7 @@ show(S.msgs);</script></body></html>`;
 }
 
 const page = (body: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}
-<title>QuickAsk</title><style>${CSS}</style></head><body><main class="home">${body}</main></body></html>`;
+<title>QuickAsk</title><meta name="description" content="QuickAsk: fast answers from the web, with sources and pictures."><style>${CSS}</style></head><body><main class="home">${body}</main></body></html>`;
 
 export const keyPage = (bad: boolean) => page(`${BRAND}<div id="log"></div>
 <form action="/" method="get"><textarea name="k" rows="1" placeholder="${bad ? "Wrong key. Try again" : "Access key"}"></textarea></form>

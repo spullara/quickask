@@ -471,7 +471,7 @@ export default {
     if (icon) return new Response(icon[0](), { headers: { "content-type": icon[1], "cache-control": "public, max-age=604800" } });
 
     // Share links are public: no access key, no account. The edge caches them for a minute, so a deleted link dies everywhere within a minute.
-    if (path === "/robots.txt") return new Response("User-agent: *\nAllow: /s/\nDisallow: /\n", { headers: { "content-type": "text/plain" } });
+    if (path === "/robots.txt") return new Response("User-agent: *\nAllow: /$\nAllow: /s/\nDisallow: /\n", { headers: { "content-type": "text/plain" } });
 
     // Share card for link previews (X, iMessage, Slack): rendered by the separate card Worker, cached at the edge.
     const cardPath = path.match(/^\/s\/(\w+)\/card\.png$/);
