@@ -21,6 +21,8 @@ export class Auth extends DurableObject<WorkerEnv> {
     if (!this.sql.exec("SELECT 1 FROM pragma_table_info('users') WHERE name = 'daily'").toArray().length) {
       this.sql.exec("ALTER TABLE users ADD COLUMN daily INTEGER");
     }
+    // The latest delivery result of the emails sent to each address (from Email Service events).
+    this.sql.exec("CREATE TABLE IF NOT EXISTS deliveries (email TEXT PRIMARY KEY, status TEXT, detail TEXT, subject TEXT, at INTEGER)");
     // Confirmed addresses waiting for an account. Rows are added only after the email link is opened.
     // Email links. Each one stays valid until it expires, so a newer email never breaks the link in an older one.
     this.sql.exec("CREATE TABLE IF NOT EXISTS links (hash TEXT PRIMARY KEY, email TEXT, expires INTEGER)");
@@ -105,6 +107,18 @@ export class Auth extends DurableObject<WorkerEnv> {
     this.sql.exec("DELETE FROM links WHERE email = ?", name);
     this.sql.exec("UPDATE waitlist SET status = 'joined' WHERE email = ?", name);
     this.sql.exec("INSERT INTO creds VALUES (?, ?, ?, ?, ?)", cred.id, userId, cred.publicKey, cred.counter, cred.transports);
+  }
+
+  /** Keep the newest delivery result per address. Returns false for an older, out-of-order event. */
+  recordDelivery(email: string, status: string, detail: string, subject: string, at: number) {
+    return this.sql.exec(`INSERT INTO deliveries VALUES (?, ?, ?, ?, ?) ON CONFLICT (email) DO UPDATE SET status = excluded.status,
+      detail = excluded.detail, subject = excluded.subject, at = excluded.at WHERE excluded.at >= deliveries.at`,
+      email, status, detail, subject, at).rowsWritten > 0;
+  }
+
+  deliveries(since: number) {
+    return this.sql.exec<{ email: string; status: string; detail: string; subject: string; at: number }>(
+      "SELECT email, status, detail, subject, at FROM deliveries WHERE at >= ? ORDER BY at DESC", since).toArray();
   }
 
   /** Another passkey for an existing account (a new domain's passkey after a move). */

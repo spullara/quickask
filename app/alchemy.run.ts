@@ -35,6 +35,9 @@ const Inbound = SENDER && FORWARD ? [
   Cloudflare.Email.Address("ForwardTo", { email: FORWARD }),
   Cloudflare.Email.CatchAll("CatchAll", { zone: ZONE!, actions: [{ type: "forward", value: [FORWARD] }] }),
 ] : [];
+/** Delivery results (delivered, deferred, bounced, ...) of the emails sent from DOMAIN, consumed by the Worker. */
+const EmailEvents = SENDER ? Cloudflare.Queues.Queue("EmailEvents", {}) : undefined;
+const EMAIL_EVENTS = ["message.delivered", "message.deferred", "message.bounced", "message.failed", "message.rejected", "message.complained"];
 const Dmarc = SENDER ? Cloudflare.Email.DmarcReports("Dmarc", { zone: ZONE! }) : undefined;
 
 export const Worker = Cloudflare.Worker("Quick", {
@@ -83,6 +86,13 @@ export default Alchemy.Stack(
     if (Dmarc) yield* Dmarc;
     yield* CardWorker;
     const worker = yield* Worker;
+    if (EmailEvents) {
+      const q = yield* EmailEvents;
+      yield* Cloudflare.Queues.Consumer("EmailEventsConsumer", { queueId: q.queueId, scriptName: worker.workerName });
+      yield* Cloudflare.Queues.Subscription("EmailEventsSub", {
+        source: { type: "email.sending", zoneId: ZONE!, domain: DOMAIN! }, events: EMAIL_EVENTS, queueId: q.queueId,
+      });
+    }
     return { url: worker.url };
   }),
 );

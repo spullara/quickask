@@ -159,6 +159,9 @@ checks.update(WAIT)
 carol = Browser(e2e=True)
 carol.json("/auth/waitlist", {"email": f"e2e-carol-{RUN}@example.com"})
 checks["resend_waits"] = "Wait 30 seconds" in carol.json("/auth/waitlist", {"email": f"e2e-carol-{RUN}@example.com"}).get("error", "")
+inv = ADMIN.json("/api/admin/invite", {"email": f"e2e-erin-{RUN}@example.com"}).get("link", "")
+erin = Browser()
+checks["invite_link_lets_in"] = erin.open(inv[len(BASE):]).getcode() == 302 and "Create passkey" in erin.text("/")
 checks["bad_link_refused"] = status(carol, f"/auth/confirm?e=e2e-carol-{RUN}%40example.com&t=wrong") == 400
 checks["name_must_be_email"] = Browser().json("/auth/waitlist", {"email": "not an email"}).get("error") == "Enter a valid email address."
 forged = Browser()

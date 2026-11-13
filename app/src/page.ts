@@ -382,8 +382,13 @@ const usd = (n: number) => "$" + (n < 1 ? n.toFixed(4) : n.toFixed(2));
 
 const ADMIN_JS = String.raw`
 const api=(a,b)=>fetch('/api/admin/'+a,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
+// Copy an invite link. The clipboard write starts inside the click (Safari), with the link still on its way.
+function invite(email,b){const t=b.textContent,link=api('invite',{email}).then(r=>{if(!r.link)throw new Error(r.error||'No link');return r.link});
+ const w=window.ClipboardItem&&navigator.clipboard.write?navigator.clipboard.write([new ClipboardItem({'text/plain':link.then(u=>new Blob([u],{type:'text/plain'}))})]).catch(()=>link.then(u=>navigator.clipboard.writeText(u))):link.then(u=>navigator.clipboard.writeText(u));
+ w.then(()=>{b.textContent='Copied'},()=>link.then(u=>{prompt('Copy this link',u)},e=>alert(e.message))).finally(()=>setTimeout(()=>b.textContent=t,2000))}
 function bind(){
-document.querySelectorAll('.wl button').forEach(b=>b.onclick=async()=>{const tr=b.closest('tr'),e=tr.dataset.e;b.disabled=true;
+const inv=document.getElementById('inv');if(inv)inv.onsubmit=e=>{e.preventDefault();const i=inv.querySelector('input');if(i.value.trim())invite(i.value.trim(),inv.querySelector('button'))};
+document.querySelectorAll('.wl button').forEach(b=>b.onclick=async()=>{const tr=b.closest('tr'),e=tr.dataset.e;if(b.dataset.a==='invite')return invite(e,b);b.disabled=true;
  const r=await api(b.dataset.a,{email:e});if(r.error&&!r.ok){alert(r.error);b.disabled=false;return}
  if(b.dataset.a==='remove')tr.remove();else{tr.cells[1].innerHTML='<span class="mute">'+(r.error?'approved, email failed':'approved, email sent')+'</span>';b.textContent='Resend';b.disabled=false}});
 const save=async(i,v)=>{const tr=i.closest('tr');const r=await api('limit',{email:tr.dataset.e,daily:v});if(r.error){alert(r.error);return}i.value=r.daily;i.defaultValue=r.daily};
@@ -410,11 +415,21 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 type Waiting = { email: string; status: string; created: number; approved: number | null };
 type UserRow = { email: string; created: number; daily: number | null; today: number; admin: boolean };
 
-export function adminPage(d: { today: Row; month: Row; byUser: Row[]; byDay: Row[]; names: Record<string, string>; waitlist: Waiting[] | null; users: UserRow[]; daily: number }) {
+type Delivery = { email: string; status: string; detail: string; subject: string; at: number };
+
+export function adminPage(d: { today: Row; month: Row; byUser: Row[]; byDay: Row[]; names: Record<string, string>; waitlist: Waiting[] | null; users: UserRow[]; daily: number; deliveries?: Delivery[] }) {
   const date = (t: number) => new Date(t).toISOString().slice(0, 10);
-  const waiting = d.waitlist === null ? "" : `<h2>Waitlist</h2>${d.waitlist.length ? `<table class="wl">${d.waitlist.map((w) =>
-    `<tr data-e="${esc(w.email)}"><td>${esc(w.email)}</td><td>${w.status === "approved" ? `<span class="mute">approved ${date(w.approved ?? w.created)}</span>` : `<span class="mute">${date(w.created)}</span>`}</td>
-<td><button data-a="approve">${w.status === "approved" ? "Resend" : "Approve"}</button><button data-a="remove">Remove</button></td></tr>`).join("")}</table>` : `<p class="note">Nobody is waiting.</p>`}`;
+  const when = (t: number) => new Date(t).toISOString().slice(5, 16).replace("T", " ");
+  // The last email to an address did not arrive (yet): deferred, bounced, failed, rejected or marked as spam.
+  const bad = new Map((d.deliveries ?? []).filter((x) => x.status !== "delivered").map((x) => [x.email, x]));
+  const mark = (e: string) => { const x = bad.get(e); return x ? ` <span class="bad" title="${esc(x.detail)}">email ${esc(x.status)}</span>` : ""; };
+  const invite = d.waitlist === null ? "" : `<form id="inv"><input type="email" placeholder="Email address" required><button>Copy invite link</button></form>`;
+  const problems = bad.size ? `<h2>Email problems</h2><p class="note">The last email to these addresses has not arrived. Send them an invite link yourself.</p><table class="wl">${
+    [...bad.values()].map((x) => `<tr data-e="${esc(x.email)}"><td>${esc(x.email)}<div class="mute small">${esc(x.subject)}</div></td><td><span class="bad">${esc(x.status)}</span> <span class="mute small" title="${esc(x.detail)}">${esc(x.detail.slice(0, 70))}</span><div class="mute small">${when(x.at)} UTC</div></td>
+<td><button data-a="invite">Copy link</button></td></tr>`).join("")}</table>` : "";
+  const waiting = d.waitlist === null ? "" : `<h2>Waitlist</h2>${invite}${d.waitlist.length ? `<table class="wl">${d.waitlist.map((w) =>
+    `<tr data-e="${esc(w.email)}"><td>${esc(w.email)}${mark(w.email)}</td><td>${w.status === "approved" ? `<span class="mute">approved ${date(w.approved ?? w.created)}</span>` : `<span class="mute">${date(w.created)}</span>`}</td>
+<td><button data-a="approve">${w.status === "approved" ? "Resend" : "Approve"}</button><button data-a="invite">Copy link</button><button data-a="remove">Remove</button></td></tr>`).join("")}</table>` : `<p class="note">Nobody is waiting.</p>`}${problems}`;
   const users = `<h2>Users</h2><p class="note">Questions a day, reset at midnight UTC. Default ${d.daily}.</p><table class="us"><tr><th>User</th><th>Today</th><th>Daily limit</th><th></th></tr>${
     d.users.map((u) => `<tr data-e="${esc(u.email)}"><td>${esc(u.email)}</td><td>${u.today}</td>${u.admin ? `<td class="mute">no limit</td><td></td>`
       : `<td><input type="number" min="0" value="${u.daily ?? d.daily}" data-d="${u.daily ?? ""}"></td><td><button data-a="boost">+100</button></td>`}</tr>`).join("")}</table>`;
@@ -431,7 +446,8 @@ table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:ta
 .admin button{font:inherit;font-size:13px;padding:4px 10px;margin-left:6px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer}
 .admin input{font:inherit;font-size:14px;width:6em;text-align:right;padding:3px 6px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--fg)}
 .admin input:hover,.admin input:focus{border-color:var(--line);outline:none}td input{margin-right:-7px}
-.wl td:first-child,.us td:first-child{overflow-wrap:anywhere}
+.wl td:first-child,.us td:first-child{overflow-wrap:anywhere}.bad{color:#dc2626;font-size:12px}.small{font-size:12px}
+#inv{display:flex;gap:8px;margin:0 0 12px;max-width:none;position:static;padding:0}#inv input{flex:1;max-width:320px;text-align:left;width:auto;border-color:var(--line)}#inv button{margin:0}
 tr.new td{animation:flash 2.4s ease-out}@keyframes flash{from{background:color-mix(in srgb,var(--fg) 10%,transparent)}to{background:transparent}}th{text-align:left;color:var(--mute);font-weight:500;font-size:13px}
 th,td{padding:6px 8px 6px 0}td+td,th+th{text-align:right}tr+tr td{border-top:1px solid var(--line)}
 </style></head><body style="display:block;overflow:auto"><main class="admin"><a class="back" href="/">← Quisk</a>

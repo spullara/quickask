@@ -699,9 +699,10 @@ export default {
       if (path === "/api/usage") return Response.json({ month: (await usage.totals(month))[0] });
       const since = new Date(Date.now() - 29 * 86400_000).toISOString().slice(0, 10);
       const auth = env.AUTH.get(env.AUTH.idFromName("auth"));
-      const [t, m, byUser, byDay, names, users, waiting, usedToday] = await Promise.all([
+      const [t, m, byUser, byDay, names, users, waiting, usedToday, sent] = await Promise.all([
         usage.totals(today), usage.totals(month), usage.totals(month, "user"), usage.totals(since, "day"),
         auth.names(), auth.users(), waitlist ? auth.waitlist() : [], usage.totals(today, "user"),
+        waitlist ? auth.deliveries(Date.now() - 14 * 86400_000) : [],
       ]);
       const used = Object.fromEntries(usedToday.map((r) => [r.user ?? "", r.searches]));
       // Test accounts are left out of the lists (their costs still count in the totals).
@@ -710,6 +711,7 @@ export default {
         today: t[0]!, month: m[0]!, byUser: rollUpTests(byUser, (r) => isTest(names[r.user ?? ""] ?? "")), byDay,
         names: { ...names, [TESTS]: "Test accounts" },
         waitlist: waitlist ? waiting.filter((w) => !isTest(w.email)) : null, daily: Number(env.DAILY_QUERIES) || 100,
+        deliveries: sent.filter((d) => !isTest(d.email)),
         users: users.filter((u) => !isTest(u.name)).map((u) => ({ email: u.name, created: u.created, daily: u.daily, today: used[u.id] ?? 0, admin: u.id === adminId })),
       }), { headers });
     }
@@ -784,4 +786,27 @@ export default {
     }
     return new Response("Not found", { status: 404 });
   },
+
+  /** Email Service delivery events: the latest result per address, shown on /admin. */
+  async queue(batch: MessageBatch<EmailEvent>, env: WorkerEnv) {
+    const auth = env.AUTH.get(env.AUTH.idFromName("auth"));
+    let changed = false;
+    for (const m of batch.messages) {
+      const p = m.body?.payload;
+      if (p?.recipient) {
+        const status = p.delivery?.status ?? m.body.type?.split(".").pop() ?? "unknown";
+        const detail = p.bounce?.reason ?? p.delivery?.smtpResponse ?? "";
+        const at = Date.parse(m.body.metadata?.eventTimestamp ?? "") || Date.now();
+        if ((await auth.recordDelivery(p.recipient.toLowerCase(), status, detail.slice(0, 300), (p.subject ?? "").slice(0, 120), at)) && status !== "delivered") changed = true;
+      }
+      m.ack();
+    }
+    if (changed) await (await import("./waitlist.ts")).notifyAdmin(env);
+  },
+};
+
+type EmailEvent = {
+  type?: string;
+  payload?: { recipient?: string; subject?: string; delivery?: { status?: string; smtpResponse?: string }; bounce?: { reason?: string } };
+  metadata?: { eventTimestamp?: string };
 };

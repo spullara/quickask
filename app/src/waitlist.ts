@@ -175,6 +175,13 @@ export async function adminRoute(req: Request, env: WorkerEnv, url: URL): Promis
       }
       return json({ ok: true });
     }
+    case "/api/admin/invite": {
+      // A link the admin sends by hand (when email does not get through). It approves the address; no email is sent.
+      await auth.join(email, true);
+      const { url: href, hash } = await link(env, url.origin, email);
+      await auth.forceToken(email, hash, 7 * DAY);
+      return json({ ok: true, link: href });
+    }
     case "/api/admin/remove":
       await auth.unlist(email);
       return json({ ok: true });
