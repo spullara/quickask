@@ -1,16 +1,13 @@
 import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 
-/**
- * Answer models, with list prices in USD per token (thinking tokens bill as output).
- * Gemini 4 Carbon is at its introductory price; Google says it rises to $4/$20 per million later.
- */
+/** The answer model, with list prices in USD per token (thinking tokens bill as output). */
 export const MODELS = {
   lite: { id: "gemini-3.5-flash-lite", thinking: "minimal", name: "Gemini 3.5 Flash Lite", in: 0.3 / 1e6, out: 2.5 / 1e6 },
-  carbon: { id: "gemini-4-carbon", thinking: "low", name: "Gemini 4 Carbon", in: 2 / 1e6, out: 10 / 1e6 },
 } as const;
 export type ModelKey = keyof typeof MODELS;
-export const modelKey = (m: unknown): ModelKey => (m === "carbon" ? "carbon" : "lite");
+/** Older chats may name a model that is gone; every answer now uses Flash Lite. */
+export const modelKey = (_m?: unknown): ModelKey => "lite";
 
 const LITE_IN = MODELS.lite.in, LITE_OUT = MODELS.lite.out;
 

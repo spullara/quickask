@@ -21,9 +21,8 @@ with sources and, when they help, pictures.
 - Follow-up questions keep the previous answer's search results in context. The model searches again (as a tool)
   only when it needs new facts, and new results are numbered after the earlier ones.
 - Each answer ends with three suggested follow-up questions you can tap. Plain URLs and domains in answers are links.
-- A faint ⋯ under each answer opens a menu: the raw search results, copy the answer, rerun just that answer with
-  the other model, or share just that answer.
-- A chat can switch to Gemini 4 Carbon: the last answer is rerun with it, and follow-ups use it. New searches always start on Flash Lite.
+- A faint ⋯ under each answer opens a menu: the raw search results, copy the answer, rerun that answer, or share
+  just that answer.
 - Exa calls are limited to 10 per second (Cloudflare Rate Limiting, counted per location). Over the limit, a search
   waits up to 3 s, then the model answers without search results.
 - The admin sees live costs in the sidebar. `/admin` has the waitlist, daily limits, and costs by user and day.

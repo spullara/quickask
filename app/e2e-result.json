@@ -3,53 +3,53 @@
  "runs": [
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.133,
-   "first_token": 1.159,
-   "total": 1.319,
+   "ttfb": 0.167,
+   "first_token": 1.073,
+   "total": 1.187,
    "inline_images": 1
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.061,
-   "first_token": 0.99,
-   "total": 1.728,
+   "ttfb": 0.054,
+   "first_token": 0.736,
+   "total": 1.304,
    "inline_images": 1
   },
   {
    "q": "how old was the ceo of amd when nvidia was founded",
-   "ttfb": 0.089,
-   "first_token": 0.949,
-   "total": 1.355,
+   "ttfb": 0.061,
+   "first_token": 0.893,
+   "total": 1.209,
    "inline_images": 0
   },
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.074,
-   "first_token": 0.614,
-   "total": 0.741,
+   "ttfb": 0.057,
+   "first_token": 0.718,
+   "total": 0.844,
    "inline_images": 1
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.086,
-   "first_token": 0.82,
-   "total": 1.237,
+   "ttfb": 0.055,
+   "first_token": 0.583,
+   "total": 1.048,
    "inline_images": 1
   },
   {
    "q": "how old was the ceo of amd when nvidia was founded",
-   "ttfb": 0.066,
-   "first_token": 0.818,
-   "total": 1.158,
+   "ttfb": 0.065,
+   "first_token": 0.84,
+   "total": 1.192,
    "inline_images": 0
   }
  ],
  "avg": {
-  "ttfb": 0.085,
-  "first_token": 0.892,
-  "total": 1.256
+  "ttfb": 0.076,
+  "first_token": 0.807,
+  "total": 1.131
  },
- "followup_first_token": 1.943,
+ "followup_first_token": 1.743,
  "checks": {
   "public_page_offers_waitlist": true,
   "register_passkey": true,
@@ -73,7 +73,7 @@
   "unknown_passkey_rejected": true,
   "answer_streams": true,
   "images_for_visual_query": true,
-  "multi_step_answer_leads_with_23": true,
+  "multi_step_answer_leads_with_23": false,
   "no_images_for_plain_fact": true,
   "nav_query_leads_with_link": true,
   "plain_question_no_link": true,
@@ -101,8 +101,8 @@
   "delete_one_link": true,
   "share_needs_account": true,
   "unknown_share_404": true,
-  "model_rerun_answers": true,
-  "model_rerun_replaces_answer": true,
+  "rerun_answers": true,
+  "rerun_replaces_answer": true,
   "logout": true,
   "opensearch_inline": true,
   "delete": true,

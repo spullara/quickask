@@ -153,13 +153,13 @@ function add(c,html){const d=document.createElement('div');d.className=c;d.inner
 const JS = `
 const ta=$('textarea'),side=$('#list');
 let cur=null,raf=0;
-function start(el){if(el){el.classList.add('wait');el.innerHTML='';cur={el,buf:'',imgs:[]}}else cur={el:add('m wait',''),buf:'',imgs:[]};cur.model=S.model}
+function start(el){if(el){el.classList.add('wait');el.innerHTML='';cur={el,buf:'',imgs:[]}}else cur={el:add('m wait',''),buf:'',imgs:[]}}
 function paint(){raf=0;cur.el.innerHTML=(noSearch(cur.res)?NOSEARCH:'')+md(cutF(cur.buf).replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs,cur.src)}
 const main=$('main');let nearEnd=true;main.addEventListener('scroll',()=>{nearEnd=main.scrollHeight-main.scrollTop-main.clientHeight<80});
 new ResizeObserver(()=>{if(nearEnd)main.scrollTop=main.scrollHeight}).observe(log);
 function T(t){cur.buf+=t;if(!raf)raf=requestAnimationFrame(paint)}
 function D(s){cur.src=s;cur.buf=cutF(cur.buf).trim();paint();cur.el.classList.remove('wait');
- const m={role:'model',followups:cur.fups||[],text:cur.buf,sources:s,images:cur.imgs,results:cur.res||[],model:cur.model},at=cur.at;
+ const m={role:'model',followups:cur.fups||[],text:cur.buf,sources:s,images:cur.imgs,results:cur.res||[],model:'lite'},at=cur.at;
  if(at!=null)S.msgs[at]=m;else S.msgs.push(m);note(cur.el,m);acts(cur.el,at!=null?at:S.msgs.length-1);cur=null;busy=false;chips()}
 function R(r){cur.res=r}
 // Label an answer given without search results (search failed, timed out or was rate limited): it is model memory only.
@@ -227,13 +227,10 @@ if(S.streaming){busy=true;start();history.replaceState(null,'','/c/'+S.id)}
 // This page's id, so live updates it caused itself are skipped.
 const CID=Math.random().toString(36).slice(2);
 async function ask(q){if(busy)return;busy=true;log.querySelectorAll('.fups').forEach(e=>e.remove());S.msgs.push({role:'user',text:q});add('u',E1(q));run()}
-// Rerun the last question (after a model switch): drop the old answer and answer again.
-function rerun(){if(busy)return;let i=S.msgs.length-1;while(i>=0&&S.msgs[i].role!=='user')i--;if(i<0)return;
- S.msgs=S.msgs.slice(0,i+1);const us=log.querySelectorAll('.u'),lu=us[us.length-1];while(lu&&lu.nextSibling)lu.nextSibling.remove();busy=true;run()}
-// o.el/o.at: answer again in place of that answer (o.model for this answer only); otherwise answer the last question.
-async function run(o={}){start(o.el);if(o.model)cur.model=o.model;cur.at=o.at;if(!o.el)main.scrollTop=main.scrollHeight;
+// o.el/o.at: answer again in place of that answer; otherwise answer the last question.
+async function run(o={}){start(o.el);cur.at=o.at;if(!o.el)main.scrollTop=main.scrollHeight;
  const hist=(o.at!=null?S.msgs.slice(0,o.at):S.msgs).map(({role,text})=>({role,text}));
- try{const r=await fetch('/api/chats/'+S.id,{method:'POST',body:JSON.stringify({title:S.title,msgs:hist,model:cur.model,cid:CID,replace:o.at!=null})});
+ try{const r=await fetch('/api/chats/'+S.id,{method:'POST',body:JSON.stringify({title:S.title,msgs:hist,cid:CID,replace:o.at!=null})});
   if(!r.ok)throw new Error('HTTP '+r.status);
   const rd=r.body.pipeThrough(new TextDecoderStream()).getReader();let buf='';
   for(;;){const {value,done}=await rd.read();if(done)break;buf+=value;const parts=buf.split('\\u0000');buf=parts.pop();
@@ -253,7 +250,7 @@ U();
 function fresh(){document.body.classList.remove('open');
  if(!S.id){ta.value='';fit();ta.focus();return}
  if(cur){location.href='/';return}
- S.id=null;S.msgs=[];S.title='QuickAsk';S.model='lite';S.shares=[];log.innerHTML='';main.classList.add('home');
+ S.id=null;S.msgs=[];S.title='QuickAsk';S.shares=[];log.innerHTML='';main.classList.add('home');
  const x=$('#shx');if(x)x.remove();side.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));
  document.title='QuickAsk';ta.placeholder='Ask anything';ta.value='';fit();history.pushState(null,'','/');ta.focus()}
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='k'){e.preventDefault();fresh()}});
@@ -266,7 +263,7 @@ $('#zm').onclick=e=>{const b=e.target.closest('button');if(!b)return;let i=ZOOMS
  document.documentElement.style.setProperty('--chat',15*z+'px');toast('Text '+Math.round(z*100)+'%')};
 // Another window added to this chat: load the saved copy and redraw it.
 function sync(){const id=S.id;fetch('/api/chats/'+id).then(r=>r.ok?r.json():null).then(c=>{if(!c||S.id!==id||busy)return;
- S.title=c.title;S.model=c.model;ML();show(c.msgs);S.msgs=c.msgs},()=>{})}
+ S.title=c.title;show(c.msgs);S.msgs=c.msgs},()=>{})}
 // Live sidebar: the server pushes the chat list when any tab or device changes it.
 let live=null;function connect(){if(live&&live.readyState<2)return;live=new WebSocket(location.origin.replace(/^http/,'ws')+'/api/live');
  live.onmessage=e=>{try{const m=JSON.parse(e.data);
@@ -279,10 +276,6 @@ if(document.readyState==='complete')connect();else addEventListener('load',conne
 setInterval(()=>{if(live&&live.readyState===1)live.send('ping')},50000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')connect()});
 if(!/Mac|iPhone|iPad/.test(navigator.platform))$('.new kbd').textContent='Ctrl K';
-// Model switch: rerun the last answer with Gemini 4 Carbon; follow-ups in this chat then use it. Click again to go back.
-const mdl=$('#mdl');function ML(){if(!mdl)return;const c=S.model==='carbon';mdl.classList.toggle('on',c);mdl.textContent=(c?'✓ ':'')+'Gemini 4 Carbon';
- mdl.title=c?'Answering with Gemini 4 Carbon. Click to go back to Flash Lite and rerun.':'Rerun with Gemini 4 Carbon and use it for follow-ups'}
-ML();if(mdl)mdl.onclick=()=>{if(busy)return;S.model=S.model==='carbon'?'lite':'carbon';ML();rerun()};
 // Make a share link and copy it. body.at shares a single answer.
 function copyShare(body,show){const made=fetch('/api/chats/'+S.id+'/share',{method:'POST',body:JSON.stringify(body)}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()});
  made.then(j=>{S.shares.unshift({id:j.id,created:j.created});SL()},()=>{});
@@ -296,7 +289,7 @@ const sheet=document.createElement('div');sheet.id='sheet';sheet.hidden=true;doc
 log.addEventListener('click',e=>{const b=e.target.closest('.acts button');if(!b)return;e.stopPropagation();
  const i=+b.parentNode.dataset.i,m=S.msgs[i];if(!m)return;menuI=i;
  menu.innerHTML='<button data-a="res"'+(m.results&&m.results.length?'':' disabled')+'>Search results</button><button data-a="copy">Copy answer</button>'
-  +'<button data-a="rerun"'+(busy?' disabled':'')+'>Rerun with '+(m.model==='carbon'?'Flash Lite':'Gemini 4 Carbon')+'</button><button data-a="share">Share this answer</button>';
+  +'<button data-a="rerun"'+(busy?' disabled':'')+'>Rerun</button><button data-a="share">Share this answer</button>';
  menu.hidden=false;const r=b.getBoundingClientRect(),w=menu.offsetWidth,h=menu.offsetHeight;
  menu.style.left=Math.max(8,Math.min(r.left,innerWidth-w-8))+'px';menu.style.top=(r.bottom+h+8>innerHeight?r.top-h-4:r.bottom+4)+'px'});
 document.addEventListener('click',e=>{if(!menu.hidden&&!menu.contains(e.target))menu.hidden=true});
@@ -306,7 +299,7 @@ menu.onclick=e=>{const a=e.target.dataset&&e.target.dataset.a;if(!a||e.target.di
  if(a==='res'){sheet.innerHTML='<div class="sh-in"><div class="sh-hd"><b>Search results</b><button aria-label="Close">×</button></div>'+m.results.map(x=>'<div class="r"><a href="'+E1(x.url)+'" target="_blank" rel="noopener">'
   +E1(x.title||x.url)+'</a><span>'+E1(x.url.split('/')[2].replace(/^www\\./,'')+(x.date?' · '+x.date:''))+'</span><p>'+E1(x.text)+'</p></div>').join('')+'</div>';sheet.hidden=false}
  if(a==='copy')navigator.clipboard.writeText(m.text.replace(/^\\s*!\\[[^\\]]*\\]\\([^)]*\\)\\s*$/gm,'').replace(/\\s*\\[\\d+(?:,\\s*\\d+)*\\]/g,'').replace(/\\n{3,}/g,'\\n\\n').trim()).then(()=>toast('Copied'),()=>toast('Could not copy'));
- if(a==='rerun'&&!busy){const el=log.querySelector('.acts[data-i="'+i+'"]').previousElementSibling;busy=true;run({el,at:i,model:m.model==='carbon'?'lite':'carbon'})}
+ if(a==='rerun'&&!busy){const el=log.querySelector('.acts[data-i="'+i+'"]').previousElementSibling;busy=true;run({el,at:i})}
  if(a==='share')copyShare({n:S.msgs.length,at:i},toast)};
 sheet.onclick=e=>{if(e.target===sheet||e.target.closest('.sh-hd button'))sheet.hidden=true};
 const shx=$('#shx'),sh=$('#sh'),sl=$('#sl'),sp=$('#sp'),shareUrl=id=>location.origin+'/s/'+id;
@@ -324,7 +317,7 @@ if(sh){SL();
 `;
 
 export function shell(o: { id: string | null; title: string; msgs: Msg[]; streaming: boolean; user: { u: string; n: string }; shares?: ShareRef[]; model?: string }) {
-  const state = { id: o.id, title: o.title, msgs: o.msgs, streaming: o.streaming, uid: o.user.u, shares: o.shares ?? [], model: o.model ?? "lite" };
+  const state = { id: o.id, title: o.title, msgs: o.msgs, streaming: o.streaming, uid: o.user.u, shares: o.shares ?? [] };
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}${TEXT_SIZE}
 <title>${esc(o.title)}</title>
@@ -337,7 +330,7 @@ export function shell(o: { id: string | null; title: string; msgs: Msg[]; stream
 <div class="me"><span>${esc(o.user.n)}</span><a href="/auth/logout">Sign out</a></div></footer></nav>
 <main class="${o.id ? "" : "home"}"><div id="brand" class="brand">${mark(44)}<span>QuickAsk</span></div><div id="log"></div>
 <form action="/" method="get"><textarea name="q" rows="1" placeholder="${o.id ? "Ask a follow-up" : "Ask anything"}" autocomplete="off"></textarea></form><p id="tag">I feel the need, the need for speed!</p></main>
-${o.id ? '<div id="shx"><button id="sl" hidden></button><button id="mdl"></button><button id="sh">Share</button><div id="sp" hidden></div></div>' : ""}
+${o.id ? '<div id="shx"><button id="sl" hidden></button><button id="sh">Share</button><div id="sp" hidden></div></div>' : ""}
 <script>const S=${json(state)};${RENDER}${JS}</script>
 `;
 }

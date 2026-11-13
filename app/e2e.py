@@ -1,5 +1,5 @@
 """E2E check of the deployed app with a software passkey authenticator.
-Usage: python3 -I e2e.py <url> <access_key>. Set CARBON=1 to also test Gemini 4 Carbon. Writes e2e-result.json. Exit code 0 when every check passes."""
+Usage: python3 -I e2e.py <url> <access_key>. Writes e2e-result.json. Exit code 0 when every check passes."""
 import base64, hashlib, json, os, re, ssl, statistics, sys, time, urllib.error, urllib.request
 from urllib.parse import quote
 import urllib.parse
@@ -100,8 +100,6 @@ class Browser:
 
 
 WAIT, ADMIN = {}, Browser(e2e=True)
-# Reruns use Flash Lite unless CARBON=1: Gemini 4 Carbon is slow and sometimes stalls, so it is tested only on request.
-RERUN = "carbon" if os.environ.get("CARBON") == "1" else "lite"
 
 
 def status(b, path):
@@ -258,13 +256,12 @@ st = chat_state(chat_id)
 first_answer = st["msgs"][1]
 checks["followups_saved_not_shown"] = len(first_answer.get("followups") or []) == 3 and ":::" not in first_answer["text"] and "<script>F(" in bridge
 checks["answers_keep_results_and_model"] = all(m.get("results") and m.get("model") == "lite" for m in st["msgs"] if m["role"] == "model")
-# Rerun only the first answer with Carbon: it is replaced in place, later turns and the chat's model stay.
+# Rerun only the first answer: it is replaced in place, later turns stay.
 later = st["msgs"][3]["text"]
-alice.open(f"/api/chats/{chat_id}", {"title": "x", "msgs": st["msgs"][:1], "model": RERUN, "cid": "e2e", "replace": True}, "POST").read()
+alice.open(f"/api/chats/{chat_id}", {"title": "x", "msgs": st["msgs"][:1], "cid": "e2e", "replace": True}, "POST").read()
 time.sleep(1.5)
 st2 = chat_state(chat_id)
-checks["rerun_one_answer_in_place"] = (len(st2["msgs"]) == 4 and st2["msgs"][1]["model"] == RERUN and st2["msgs"][3]["text"] == later
-                                       and st2["model"] == "lite")
+checks["rerun_one_answer_in_place"] = len(st2["msgs"]) == 4 and st2["msgs"][3]["text"] == later and st2["msgs"][1]["role"] == "model"
 one = alice.json(f"/api/chats/{chat_id}/share", {"n": 4, "at": 3})
 one_page = Browser(access_key=False).text("/s/" + one["id"])
 checks["share_one_answer"] = one_page.count('"role":"user"') == 1 and "how long is it?" in one_page and '"results"' not in one_page
@@ -297,19 +294,16 @@ try:
 except urllib.error.HTTPError as e:
     checks["unknown_share_404"] = e.code == 404
 
-# Switch a chat to Gemini 4 Carbon: rerun replaces the last answer, and the chat remembers the model.
+# Rerun the only question: the new answer replaces the old one.
 small = search(alice, "what is the capital of australia")[3]
 small_id = re.search(r'"id":"(\w+)"', small).group(1)
 time.sleep(1.5)
-t = time.perf_counter()
 rerun = alice.open(f"/api/chats/{small_id}", {"title": "capital", "msgs": [{"role": "user", "text": "what is the capital of australia"}],
-                                               "model": RERUN, "cid": "e2e"}, "POST").read().decode()
-carbon_s = time.perf_counter() - t
+                                               "cid": "e2e"}, "POST").read().decode()
 time.sleep(1.5)
 saved = alice.text(f"/c/{small_id}")
-checks["model_rerun_answers"] = "canberra" in rerun.lower() and "\u0000D" in rerun
-checks["model_rerun_replaces_answer"] = f'"model":"{RERUN}"' in saved and saved.count('"role":"model"') == 1
-print(RERUN, "rerun took", round(carbon_s, 1), "s")
+checks["rerun_answers"] = "canberra" in rerun.lower() and "\u0000D" in rerun
+checks["rerun_replaces_answer"] = saved.count('"role":"model"') == 1
 
 out = Browser()
 out.cookies = dict(alice.cookies)

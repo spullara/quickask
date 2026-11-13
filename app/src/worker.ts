@@ -725,7 +725,7 @@ export default {
       // question to answer), so no storage read is on the critical path. model is the chat's chosen model.
       // replace: answer again in place of the answer that follows these messages, keeping later turns and the chat's model.
       const body = (await req.json()) as { title: string; msgs: Msg[]; model?: string; cid?: string; replace?: boolean };
-      const model = modelKey(body.model);
+      const model: ModelKey = "lite";
       const n = body.msgs.length;
       // A follow-up (an earlier answer exists, not a rerun in place) searches only if the model asks to. The first
       // question and reruns search first, as a new chat does.
