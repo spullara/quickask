@@ -3,61 +3,66 @@
  "runs": [
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.049,
-   "first_token": 0.799,
-   "total": 0.902,
+   "ttfb": 0.054,
+   "first_token": 1.076,
+   "total": 1.272,
    "inline_images": 1
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.11,
-   "first_token": 1.535,
-   "total": 2.05,
+   "ttfb": 0.065,
+   "first_token": 0.646,
+   "total": 1.235,
    "inline_images": 1
   },
   {
    "q": "how old was the ceo of amd when nvidia was founded",
-   "ttfb": 0.052,
-   "first_token": 1.006,
-   "total": 1.32,
+   "ttfb": 0.129,
+   "first_token": 0.859,
+   "total": 1.152,
    "inline_images": 0
   },
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.081,
-   "first_token": 1.195,
-   "total": 1.321,
+   "ttfb": 0.073,
+   "first_token": 0.834,
+   "total": 0.963,
    "inline_images": 1
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.136,
-   "first_token": 0.961,
-   "total": 1.542,
+   "ttfb": 0.177,
+   "first_token": 0.916,
+   "total": 1.411,
    "inline_images": 1
   },
   {
    "q": "how old was the ceo of amd when nvidia was founded",
-   "ttfb": 0.046,
-   "first_token": 0.942,
-   "total": 1.254,
+   "ttfb": 0.058,
+   "first_token": 0.77,
+   "total": 6.554,
    "inline_images": 0
   }
  ],
  "avg": {
-  "ttfb": 0.079,
-  "first_token": 1.073,
-  "total": 1.398
+  "ttfb": 0.093,
+  "first_token": 0.85,
+  "total": 2.098
  },
- "followup_first_token": 0.971,
+ "followup_first_token": 0.564,
  "checks": {
-  "no_access_key_is_401": true,
-  "access_key_shows_passkey_page": true,
+  "public_page_offers_waitlist": true,
   "register_passkey": true,
+  "early_signup_refused": true,
+  "link_puts_on_waitlist": true,
+  "waiting_cannot_register": true,
+  "approved_sees_create": true,
   "email_must_be_unique": true,
-  "wrong_code_rejected": true,
-  "code_resend_waits": true,
+  "resend_waits": true,
+  "bad_link_refused": true,
   "name_must_be_email": true,
+  "other_signed_cookie_is_not_a_session": true,
+  "admin_api_hidden_from_users": true,
   "usage_hidden_from_users": true,
   "login_with_passkey": true,
   "login_twice_counter_ok": true,
@@ -72,6 +77,8 @@
   "plain_question_no_link": true,
   "chat_in_own_sidebar": true,
   "chat_not_in_other_sidebar": true,
+  "daily_limit_stops_questions": true,
+  "limit_restored": true,
   "search_by_title_prefix": true,
   "search_by_answer_word": true,
   "search_only_own_chats": true,

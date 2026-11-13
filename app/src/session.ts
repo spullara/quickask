@@ -36,4 +36,6 @@ export const setCookie = (name: string, value: string, maxAge: number) =>
   `${name}=${value}; Path=/; Max-Age=${maxAge}; Secure; HttpOnly; SameSite=Lax`;
 
 /** Pure HMAC check, no storage read, so it adds well under a millisecond to every request. */
-export const session = (req: Request, env: WorkerEnv) => unsign<Session>(env.SESSION_SECRET, cookie(req, "s"));
+/** Other signed cookies (ceremony, waitlist) must never pass as a session, so the fields are checked too. */
+export const session = (req: Request, env: WorkerEnv) =>
+  unsign<Session>(env.SESSION_SECRET, cookie(req, "s")).then((v) => (typeof v?.u === "string" && typeof v.n === "string" ? v : null));

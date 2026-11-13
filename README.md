@@ -11,8 +11,10 @@ with sources and, when they help, pictures.
 - Each search is a chat. Previous chats are in the sidebar, one history per account.
 - The sidebar updates live across tabs and devices over a hibernating WebSocket.
 - Search your chats from the sidebar (keywords across titles and messages, SQLite FTS5); the list loads 50 at a time as you scroll.
-- Passkey accounts, behind a shared access key. With a custom domain, sign-up confirms the email address with a
-  6-digit code sent by Cloudflare Email Service.
+- Passkey accounts with a waitlist. People join with their email address and confirm it with a link (sent by
+  Cloudflare Email Service). The admin approves them on `/admin`, and they get a link to create a passkey.
+  Without a custom domain, a shared access key gates the app and anyone with it can sign up.
+- Each user can ask 100 questions a day. The admin can change the limit for each user on `/admin`.
 - Read-only share links that anyone can open, with no account. Links show a rich preview card on X, iMessage and Slack.
 - Press ⌘K (Ctrl K) for a new search.
 - Answers know your approximate city and local time (from Cloudflare), so local questions like the weather work.
@@ -22,7 +24,7 @@ with sources and, when they help, pictures.
 - A chat can switch to Gemini 4 Carbon: the last answer is rerun with it, and follow-ups use it. New searches always start on Flash Lite.
 - Exa calls are limited to 10 per second (Cloudflare Rate Limiting, counted per location). Over the limit, a search
   waits up to 3 s, then the model answers without search results.
-- The admin sees live costs in the sidebar and a breakdown by user and day at `/admin`.
+- The admin sees live costs in the sidebar. `/admin` has the waitlist, daily limits, and costs by user and day.
 
 ## How it stays fast
 
@@ -115,11 +117,13 @@ Passkeys are tied to a hostname. Pick the domain before people create accounts.
 3. Run `./deploy.sh` again. Your app is now at `https://example.com`. The
    `workers.dev` address keeps working.
 
-The deploy also turns on Cloudflare Email Sending for the domain and sends sign-up codes from
-`login@<domain>`. This needs the Workers Paid plan, and the token needs **Zone → Email Sending: Edit**
-(or create the sender in the dashboard: **Compute → Email Service → Email Sending → Onboard Domain**).
-Without a custom domain, sign-up asks for no code. To turn codes off, add `EMAIL_CODES=off` to `app/.env` and run
-`./deploy.sh` again.
+With a custom domain, the deploy turns on Cloudflare Email Sending for it and the app uses a waitlist in place of
+the access key. Emails come from `login@<domain>`. This needs the Workers Paid plan, and the token needs
+**Zone → Email Sending: Edit** (or create the sender in the dashboard: **Compute → Email Service → Email Sending →
+Onboard Domain**).
+
+Set `ADMIN_NAME` to your email address, then join the waitlist with it: the admin's address is approved at once.
+To keep the access key and open sign-up instead, add `WAITLIST=off` to `app/.env` and run `./deploy.sh` again.
 
 ### Add it to your browser
 
@@ -142,9 +146,10 @@ Without a custom domain, sign-up asks for no code. To turn codes off, add `EMAIL
 | `EXA_API_KEY` | yes | Web search and images. |
 | `CLOUDFLARE_ACCOUNT_ID` | no | Needed only when the token can see more than one account. |
 | `QUICK_DOMAIN` | no | Custom domain, for example `ask.example.com`. |
-| `EMAIL_CODES` | no | `off` turns off email codes at sign-up (passkey only). On by default with a custom domain. |
+| `WAITLIST` | no | `off` uses the access key and open sign-up even with a custom domain. |
+| `DAILY_QUERIES` | no | Questions a day for each user. Default 100. The admin has no limit. |
 | `ADMIN_NAME` | no | Account (email address) that can see costs. The oldest account with this name is the admin. |
-| `ACCESS_KEY`, `SESSION_SECRET` | created for you | Change `SESSION_SECRET` to sign everyone out. |
+| `ACCESS_KEY`, `SESSION_SECRET` | created for you | The access key is used only without the waitlist. Change `SESSION_SECRET` to sign everyone out. |
 
 ### Keep `app/.alchemy/`
 
@@ -169,8 +174,8 @@ python3 -m pip install cryptography
 python3 e2e.py https://<your app> "$(grep ^ACCESS_KEY= .env | cut -d= -f2)"
 ```
 
-It reads `SESSION_SECRET` from `app/.env` to get sign-up codes for its `@example.com` accounts without email.
-It checks the access gate, email codes, passkey sign-up and sign-in, streaming, images, separate
+It reads `SESSION_SECRET` from `app/.env`. With it, the test gets the email links for its `@example.com` accounts in
+the replies and approves them as the admin. It checks the waitlist, approval, daily limits, passkey sign-up and sign-in, streaming, images, separate
 histories per account, follow-ups, share links and deletes. It writes `e2e-result.json`.
 Each run creates two test accounts (`e2e-alice-<random>@example.com`, `e2e-bob-<random>@example.com`).
 
@@ -185,7 +190,8 @@ app/
   src/page.ts        HTML, CSS and browser JavaScript (no build step, no framework)
   src/session.ts     signed session cookies
   src/auth.ts        passkey routes (loaded on demand)
-  src/auth-store.ts  users and passkeys
+  src/auth-store.ts  users, passkeys and the waitlist
+  src/waitlist.ts    waitlist emails and admin actions (loaded on demand)
   src/usage.ts       cost ledger and model prices
   src/icons.ts       favicons, generated by icons/build.sh from icons/logo.svg
   src/card.ts        share preview image (separate Worker, so its WebAssembly stays off the search path)

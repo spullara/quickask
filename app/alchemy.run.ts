@@ -17,10 +17,10 @@ export const CardWorker = Cloudflare.Worker("QuickCard", {
 
 const DOMAIN = process.env.QUICK_DOMAIN, ZONE = process.env.QUICK_ZONE_ID;
 /**
- * Sign-up codes come from this address. Only with a custom domain on Cloudflare DNS (Email Service needs the zone),
- * and not when EMAIL_CODES=off.
+ * Waitlist emails come from this address. Only with a custom domain on Cloudflare DNS (Email Service needs the zone),
+ * and not when WAITLIST=off. Without it, the app uses the shared access key and open passkey sign-up instead.
  */
-export const SENDER = DOMAIN && ZONE && process.env.EMAIL_CODES !== "off" ? `login@${DOMAIN}` : undefined;
+export const SENDER = DOMAIN && ZONE && process.env.WAITLIST !== "off" ? `login@${DOMAIN}` : undefined;
 const Sending = SENDER ? Cloudflare.Email.SendingSubdomain("Sending", { zoneId: ZONE!, name: DOMAIN! }) : undefined;
 
 export const Worker = Cloudflare.Worker("Quick", {
@@ -38,7 +38,7 @@ export const Worker = Cloudflare.Worker("Quick", {
     USAGE: Cloudflare.DurableObject<Usage>("Usage", { className: "Usage" }),
     // Exa allows 10 searches a second. Counted in each Cloudflare location, so it needs no long-distance call.
     EXA_LIMIT: Cloudflare.RateLimit("EXA_LIMIT", { namespaceId: 2001, simple: { limit: 100, period: 10 } }),
-    // Sign-up codes, at most 5 a minute from one IP address.
+    // Waitlist emails, at most 5 a minute from one IP address.
     EMAIL_LIMIT: Cloudflare.RateLimit("EMAIL_LIMIT", { namespaceId: 2002, simple: { limit: 5, period: 60 } }),
     ...(SENDER ? { EMAIL: Cloudflare.Email.SendEmail("EMAIL", { allowedSenderAddresses: [SENDER] }) } : {}),
     SENDER: SENDER ?? "",
@@ -47,11 +47,13 @@ export const Worker = Cloudflare.Worker("Quick", {
     ACCESS_KEY: Config.Redacted("ACCESS_KEY"),
     SESSION_SECRET: Config.Redacted("SESSION_SECRET"),
     ADMIN_NAME: Config.String("ADMIN_NAME").pipe(Config.withDefault("")),
+    // Questions a day for each user (the admin has no limit). The admin can change it per user on /admin.
+    DAILY_QUERIES: Config.String("DAILY_QUERIES").pipe(Config.withDefault("100")),
   },
 });
 
 export interface WorkerEnv extends Omit<Cloudflare.InferEnv<typeof Worker>, "EMAIL"> {
-  /** Absent without a custom domain: sign-up then needs no email code. */
+  /** Absent without a custom domain or with WAITLIST=off: the access key and open sign-up are used instead. */
   EMAIL?: SendEmail;
 }
 

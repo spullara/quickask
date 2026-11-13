@@ -1,6 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 
+export type Status = "waiting" | "approved" | "joined";
 type Cred = { id: string; userId: string; name: string; publicKey: string; counter: number; transports: string };
 
 /** Users and their passkeys. One global instance; only touched during sign-in. */
@@ -16,36 +17,86 @@ export class Auth extends DurableObject<WorkerEnv> {
     if (!this.sql.exec("SELECT 1 FROM pragma_table_info('users') WHERE name = 'verified'").toArray().length) {
       this.sql.exec("ALTER TABLE users ADD COLUMN verified INTEGER");
     }
+    // Questions a day for this user; NULL means the default (DAILY_QUERIES).
+    if (!this.sql.exec("SELECT 1 FROM pragma_table_info('users') WHERE name = 'daily'").toArray().length) {
+      this.sql.exec("ALTER TABLE users ADD COLUMN daily INTEGER");
+    }
+    // Confirmed addresses waiting for an account. Rows are added only after the email link is opened.
+    this.sql.exec("CREATE TABLE IF NOT EXISTS waitlist (email TEXT PRIMARY KEY, status TEXT, created INTEGER, approved INTEGER)");
   }
 
   /**
-   * Store a new sign-up code for an email address (hashed). Limits: one send each 30 s and five each hour per address.
-   * Returns an error message, or null when the code may be sent.
+   * Store a new email-link token (hashed) for an address. Limits: one send each 30 s and five each hour per address.
+   * Returns an error message, or null when the email may be sent.
    */
-  setCode(email: string, hash: string): string | null {
+  setToken(email: string, hash: string, ttl: number): string | null {
     const now = Date.now();
     const row = this.sql.exec<{ sent: number; sends: string }>("SELECT sent, sends FROM codes WHERE email = ?", email).toArray()[0];
     const sends = (JSON.parse(row?.sends ?? "[]") as number[]).filter((t) => t > now - 3600_000);
-    if (row && now - row.sent < 30_000) return "A code was just sent. Wait 30 seconds to send another.";
-    if (sends.length >= 5) return "Too many codes for this address. Try again in an hour.";
+    if (row && now - row.sent < 30_000) return "An email was just sent. Wait 30 seconds to send another.";
+    if (sends.length >= 5) return "Too many emails for this address. Try again in an hour.";
     sends.push(now);
-    this.sql.exec("INSERT OR REPLACE INTO codes VALUES (?, ?, ?, 0, ?, ?)", email, hash, now + 600_000, now, JSON.stringify(sends));
+    this.sql.exec("INSERT OR REPLACE INTO codes VALUES (?, ?, ?, 0, ?, ?)", email, hash, now + ttl, now, JSON.stringify(sends));
     return null;
   }
 
-  /** Check a code. Five wrong tries end it. The code stays valid until the account is made, so a cancelled passkey can retry. */
-  checkCode(email: string, hash: string): string | null {
-    const row = this.sql.exec<{ hash: string; expires: number; tries: number }>("SELECT hash, expires, tries FROM codes WHERE email = ?", email).toArray()[0];
-    if (!row || row.expires < Date.now() || row.tries >= 5) return "That code expired. Send a new one.";
-    if (row.hash === hash) return null;
-    this.sql.exec("UPDATE codes SET tries = tries + 1 WHERE email = ?", email);
-    return "Wrong code. Check the email and try again.";
+  /** Approval emails skip the per-address limits: only the admin sends them. */
+  forceToken(email: string, hash: string, ttl: number) {
+    const now = Date.now();
+    this.sql.exec(`INSERT INTO codes VALUES (?, ?, ?, 0, ?, '[]') ON CONFLICT (email) DO UPDATE SET hash = excluded.hash,
+      expires = excluded.expires, tries = 0`, email, hash, now + ttl, now);
+  }
+
+  /** Check an email-link token. Clicking the link again (or a mail scanner opening it first) still works until it expires. */
+  checkToken(email: string, hash: string) {
+    const row = this.sql.exec<{ hash: string; expires: number }>("SELECT hash, expires FROM codes WHERE email = ?", email).toArray()[0];
+    return !!row && row.expires > Date.now() && row.hash === hash;
+  }
+
+  /** Put a confirmed address on the waitlist. The admin's address is approved at once. Returns its status. */
+  join(email: string, approve: boolean): Status {
+    this.sql.exec(`INSERT INTO waitlist (email, status, created) VALUES (?, ?, ?) ON CONFLICT (email) DO NOTHING`,
+      email, approve ? "approved" : "waiting", Date.now());
+    if (approve) this.sql.exec("UPDATE waitlist SET status = 'approved', approved = ? WHERE email = ? AND status = 'waiting'", Date.now(), email);
+    return this.statusOf(email)!;
+  }
+
+  statusOf(email: string): Status | null {
+    if (this.nameTaken(email)) return "joined";
+    return this.sql.exec<{ status: Status }>("SELECT status FROM waitlist WHERE email = ?", email).toArray()[0]?.status ?? null;
+  }
+
+  /** Returns false when the address is not on the waitlist. */
+  approve(email: string) {
+    return this.sql.exec("UPDATE waitlist SET status = 'approved', approved = ? WHERE email = ?", Date.now(), email).rowsWritten > 0;
+  }
+
+  unlist(email: string) {
+    this.sql.exec("DELETE FROM waitlist WHERE email = ?", email);
+  }
+
+  waitlist() {
+    return this.sql.exec<{ email: string; status: Status; created: number; approved: number | null }>(
+      "SELECT email, status, created, approved FROM waitlist WHERE status != 'joined' ORDER BY created").toArray();
+  }
+
+  users() {
+    return this.sql.exec<{ id: string; name: string; created: number; daily: number | null }>(
+      "SELECT id, name, created, daily FROM users ORDER BY created").toArray();
+  }
+
+  /** The user's own daily limit; null returns them to the default. Returns the user's id, or null when unknown. */
+  setDaily(email: string, daily: number | null) {
+    const id = this.firstNamed(email);
+    if (id) this.sql.exec("UPDATE users SET daily = ? WHERE id = ?", daily, id);
+    return id;
   }
 
   addUser(userId: string, name: string, cred: { id: string; publicKey: string; counter: number; transports: string }, verified: boolean) {
     this.sql.exec("INSERT INTO users (id, name, created, verified) VALUES (?, ?, ?, ?)", userId, name, Date.now(), verified ? 1 : null);
-    // The code is spent. The send history stays, so the hourly limit still counts.
+    // The link is spent. The send history stays, so the hourly limit still counts.
     this.sql.exec("UPDATE codes SET expires = 0 WHERE email = ?", name);
+    this.sql.exec("UPDATE waitlist SET status = 'joined' WHERE email = ?", name);
     this.sql.exec("INSERT INTO creds VALUES (?, ?, ?, ?, ?)", cred.id, userId, cred.publicKey, cred.counter, cred.transports);
   }
 

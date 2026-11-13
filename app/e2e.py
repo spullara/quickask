@@ -70,15 +70,16 @@ class Authenticator:
 
 class Browser:
     """Keeps cookies like a browser does."""
-    def __init__(self, access_key=True):
+    def __init__(self, access_key=True, e2e=False):
         self.cookies = {"k": KEY} if access_key else {}
+        self.e2e = e2e
 
     def open(self, path, body=None, method=None):
-        headers = {**UA, "x-e2e": E2E, "Cookie": "; ".join(f"{k}={v}" for k, v in self.cookies.items())}
+        headers = {**UA, **({"x-e2e": E2E} if self.e2e else {}), "Cookie": "; ".join(f"{k}={v}" for k, v in self.cookies.items())}
         data = None if body is None else json.dumps(body).encode()
         if data: headers["content-type"] = "application/json"
         try:
-            r = OPENER.open(urllib.request.Request(BASE + path, data, headers, method=method), timeout=60)
+            r = OPENER.open(urllib.request.Request(BASE + path, data, headers, method=method), timeout=120)
         except urllib.error.HTTPError as e:
             if e.code not in (301, 302): raise
             r = e
@@ -97,12 +98,30 @@ class Browser:
         return re.findall(r'"id":"(\w+)"', re.search(r"<script>L\((.*?)\)</script>", self.text("/")).group(1))
 
 
+WAIT, ADMIN = {}, Browser(e2e=True)
+
+
+def status(b, path):
+    try:
+        return b.open(path).getcode()
+    except urllib.error.HTTPError as e:
+        return e.code
+
+
 def signup(name):
-    """Create an account with a software passkey. Accounts are named by email address."""
+    """Waitlist sign-up: email link, admin approval, then a software passkey. Accounts are named by email address."""
     name = name if "@" in name else f"{name}@example.com"
-    b, a = Browser(), Authenticator()
-    sent = b.json("/auth/register/code", {"name": name})
-    o = b.json("/auth/register/options", {"name": name, "code": sent.get("code", "")})
+    b, a = Browser(e2e=True), Authenticator()
+    link = b.json("/auth/waitlist", {"email": name}).get("link", "")
+    WAIT["early_signup_refused"] = "not approved" in b.json("/auth/register/options", {"name": name}).get("error", "")
+    b.open(link[len(BASE):])
+    WAIT["link_puts_on_waitlist"] = "on the waitlist as " + name in b.text("/")
+    WAIT["waiting_cannot_register"] = "not approved" in b.json("/auth/register/options", {}).get("error", "")
+    approved = ADMIN.json("/api/admin/approve", {"email": name})
+    b.open(approved.get("link", "")[len(BASE):])
+    WAIT["approved_sees_create"] = "Create passkey" in b.text("/")
+    o = b.json("/auth/register/options", {})
+    b.e2e = False
     return b, a, b.json("/auth/register/verify", a.create(o)).get("ok") is True
 
 
@@ -121,27 +140,25 @@ def search(b, q):
 
 
 checks, rows = {}, []
-try:
-    Browser(access_key=False).open("/")
-    checks["no_access_key_is_401"] = False
-except urllib.error.HTTPError as e:
-    checks["no_access_key_is_401"] = e.code == 401
-checks["access_key_shows_passkey_page"] = "Sign in with passkey" in Browser().text("/")
+home = Browser(access_key=False).text("/")
+checks["public_page_offers_waitlist"] = "Sign in with passkey" in home and "Join the waitlist" in home
 
 RUN = os.urandom(3).hex()
 alice, alice_key, ok_a = signup(f"e2e-alice-{RUN}")
 bob, _, ok_b = signup(f"e2e-bob-{RUN}")
 checks["register_passkey"] = ok_a and ok_b
-checks["email_must_be_unique"] = Browser().json("/auth/register/options", {"name": f"E2E-ALICE-{RUN}@EXAMPLE.COM"}).get("error") == "That email address already has an account."
-checks["wrong_code_rejected"] = Browser().json("/auth/register/code", {"name": f"e2e-carol-{RUN}@example.com"}).get("sent") is not True or \
-    Browser().json("/auth/register/options", {"name": f"e2e-carol-{RUN}@example.com", "code": "000000"}).get("error", "").startswith(("Wrong code", "That code"))
-checks["code_resend_waits"] = "skip" in (r := Browser().json("/auth/register/code", {"name": f"e2e-carol-{RUN}@example.com"})) or r.get("error", "").startswith("A code was just sent")
-checks["name_must_be_email"] = Browser().json("/auth/register/options", {"name": "not an email"}).get("error") == "Enter a valid email address."
-def status(b, path):
-    try:
-        return b.open(path).getcode()
-    except urllib.error.HTTPError as e:
-        return e.code
+checks.update(WAIT)
+checks["email_must_be_unique"] = "already has an account" in Browser().json("/auth/waitlist", {"email": f"E2E-ALICE-{RUN}@EXAMPLE.COM"}).get("error", "")
+carol = Browser(e2e=True)
+carol.json("/auth/waitlist", {"email": f"e2e-carol-{RUN}@example.com"})
+checks["resend_waits"] = "Wait 30 seconds" in carol.json("/auth/waitlist", {"email": f"e2e-carol-{RUN}@example.com"}).get("error", "")
+checks["bad_link_refused"] = status(carol, f"/auth/confirm?e=e2e-carol-{RUN}%40example.com&t=wrong") == 400
+checks["name_must_be_email"] = Browser().json("/auth/waitlist", {"email": "not an email"}).get("error") == "Enter a valid email address."
+forged = Browser()
+forged.json("/auth/login/options")
+forged.cookies["s"] = forged.cookies["c"]
+checks["other_signed_cookie_is_not_a_session"] = "Sign in with passkey" in forged.text("/")
+checks["admin_api_hidden_from_users"] = status(alice, "/api/admin/approve") == 404
 checks["usage_hidden_from_users"] = status(alice, "/api/usage") == 404 and status(alice, "/admin") == 404
 
 again = Browser()
@@ -195,6 +212,12 @@ checks["plain_question_no_link"] = not re.match(NAV_LINE, plain.strip().split("\
 time.sleep(1.5)
 checks["chat_in_own_sidebar"] = chat_id in alice.chat_ids()
 checks["chat_not_in_other_sidebar"] = chat_id not in bob.chat_ids()
+BOB = f"e2e-bob-{RUN}@example.com"
+ADMIN.json("/api/admin/limit", {"email": BOB, "daily": 0})
+capped = search(bob, "what is the tallest mountain")[3]
+checks["daily_limit_stops_questions"] = "daily limit" in capped and "<script>T(" not in capped
+ADMIN.json("/api/admin/limit", {"email": BOB, "daily": None})
+checks["limit_restored"] = "<script>T(" in search(bob, "what is 2 plus 2")[3]
 find = lambda who, q: [c["id"] for c in json.load(who.open("/api/chats?q=" + urllib.parse.quote(q)))]
 word = max(re.findall(r"[A-Za-z]{7,}", answer(bridge)), key=len)
 checks["search_by_title_prefix"] = chat_id in find(alice, "golden gat")

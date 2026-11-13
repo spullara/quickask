@@ -113,8 +113,7 @@ textarea:focus{border-color:var(--mute)}
 .or{text-align:center;color:var(--mute);font-size:13px;margin-top:8px}
 #up{display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0;position:static;max-width:none}
 #up input{flex:1;min-width:0;font:inherit;padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);outline:none}
-#up:has(input[name=c]:not([hidden])) input[name=n]{flex-basis:100%}#up input[name=c]{letter-spacing:2px}
-.auth p.note{color:var(--mute);font-size:13px}
+.auth p.note{color:var(--mute);font-size:13px;text-align:center}.auth .lead{text-align:center;margin:0}.auth .or a{color:var(--mute)}
 #up button{font:inherit;padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer}
 @media (max-width:720px){#side{position:fixed;z-index:2;left:0;top:0;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 24px #0003;padding-top:52px}
 #zm{left:52px;top:12px}body.open #side{transform:none}#tg{display:block;position:fixed;top:10px;left:10px;z-index:3;border:0;background:var(--soft);color:var(--fg);border-radius:8px;width:34px;height:34px;font-size:16px}
@@ -347,25 +346,50 @@ export const PAGE_VERSION = [...CSS + RENDER].reduce((h, c) => Math.imul(h ^ c.c
 
 const usd = (n: number) => "$" + (n < 1 ? n.toFixed(4) : n.toFixed(2));
 
+const ADMIN_JS = String.raw`
+const api=(a,b)=>fetch('/api/admin/'+a,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
+document.querySelectorAll('.wl button').forEach(b=>b.onclick=async()=>{const tr=b.closest('tr'),e=tr.dataset.e;b.disabled=true;
+ const r=await api(b.dataset.a,{email:e});if(r.error&&!r.ok){alert(r.error);b.disabled=false;return}
+ if(b.dataset.a==='remove')tr.remove();else{tr.cells[1].innerHTML='<span class="mute">'+(r.error?'approved, email failed':'approved, email sent')+'</span>';b.textContent='Resend';b.disabled=false}});
+const save=async(i,v)=>{const tr=i.closest('tr');const r=await api('limit',{email:tr.dataset.e,daily:v});if(r.error){alert(r.error);return}i.value=r.daily;i.defaultValue=r.daily};
+document.querySelectorAll('.us input').forEach(i=>{i.onchange=()=>save(i,Math.max(0,Math.round(+i.value||0)));i.onkeydown=e=>{if(e.key==='Enter')i.blur()}});
+document.querySelectorAll('.us button').forEach(b=>b.onclick=()=>{const i=b.closest('tr').querySelector('input');save(i,(+i.value||0)+100)});
+`;
+
 /** Admin cost page: variable costs from Exa and Gemini, recorded per search. */
-export function adminPage(d: { today: Row; month: Row; byUser: Row[]; byDay: Row[]; names: Record<string, string> }) {
+type Waiting = { email: string; status: string; created: number; approved: number | null };
+type UserRow = { email: string; created: number; daily: number | null; today: number; admin: boolean };
+
+export function adminPage(d: { today: Row; month: Row; byUser: Row[]; byDay: Row[]; names: Record<string, string>; waitlist: Waiting[] | null; users: UserRow[]; daily: number }) {
+  const date = (t: number) => new Date(t).toISOString().slice(0, 10);
+  const waiting = d.waitlist === null ? "" : `<h2>Waitlist</h2>${d.waitlist.length ? `<table class="wl">${d.waitlist.map((w) =>
+    `<tr data-e="${esc(w.email)}"><td>${esc(w.email)}</td><td>${w.status === "approved" ? `<span class="mute">approved ${date(w.approved ?? w.created)}</span>` : `<span class="mute">${date(w.created)}</span>`}</td>
+<td><button data-a="approve">${w.status === "approved" ? "Resend" : "Approve"}</button><button data-a="remove">Remove</button></td></tr>`).join("")}</table>` : `<p class="note">Nobody is waiting.</p>`}`;
+  const users = `<h2>Users</h2><p class="note">Questions a day, reset at midnight UTC. Default ${d.daily}.</p><table class="us"><tr><th>User</th><th>Today</th><th>Daily limit</th><th></th></tr>${
+    d.users.map((u) => `<tr data-e="${esc(u.email)}"><td>${esc(u.email)}</td><td>${u.today}</td>${u.admin ? `<td class="mute">no limit</td><td></td>`
+      : `<td><input type="number" min="0" value="${u.daily ?? d.daily}" data-d="${u.daily ?? ""}"></td><td><button data-a="boost">+100</button></td>`}</tr>`).join("")}</table>`;
   const card = (label: string, r: Row) => `<div class="card"><span>${label}</span><b>${usd(r.cost)}</b><span>${r.searches} searches · ${usd(r.searches ? r.cost / r.searches : 0)} each</span></div>`;
   const table = (head: string, rows: Row[], name: (r: Row) => string) => rows.length ? `<table><tr><th>${head}</th><th>Searches</th><th>Exa</th><th>Gemini</th><th>Total</th></tr>${
     rows.map((r) => `<tr><td>${esc(name(r))}</td><td>${r.searches}</td><td>${usd(r.exa)}</td><td>${usd(r.gemini)}</td><td>${usd(r.cost)}</td></tr>`).join("")}</table>` : "<p>No searches yet.</p>";
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}
-<title>Usage · QuickAsk</title><meta name="robots" content="noindex"><style>${CSS}
+<title>Admin · QuickAsk</title><meta name="robots" content="noindex"><style>${CSS}
 main.admin{padding:32px 24px;max-width:760px;margin:0 auto;display:block;height:auto}.admin h1{font-size:20px;margin:0 0 4px}.admin h2{font-size:15px;margin:28px 0 8px}
 .admin .note{color:var(--mute);font-size:13px;margin:0 0 16px}.admin .back{font-size:14px}
 .cards{display:flex;gap:12px;flex-wrap:wrap}.card{flex:1;min-width:200px;background:var(--soft);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:2px}
 .card span{color:var(--mute);font-size:13px}.card b{font-size:24px;font-weight:600}
-table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}th{text-align:left;color:var(--mute);font-weight:500;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}.mute{color:var(--mute)}
+.admin button{font:inherit;font-size:13px;padding:4px 10px;margin-left:6px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer}
+.admin input{font:inherit;font-size:14px;width:6em;text-align:right;padding:3px 6px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--fg)}
+.admin input:hover,.admin input:focus{border-color:var(--line);outline:none}td input{margin-right:-7px}
+.wl td:first-child,.us td:first-child{overflow-wrap:anywhere}th{text-align:left;color:var(--mute);font-weight:500;font-size:13px}
 th,td{padding:6px 8px 6px 0}td+td,th+th{text-align:right}tr+tr td{border-top:1px solid var(--line)}
 </style></head><body style="display:block;overflow:auto"><main class="admin"><a class="back" href="/">← QuickAsk</a>
-<h1>Usage</h1><p class="note">Exa and Gemini charges, recorded per search. Cloudflare's $5/month plan is not included.</p>
+${waiting}${users}
+<h1 style="margin-top:32px">Usage</h1><p class="note">Exa and Gemini charges, recorded per search. Cloudflare's $5/month plan is not included.</p>
 <div class="cards">${card("Today", d.today)}${card("This month", d.month)}</div>
 <h2>This month by user</h2>${table("User", d.byUser, (r) => d.names[r.user ?? ""] ?? "(deleted)")}
 <h2>Last 30 days</h2>${table("Day", d.byDay, (r) => r.day ?? "")}
-</main></body></html>`;
+</main><script>${ADMIN_JS}</script></body></html>`;
 }
 
 /** Read-only snapshot of a chat for anyone with the link: no sidebar, no input, no account. */
@@ -400,39 +424,44 @@ const post=(p,b)=>fetch(p,{method:'POST',headers:{'content-type':'application/js
 const msg=document.getElementById('msg'),ids=l=>(l||[]).map(x=>({...x,id:u2b(x.id)}));
 // One passkey ceremony at a time: extra taps are ignored and the buttons are disabled until it ends.
 let running=false;
-async function go(f){if(running)return;running=true;const bs=document.querySelectorAll('.auth button');bs.forEach(b=>b.disabled=true);msg.textContent='';
- try{const r=await f();if(r.error)msg.textContent=r.error;else location.reload()}
+async function go(f){if(running)return;running=true;const bs=document.querySelectorAll('.auth button');bs.forEach(b=>b.disabled=true);msg.className='err';msg.textContent='';
+ try{const r=await f();if(r.error){msg.className='err';msg.textContent=r.error}else if(!r.stay)location.reload()}
  catch(e){msg.textContent=e.name==='NotAllowedError'?'Cancelled.':e.message}finally{running=false;bs.forEach(b=>b.disabled=false)}}
-document.getElementById('in').onclick=()=>go(async()=>{const o=await post('/auth/login/options');
+document.getElementById('in').onclick=e=>{e.preventDefault();go(async()=>{const o=await post('/auth/login/options');
  const c=await navigator.credentials.get({publicKey:{...o,challenge:u2b(o.challenge),allowCredentials:ids(o.allowCredentials)}});
  const r=c.response;return post('/auth/login/verify',{id:c.id,rawId:b2u(c.rawId),type:c.type,clientExtensionResults:c.getClientExtensionResults(),
   authenticatorAttachment:c.authenticatorAttachment,response:{clientDataJSON:b2u(r.clientDataJSON),authenticatorData:b2u(r.authenticatorData),
-  signature:b2u(r.signature),userHandle:r.userHandle?b2u(r.userHandle):undefined}})});
-// Sign-up: email address, then the emailed code (when the server sends codes), then the passkey.
-const up=document.getElementById('up'),code=up.c;let sentTo='';
-up.n.oninput=()=>{if(sentTo){sentTo='';code.hidden=true;code.value='';up.b.textContent='Create';msg.className='err';msg.textContent=''}};
-const create=(n,c)=>go(async()=>{const o=await post('/auth/register/options',{name:n,code:c});if(o.error)return o;
+  signature:b2u(r.signature),userHandle:r.userHandle?b2u(r.userHandle):undefined}})})};
+const create=n=>go(async()=>{const o=await post('/auth/register/options',{name:n});if(o.error)return o;
   const k=await navigator.credentials.create({publicKey:{...o,challenge:u2b(o.challenge),user:{...o.user,id:u2b(o.user.id)},excludeCredentials:ids(o.excludeCredentials)}});
   const r=k.response;return post('/auth/register/verify',{id:k.id,rawId:b2u(k.rawId),type:k.type,clientExtensionResults:k.getClientExtensionResults(),
    authenticatorAttachment:k.authenticatorAttachment,response:{clientDataJSON:b2u(r.clientDataJSON),attestationObject:b2u(r.attestationObject),
    transports:r.getTransports?r.getTransports():[]}})});
-async function send(n){if(running)return;running=true;up.b.disabled=true;msg.className='err';msg.textContent='';
- try{const r=await post('/auth/register/code',{name:n});if(r.error){msg.textContent=r.error;return}
-  if(r.skip){running=false;return create(n)}
-  sentTo=n;code.hidden=false;code.focus();up.b.textContent='Create';msg.className='note';
-  msg.innerHTML='Code sent to '+n.replace(/[<>&]/g,'')+'. <a href="#" id="again">Send again</a>';
-  document.getElementById('again').onclick=e=>{e.preventDefault();send(n)}}
- finally{running=false;up.b.disabled=false}}
-up.onsubmit=e=>{e.preventDefault();const n=up.n.value.trim().toLowerCase();if(!n)return;
- if(sentTo!==n)return send(n);const c=code.value.replace(/\D/g,'');if(c.length!==6){msg.className='err';msg.textContent='Enter the 6-digit code from the email.';return}
- create(n,c)};
+const mk=document.getElementById('mk');if(mk)mk.onclick=()=>create();
+const up=document.getElementById('up');
+if(up)up.onsubmit=e=>{e.preventDefault();const n=up.n.value.trim().toLowerCase();if(!n)return;
+ if(up.dataset.mode!=='wait')return create(n);
+ go(async()=>{const r=await post('/auth/waitlist',{email:n});if(r.error)return r;
+  up.style.display='none';document.querySelector('.or').hidden=true;msg.className='note';msg.textContent='Check '+n+' for a link to confirm your address.';return {stay:1}})};
 `;
 
-export const signIn = () => page(`<div class="auth">${BRAND}
-<button id="in" class="btn">Sign in with passkey</button>
-<div class="or">New here? Create an account</div>
-<form id="up"><input name="n" type="email" inputmode="email" placeholder="Email address" autocomplete="email" autocapitalize="off" spellcheck="false"><input name="c" hidden inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="6-digit code"><button name="b">Create</button></form>
-<p id="msg" class="err"></p></div><script>${AUTH_JS}</script>`);
+/**
+ * Signed-out page. With the waitlist: join by email; after the email link, "waiting" or (once approved) create a passkey.
+ * Without it: open sign-up with any email address (the access key already gates the app).
+ */
+export function signIn(o: { waitlist: boolean; email?: string | null; status?: string | null; error?: string }) {
+  const inBtn = `<button id="in" class="btn">Sign in with passkey</button>`;
+  const form = (mode: string, label: string) =>
+    `<form id="up" data-mode="${mode}"><input name="n" type="email" inputmode="email" placeholder="Email address" autocomplete="email" autocapitalize="off" spellcheck="false"><button>${label}</button></form>`;
+  const who = esc(o.email ?? "");
+  let body: string, note = "";
+  if (!o.waitlist) body = `${inBtn}<div class="or">New here? Create an account</div>${form("create", "Create")}`;
+  else if (o.status === "approved") body = `<p class="lead">You're in. Create a passkey for ${who} to start.</p><button id="mk" class="btn">Create passkey</button><div class="or"><a href="#" id="in">Sign in instead</a></div>`;
+  else if (o.status === "waiting") { body = inBtn; note = `You're on the waitlist as ${who}. You'll get an email when you're in.`; }
+  else body = `${inBtn}<div class="or">New here? Join the waitlist</div>${form("wait", "Join")}`;
+  const p = o.error ? `<p id="msg" class="err">${esc(o.error)}</p>` : `<p id="msg" class="${note ? "note" : "err"}">${note}</p>`;
+  return page(`<div class="auth">${BRAND}${body}${p}</div><script>${AUTH_JS}</script>`);
+}
 
 export const opensearch = (origin: string) => `<?xml version="1.0" encoding="UTF-8"?>
 <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">

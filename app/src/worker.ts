@@ -30,8 +30,31 @@ export class Chats extends DurableObject<WorkerEnv> {
         this.index(c.id, c.title, JSON.parse(c.msgs));
       }
     }
+    // Questions asked per UTC day, and this user's daily limit when the admin changed it.
+    this.sql.exec("CREATE TABLE IF NOT EXISTS quota (day TEXT PRIMARY KEY, used INTEGER); CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v)");
     // Keep-alive pings get an answer without waking the object.
     this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
+  }
+
+  /** Count one question against today's limit. Returns false, without counting, when the limit is used up. */
+  take(fallback: number, unlimited: boolean) {
+    const day = new Date().toISOString().slice(0, 10);
+    const limit = this.sql.exec<{ v: number }>("SELECT v FROM meta WHERE k = 'daily'").toArray()[0]?.v ?? fallback;
+    const used = this.sql.exec<{ used: number }>("SELECT used FROM quota WHERE day = ?", day).toArray()[0]?.used ?? 0;
+    if (!unlimited && used >= limit) return { ok: false, limit };
+    this.sql.exec("INSERT INTO quota VALUES (?, 1) ON CONFLICT (day) DO UPDATE SET used = used + 1", day);
+    this.sql.exec("DELETE FROM quota WHERE day < ?", new Date(Date.now() - 7 * 86400_000).toISOString().slice(0, 10));
+    return { ok: true, limit };
+  }
+
+  /** null returns the user to the default limit. */
+  setDaily(daily: number | null) {
+    if (daily === null) this.sql.exec("DELETE FROM meta WHERE k = 'daily'");
+    else this.sql.exec("INSERT OR REPLACE INTO meta VALUES ('daily', ?)", daily);
+  }
+
+  usedToday() {
+    return this.sql.exec<{ used: number }>("SELECT used FROM quota WHERE day = ?", new Date().toISOString().slice(0, 10)).toArray()[0]?.used ?? 0;
   }
 
   private index(id: string, title: string, msgs: Msg[]) {
@@ -347,20 +370,20 @@ type ExaResult = { url: string; title?: string; publishedDate?: string; highligh
 const NOT_A_PHOTO = /\.svg(\?|$)|\/\d{1,2}px-|logo|icon|favicon|sprite|avatar|badge|banner|slide|promo|hiring|advert/i;
 
 /** Exa search: the most query-relevant sentences of each page (anywhere in it, not just the top) for the model, plus each page's images as short ids (img:N) the model can place. */
-async function search(env: WorkerEnv, query: string, loc: Loc = {}): Promise<Search> {
+async function search(env: WorkerEnv, query: string, loc: Loc = {}, stop?: AbortSignal): Promise<Search> {
   if (LOCAL.test(query) && loc.city) query = `${query} in ${[loc.city, loc.region].filter(Boolean).join(", ")}`;
   try {
     // Exa rate limit: 100 per 10 s per Cloudflare location. Over budget, retry for up to 3 s, then answer without search.
     // If the limiter itself fails, let the search through.
     for (let waited = 0; !(await env.EXA_LIMIT.limit({ key: "exa" }).catch(() => ({ success: true }))).success; waited += 250) {
-      if (waited >= 3000) throw new Error("Exa rate limit");
+      if (waited >= 3000 || stop?.aborted) throw new Error("Exa rate limit");
       await new Promise((r) => setTimeout(r, 250));
     }
     const res = await fetch("https://api.exa.ai/search", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": env.EXA_API_KEY },
       body: JSON.stringify({ query, type: "fast", numResults: 10, ...(loc.country ? { userLocation: loc.country } : {}), contents: { highlights: { numSentences: 3, highlightsPerUrl: 3 }, extras: { imageLinks: 2 } } }),
-      signal: AbortSignal.timeout(3000),
+      signal: stop ? AbortSignal.any([stop, AbortSignal.timeout(3000)]) : AbortSignal.timeout(3000),
     });
     if (!res.ok) throw new Error(`Exa ${res.status}`);
     const { results = [], costDollars } = (await res.json()) as { results?: ExaResult[]; costDollars?: { total?: number } };
@@ -395,9 +418,29 @@ type Emit = (type: "T" | "I" | "R" | "F" | "D" | "E", value: unknown) => void;
 /** Highlights are page Markdown; strip the marks for the search results panel. */
 const plain = (t: string) => t.replace(/(^|\s)#{1,6}(?=\s|$)/g, "$1").replace(/\*\*|__|`/g, "").replace(/\s+/g, " ").trim();
 
+type Gate = { ok: boolean; limit: number };
+
+/**
+ * Start a question: the search, and in parallel the daily-limit check in the user's own Chats object. The check is
+ * faster than the search, so it adds no wait. Over the limit, the search is cancelled and no answer is written.
+ */
+function ask(env: WorkerEnv, chats: DurableObjectStub<Chats>, user: string, query: string, loc: Loc) {
+  const stop = new AbortController();
+  const gate: Promise<Gate> = isAdmin(env, user).catch(() => false)
+    .then((admin) => chats.take(Number(env.DAILY_QUERIES) || 100, admin))
+    .catch(() => ({ ok: true, limit: 0 }))
+    .then((g) => (g.ok || stop.abort(), g));
+  return { searching: search(env, query, loc, stop.signal), gate };
+}
+
 /** One answer turn as events: I image ids, T text delta, D done with sources, E error. Returns what to save and what it cost. */
-async function turn(env: WorkerEnv, msgs: Msg[], searching: Promise<Search>, emit: Emit, model: ModelKey, loc: Loc): Promise<{ msg: Msg; meter: Meter } | null> {
+async function turn(env: WorkerEnv, msgs: Msg[], { searching, gate }: { searching: Promise<Search>; gate: Promise<Gate> }, emit: Emit, model: ModelKey, loc: Loc): Promise<{ msg: Msg; meter: Meter } | null> {
   try {
+    const { ok, limit } = await gate;
+    if (!ok) {
+      emit("E", `You have asked ${limit} questions today, your daily limit. It resets at midnight UTC.`);
+      return null;
+    }
     const found = await searching;
     if (found.images.length) emit("I", found.images);
     emit("R", found.results);
@@ -456,24 +499,42 @@ export default {
       return res;
     }
 
-    const hasKey = cookie(req, "k") === env.ACCESS_KEY;
-    const keyParam = url.searchParams.get("k") === env.ACCESS_KEY;
-    if (!hasKey && !keyParam) return new Response(keyPage(url.searchParams.has("k")), { status: 401, headers: HTML });
+    // With email sending, anyone can join the waitlist and there is no access key. Without it, the shared key gates the app.
+    const waitlist = !!env.EMAIL;
     const headers: Record<string, string> = { ...HTML };
-    if (keyParam && !hasKey) headers["set-cookie"] = `k=${env.ACCESS_KEY}; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Lax`;
+    if (!waitlist) {
+      const hasKey = cookie(req, "k") === env.ACCESS_KEY;
+      const keyParam = url.searchParams.get("k") === env.ACCESS_KEY;
+      if (!hasKey && !keyParam) return new Response(keyPage(url.searchParams.has("k")), { status: 401, headers: HTML });
+      if (keyParam && !hasKey) headers["set-cookie"] = `k=${env.ACCESS_KEY}; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Lax`;
+    }
 
+    if (waitlist && (path === "/auth/waitlist" || path === "/auth/confirm")) {
+      const res = await (await import("./waitlist.ts")).waitlistRoute(req, env, url);
+      if (res) return res;
+    }
     if (path.startsWith("/auth/")) {
       const res = await (await import("./auth.ts")).authRoute(req, env, url);
       if (res) return res;
     }
     const user = await session(req, env);
-    if (!user) return new Response(signIn(), { headers });
+    if (path.startsWith("/api/admin/")) {
+      const w = await import("./waitlist.ts");
+      if (!((user && (await isAdmin(env, user.u))) || (await w.isE2E(env, req)))) return new Response("Not found", { status: 404 });
+      return w.adminRoute(req, env, url);
+    }
+    if (!user) {
+      if (!waitlist) return new Response(signIn({ waitlist: false }), { headers });
+      const email = await (await import("./waitlist.ts")).confirmed(env, req);
+      const status = email ? await env.AUTH.get(env.AUTH.idFromName("auth")).statusOf(email) : null;
+      return new Response(signIn({ waitlist: true, email, status }), { headers });
+    }
 
     // Start the search before any other work: it is the first step of the critical path.
     const msgs: Msg[] = q ? [{ role: "user", text: q }] : [];
     const loc = locOf(req);
-    const searching = q ? search(env, q, loc) : null;
     const chats = env.CHATS.get(env.CHATS.idFromName(user.u));
+    const searching = q ? ask(env, chats, user.u, q, loc) : null;
     const shares = env.SHARES.get(env.SHARES.idFromName("shares"));
     const usage = env.USAGE.get(env.USAGE.idFromName("global"));
 
@@ -521,11 +582,16 @@ export default {
       const month = new Date().toISOString().slice(0, 8) + "01", today = new Date().toISOString().slice(0, 10);
       if (path === "/api/usage") return Response.json({ month: (await usage.totals(month))[0] });
       const since = new Date(Date.now() - 29 * 86400_000).toISOString().slice(0, 10);
-      const [t, m, byUser, byDay, names] = await Promise.all([
+      const auth = env.AUTH.get(env.AUTH.idFromName("auth"));
+      const [t, m, byUser, byDay, names, users, waiting, usedToday] = await Promise.all([
         usage.totals(today), usage.totals(month), usage.totals(month, "user"), usage.totals(since, "day"),
-        env.AUTH.get(env.AUTH.idFromName("auth")).names(),
+        auth.names(), auth.users(), waitlist ? auth.waitlist() : [], usage.totals(today, "user"),
       ]);
-      return new Response(adminPage({ today: t[0]!, month: m[0]!, byUser, byDay, names }), { headers });
+      const used = Object.fromEntries(usedToday.map((r) => [r.user ?? "", r.searches]));
+      return new Response(adminPage({
+        today: t[0]!, month: m[0]!, byUser, byDay, names, waitlist: waitlist ? waiting : null, daily: Number(env.DAILY_QUERIES) || 100,
+        users: users.map((u) => ({ email: u.name, created: u.created, daily: u.daily, today: used[u.id] ?? 0, admin: u.id === adminId })),
+      }), { headers });
     }
 
     const share = path.match(/^\/api\/chats\/(\w+)\/share$/);
@@ -563,7 +629,7 @@ export default {
       // replace: answer again in place of the answer that follows these messages, keeping later turns and the chat's model.
       const body = (await req.json()) as { title: string; msgs: Msg[]; model?: string; cid?: string; replace?: boolean };
       const model = modelKey(body.model);
-      const searching = search(env, queryOf(body.msgs), loc);
+      const searching = ask(env, chats, user.u, queryOf(body.msgs), loc);
       const out = stream();
       ctx.waitUntil((async () => {
         const result = await turn(env, body.msgs, searching,
