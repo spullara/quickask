@@ -145,21 +145,22 @@ def answer(html):
 
 
 for q in ["what is the capital of australia", "golden gate bridge",
-          "who is the latest person jensen huang had an affair with"] * 2:
+          "how old was the ceo of amd when nvidia was founded"] * 2:
     ttfb, first, total, html = search(again, q)
     rows.append({"q": q, "ttfb": round(ttfb, 3), "first_token": round(first or -1, 3), "total": round(total, 3),
                  "inline_images": answer(html).count("](img:")})
     print(rows[-1], flush=True)
     if q == "golden gate bridge":
         bridge = html
-    if "jensen" in q:
+    if "amd" in q:
         leads.append(re.split(r"(?<=[.!?])\s", answer(html).strip(), 1)[0].lower())
 plain = answer(search(again, "what is 17 times 23")[3])
 
 chat_id = re.search(r'"id":"(\w+)"', bridge).group(1)
 checks["answer_streams"] = "<script>T(" in bridge and "<script>D(" in bridge
 checks["images_for_visual_query"] = "](img:" in answer(bridge)
-checks["latest_news_leads_with_powell"] = all("powell" in lead for lead in leads)
+# Needs two searched facts (Lisa Su born Nov 1969, Nvidia founded Apr 1993); the answer does not change over time.
+checks["multi_step_answer_leads_with_23"] = all(re.search(r"\b23\b", lead) for lead in leads)
 checks["no_images_for_plain_fact"] = "391" in plain and "](img:" not in plain
 time.sleep(1.5)
 checks["chat_in_own_sidebar"] = chat_id in alice.chat_ids()

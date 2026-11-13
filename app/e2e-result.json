@@ -3,53 +3,53 @@
  "runs": [
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.066,
-   "first_token": 1.235,
-   "total": 1.268,
+   "ttfb": 0.252,
+   "first_token": 1.229,
+   "total": 1.258,
    "inline_images": 0
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.084,
-   "first_token": 1.243,
-   "total": 1.84,
+   "ttfb": 0.107,
+   "first_token": 0.971,
+   "total": 1.1,
    "inline_images": 1
   },
   {
-   "q": "who is the latest person jensen huang had an affair with",
-   "ttfb": 0.097,
-   "first_token": 1.144,
-   "total": 1.309,
+   "q": "how old was the ceo of amd when nvidia was founded",
+   "ttfb": 0.105,
+   "first_token": 1.27,
+   "total": 1.399,
    "inline_images": 0
   },
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.085,
-   "first_token": 0.75,
-   "total": 0.798,
+   "ttfb": 0.505,
+   "first_token": 1.323,
+   "total": 1.368,
    "inline_images": 0
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.073,
-   "first_token": 0.837,
-   "total": 1.345,
+   "ttfb": 0.615,
+   "first_token": 1.935,
+   "total": 2.261,
    "inline_images": 1
   },
   {
-   "q": "who is the latest person jensen huang had an affair with",
-   "ttfb": 0.07,
-   "first_token": 0.781,
-   "total": 0.899,
+   "q": "how old was the ceo of amd when nvidia was founded",
+   "ttfb": 0.437,
+   "first_token": 1.769,
+   "total": 2.075,
    "inline_images": 0
   }
  ],
  "avg": {
-  "ttfb": 0.079,
-  "first_token": 0.998,
-  "total": 1.243
+  "ttfb": 0.337,
+  "first_token": 1.416,
+  "total": 1.577
  },
- "followup_first_token": 1.075,
+ "followup_first_token": 0.689,
  "checks": {
   "no_access_key_is_401": true,
   "access_key_shows_passkey_page": true,
@@ -61,7 +61,7 @@
   "unknown_passkey_rejected": true,
   "answer_streams": true,
   "images_for_visual_query": true,
-  "latest_news_leads_with_powell": false,
+  "multi_step_answer_leads_with_23": true,
   "no_images_for_plain_fact": true,
   "chat_in_own_sidebar": true,
   "chat_not_in_other_sidebar": true,

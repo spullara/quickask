@@ -158,8 +158,6 @@ python3 e2e.py https://<your app> "$(grep ^ACCESS_KEY= .env | cut -d= -f2)"
 It checks the access gate, passkey sign-up and sign-in, streaming, images, separate
 histories per account, follow-ups, share links and deletes. It writes `e2e-result.json`.
 Each run creates two test accounts (`e2e-alice-<random>`, `e2e-bob-<random>`).
-The `latest_news_leads_with_powell` check is tied to news from November 2026 and
-will fail once that story is no longer the latest.
 
 ## Project layout
 
