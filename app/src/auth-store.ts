@@ -22,6 +22,9 @@ export class Auth extends DurableObject<WorkerEnv> {
       this.sql.exec("ALTER TABLE users ADD COLUMN daily INTEGER");
     }
     // Confirmed addresses waiting for an account. Rows are added only after the email link is opened.
+    // Email links. Each one stays valid until it expires, so a newer email never breaks the link in an older one.
+    this.sql.exec("CREATE TABLE IF NOT EXISTS links (hash TEXT PRIMARY KEY, email TEXT, expires INTEGER)");
+    this.sql.exec("INSERT OR IGNORE INTO links SELECT hash, email, expires FROM codes WHERE hash != '' AND expires > ?", Date.now());
     this.sql.exec("CREATE TABLE IF NOT EXISTS waitlist (email TEXT PRIMARY KEY, status TEXT, created INTEGER, approved INTEGER)");
   }
 
@@ -36,21 +39,25 @@ export class Auth extends DurableObject<WorkerEnv> {
     if (row && now - row.sent < 30_000) return "An email was just sent. Wait 30 seconds to send another.";
     if (sends.length >= 5) return "Too many emails for this address. Try again in an hour.";
     sends.push(now);
-    this.sql.exec("INSERT OR REPLACE INTO codes VALUES (?, ?, ?, 0, ?, ?)", email, hash, now + ttl, now, JSON.stringify(sends));
+    this.sql.exec("INSERT OR REPLACE INTO codes VALUES (?, '', 0, 0, ?, ?)", email, now, JSON.stringify(sends));
+    this.addLink(email, hash, ttl);
     return null;
+  }
+
+  private addLink(email: string, hash: string, ttl: number) {
+    const now = Date.now();
+    this.sql.exec("DELETE FROM links WHERE expires < ?", now);
+    this.sql.exec("INSERT OR REPLACE INTO links VALUES (?, ?, ?)", hash, email, now + ttl);
   }
 
   /** Approval emails skip the per-address limits: only the admin sends them. */
   forceToken(email: string, hash: string, ttl: number) {
-    const now = Date.now();
-    this.sql.exec(`INSERT INTO codes VALUES (?, ?, ?, 0, ?, '[]') ON CONFLICT (email) DO UPDATE SET hash = excluded.hash,
-      expires = excluded.expires, tries = 0`, email, hash, now + ttl, now);
+    this.addLink(email, hash, ttl);
   }
 
   /** Check an email-link token. Clicking the link again (or a mail scanner opening it first) still works until it expires. */
   checkToken(email: string, hash: string) {
-    const row = this.sql.exec<{ hash: string; expires: number }>("SELECT hash, expires FROM codes WHERE email = ?", email).toArray()[0];
-    return !!row && row.expires > Date.now() && row.hash === hash;
+    return this.sql.exec("SELECT 1 FROM links WHERE hash = ? AND email = ? AND expires > ?", hash, email, Date.now()).toArray().length > 0;
   }
 
   /** Put a confirmed address on the waitlist. The admin's address is approved at once. Returns its status. */
@@ -95,7 +102,7 @@ export class Auth extends DurableObject<WorkerEnv> {
   addUser(userId: string, name: string, cred: { id: string; publicKey: string; counter: number; transports: string }, verified: boolean) {
     this.sql.exec("INSERT INTO users (id, name, created, verified) VALUES (?, ?, ?, ?)", userId, name, Date.now(), verified ? 1 : null);
     // The link is spent. The send history stays, so the hourly limit still counts.
-    this.sql.exec("UPDATE codes SET expires = 0 WHERE email = ?", name);
+    this.sql.exec("DELETE FROM links WHERE email = ?", name);
     this.sql.exec("UPDATE waitlist SET status = 'joined' WHERE email = ?", name);
     this.sql.exec("INSERT INTO creds VALUES (?, ?, ?, ?, ?)", cred.id, userId, cred.publicKey, cred.counter, cred.transports);
   }

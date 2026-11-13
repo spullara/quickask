@@ -110,7 +110,7 @@ export async function waitlistRoute(req: Request, env: WorkerEnv, url: URL): Pro
     const token = url.searchParams.get("t") ?? "";
     const html = { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" };
     if (!email || !(await store(env).checkToken(email, await hex(`${email}:${token}:${env.SESSION_SECRET}`)))) {
-      return new Response(signIn({ waitlist: true, error: "This link has expired. Enter your email address again." }), { status: 400, headers: html });
+      return new Response(signIn({ waitlist: true, error: "This link has expired or was already used. Enter your email address to get a new one." }), { status: 400, headers: html });
     }
     // The admin's own address skips the wait, so a new install can make its first account.
     await store(env).join(email, !!env.ADMIN_NAME && email === env.ADMIN_NAME.toLowerCase());
