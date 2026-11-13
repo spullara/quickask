@@ -21,8 +21,9 @@ with sources and, when they help, pictures.
 - Follow-up questions keep the previous answer's search results in context. The model searches again (as a tool)
   only when it needs new facts, and new results are numbered after the earlier ones.
 - Each answer ends with three suggested follow-up questions you can tap. Plain URLs and domains in answers are links.
-- A faint ⋯ under each answer opens a menu: the raw search results, copy the answer, rerun that answer, or share
-  just that answer.
+- A faint ⋯ under each answer opens a menu: the raw search results, copy the answer, rerun that answer, share
+  just that answer, or continue the chat in Claude, ChatGPT, Grok or Gemini (your own account; the chat is
+  prefilled where the service allows it and always copied to the clipboard).
 - Exa calls are limited to 10 per second (Cloudflare Rate Limiting, counted per location). Over the limit, a search
   waits up to 3 s, then the model answers without search results.
 - The admin sees live costs in the sidebar. `/admin` has the waitlist, daily limits, and costs by user and day.

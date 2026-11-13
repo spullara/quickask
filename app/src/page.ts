@@ -90,6 +90,8 @@ textarea:focus{border-color:var(--mute)}
 .m:hover+.acts button,.acts:hover button,.acts button:focus-visible{opacity:1}.acts button:hover{background:var(--soft);color:var(--fg)}
 @media (hover:none){.acts button{opacity:.45}}
 #menu{position:fixed;z-index:5;min-width:220px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:4px;box-shadow:0 8px 24px #0002;display:flex;flex-direction:column}#menu[hidden]{display:none}
+#menu .ci{display:flex;flex-wrap:wrap;align-items:center;gap:2px;border-top:1px solid var(--line);margin-top:4px;padding:6px 4px 2px}
+#menu .ci span{width:100%;font-size:12px;color:var(--mute);padding:0 6px 2px}#menu .ci button{padding:6px 8px;font-size:13px}
 #menu button{border:0;background:none;color:var(--fg);font:inherit;font-size:14px;text-align:left;padding:8px 10px;border-radius:6px;cursor:pointer}#menu button:hover:not(:disabled){background:var(--soft)}#menu button:disabled{color:var(--mute);cursor:default}
 #sheet{position:fixed;inset:0;z-index:6;background:#0003;display:flex;justify-content:flex-end}#sheet[hidden]{display:none}
 .sh-in{width:440px;max-width:100%;height:100%;overflow-y:auto;background:var(--bg);padding:0 20px 20px;box-shadow:-8px 0 24px #0002}
@@ -283,19 +285,42 @@ function copyShare(body,show){const made=fetch('/api/chats/'+S.id+'/share',{meth
  (window.ClipboardItem&&navigator.clipboard.write?navigator.clipboard.write([new ClipboardItem({'text/plain':link.then(u=>new Blob([u],{type:'text/plain'}))})]).catch(plain):plain())
   .then(()=>show('Link copied'),()=>show('Could not copy'))}
 function toast(t){let e=$('#toast');if(!e){e=document.createElement('div');e.id='toast';document.body.append(e)}e.textContent=t;e.hidden=false;clearTimeout(e.t);e.t=setTimeout(()=>e.hidden=true,1600)}
+// Continue the chat up to this answer in another assistant, in the person's own account. The text is prefilled in the
+// link where the service supports it (?q=), and always copied too, since these links are not stable interfaces.
+// Gemini has no reliable prefill link: it gets the clipboard only.
+const GO={claude:{n:'Claude',u:'https://claude.ai/new?q='},chatgpt:{n:'ChatGPT',u:'https://chatgpt.com/?q='},grok:{n:'Grok',u:'https://grok.com/?q='},gemini:{n:'Gemini',u:'https://gemini.google.com/app'}};
+const clean=t=>t.replace(/^\\s*!\\[[^\\]]*\\]\\([^)]*\\)\\s*$/gm,'').replace(/\\s*\\[\\d+(?:,\\s*\\d+)*\\]/g,'').replace(/\\n{3,}/g,'\\n\\n').trim();
+function handoffText(i){const msgs=S.msgs.slice(0,i+1),last=msgs[i],max=6000;
+ const cited=new Set([...last.text.matchAll(/\\[(\\d+(?:,\\s*\\d+)*)\\]/g)].flatMap(x=>x[1].split(/,\\s*/).map(Number)));
+ const src=[...new Set((last.sources||[]).filter((_,k)=>cited.has(k+1)).map(x=>x.uri))].slice(0,10);
+ const draft=($('textarea')||{}).value||'';
+ const head='This is a conversation I had in QuickAsk, a web answer engine. Use it as context and continue it with me.\\n\\n';
+ const tail=(src.length?'\\n\\nSources for the last answer:\\n'+src.join('\\n'):'')
+  +(draft.trim()?'\\n\\nMy next question: '+draft.trim():'\\n\\nConfirm in one line that you have the context, then wait for my next question.');
+ // Newest turns first, whole; older answers shortened; the oldest dropped when it is still too long.
+ const turns=[];let room=max-head.length-tail.length;
+ for(let k=msgs.length-1;k>=0;k--){const m=msgs[k];let t=clean(m.text);if(k<msgs.length-2&&m.role==='model'&&t.length>400)t=t.slice(0,400)+'…';
+  const line=(m.role==='user'?'Me: ':'QuickAsk: ')+t;if(line.length>room){if(!turns.length)turns.unshift(line.slice(0,room)+'…');else turns.unshift('(Earlier turns left out.)');break}
+  turns.unshift(line);room-=line.length+2}
+ return head+turns.join('\\n\\n')+tail}
+function handoff(to,i){const g=GO[to],t=handoffText(i);
+ window.open(to==='gemini'?g.u:g.u+encodeURIComponent(t),'_blank','noopener');
+ navigator.clipboard.writeText(t).then(()=>toast(to==='gemini'?'Copied. Paste it into Gemini':'Opened '+g.n+'. Also copied, in case it is not filled in'),()=>toast(to==='gemini'?'Could not copy':'Opened '+g.n))}
 // Per-answer ⋯ menu.
 const menu=document.createElement('div');menu.id='menu';menu.hidden=true;document.body.append(menu);let menuI=-1;
 const sheet=document.createElement('div');sheet.id='sheet';sheet.hidden=true;document.body.append(sheet);
 log.addEventListener('click',e=>{const b=e.target.closest('.acts button');if(!b)return;e.stopPropagation();
  const i=+b.parentNode.dataset.i,m=S.msgs[i];if(!m)return;menuI=i;
  menu.innerHTML='<button data-a="res"'+(m.results&&m.results.length?'':' disabled')+'>Search results</button><button data-a="copy">Copy answer</button>'
-  +'<button data-a="rerun"'+(busy?' disabled':'')+'>Rerun</button><button data-a="share">Share this answer</button>';
+  +'<button data-a="rerun"'+(busy?' disabled':'')+'>Rerun</button><button data-a="share">Share this answer</button>'
+  +'<div class="ci"><span>Continue in</span>'+Object.keys(GO).map(k=>'<button data-a="go" data-to="'+k+'">'+GO[k].n+'</button>').join('')+'</div>';
  menu.hidden=false;const r=b.getBoundingClientRect(),w=menu.offsetWidth,h=menu.offsetHeight;
  menu.style.left=Math.max(8,Math.min(r.left,innerWidth-w-8))+'px';menu.style.top=(r.bottom+h+8>innerHeight?r.top-h-4:r.bottom+4)+'px'});
 document.addEventListener('click',e=>{if(!menu.hidden&&!menu.contains(e.target))menu.hidden=true});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){menu.hidden=true;sheet.hidden=true}});
 main.addEventListener('scroll',()=>{menu.hidden=true});
 menu.onclick=e=>{const a=e.target.dataset&&e.target.dataset.a;if(!a||e.target.disabled)return;menu.hidden=true;const i=menuI,m=S.msgs[i];if(!m)return;
+ if(a==='go')handoff(e.target.dataset.to,i);
  if(a==='res'){sheet.innerHTML='<div class="sh-in"><div class="sh-hd"><b>Search results</b><button aria-label="Close">×</button></div>'+m.results.map(x=>'<div class="r"><a href="'+E1(x.url)+'" target="_blank" rel="noopener">'
   +E1(x.title||x.url)+'</a><span>'+E1(x.url.split('/')[2].replace(/^www\\./,'')+(x.date?' · '+x.date:''))+'</span><p>'+E1(x.text)+'</p></div>').join('')+'</div>';sheet.hidden=false}
  if(a==='copy')navigator.clipboard.writeText(m.text.replace(/^\\s*!\\[[^\\]]*\\]\\([^)]*\\)\\s*$/gm,'').replace(/\\s*\\[\\d+(?:,\\s*\\d+)*\\]/g,'').replace(/\\n{3,}/g,'\\n\\n').trim()).then(()=>toast('Copied'),()=>toast('Could not copy'));
