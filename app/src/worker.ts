@@ -205,6 +205,10 @@ export class Shares extends DurableObject<WorkerEnv> {
       this.sql.exec("ALTER TABLE shares ADD COLUMN chat TEXT");
     }
     this.sql.exec("CREATE INDEX IF NOT EXISTS shares_chat ON shares (chat)");
+    // Hash of the shared title and messages: sharing the same content again returns the existing link.
+    if (!this.sql.exec("SELECT 1 FROM pragma_table_info('shares') WHERE name = 'hash'").toArray().length) {
+      this.sql.exec("ALTER TABLE shares ADD COLUMN hash TEXT");
+    }
     // The rendered preview card (PNG), stored so any Cloudflare location can serve it without drawing it again.
     if (!this.sql.exec("SELECT 1 FROM pragma_table_info('shares') WHERE name = 'card'").toArray().length) {
       this.sql.exec("ALTER TABLE shares ADD COLUMN card BLOB");
@@ -212,10 +216,15 @@ export class Shares extends DurableObject<WorkerEnv> {
   }
 
   /** chat is "<user id>/<chat id>", so every change below is scoped to the owner. */
-  put(id: string, chat: string, title: string, msgs: Msg[]) {
+  async put(id: string, chat: string, title: string, msgs: Msg[]) {
+    const body = JSON.stringify(msgs);
+    const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(title + "\u0000" + body)))]
+      .map((b) => b.toString(16).padStart(2, "0")).join("");
+    const same = this.sql.exec<{ id: string; created: number }>("SELECT id, created FROM shares WHERE chat = ? AND hash = ? LIMIT 1", chat, hash).toArray()[0];
+    if (same) return { ...same, existed: true };
     const created = Date.now();
-    this.sql.exec("INSERT INTO shares (id, title, msgs, created, chat) VALUES (?, ?, ?, ?, ?)", id, title, JSON.stringify(msgs), created, chat);
-    return created;
+    this.sql.exec("INSERT INTO shares (id, title, msgs, created, chat, hash) VALUES (?, ?, ?, ?, ?, ?)", id, title, body, created, chat, hash);
+    return { id, created, existed: false };
   }
 
   list(chat: string) {
@@ -702,11 +711,10 @@ export default {
       const one = typeof at === "number" && chat.msgs[at]?.role === "model" && chat.msgs[at - 1]?.role === "user";
       const picked = one ? chat.msgs.slice(at - 1, at + 1) : chat.msgs;
       const title = one ? titleOf(chat.msgs[at - 1]!.text) : chat.title;
-      const id = newId();
-      // Search results stay with the chat; share pages do not show them.
-      const created = await shares.put(id, `${user.u}/${share[1]}`, title, picked.map(({ results: _, followups: __, ...m }) => m));
+      // Search results stay with the chat; share pages do not show them. The same content shared again gets its old link.
+      const { id, created, existed } = await shares.put(newId(), `${user.u}/${share[1]}`, title, picked.map(({ results: _, followups: __, ...m }) => m));
       // Draw the preview card now, in the background: the link is about to be posted somewhere.
-      ctx.waitUntil(storedCard(env, id, url.host).then((png) => {
+      if (!existed) ctx.waitUntil(storedCard(env, id, url.host).then((png) => {
         if (png) return caches.default.put(new Request(`${url.origin}/s/${id}/card.png?v=${PAGE_VERSION}`), new Response(png, { headers: CARD_HEADERS }));
       }));
       return Response.json({ url: `${url.origin}/s/${id}`, id, created });

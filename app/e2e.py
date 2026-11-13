@@ -276,7 +276,9 @@ png = card.read()
 checks["share_card_png"] = card.headers["content-type"] == "image/png" and png[:8] == b"\x89PNG\r\n\x1a\n" and int.from_bytes(png[16:20], "big") == 1200
 share_id = share_path.rsplit("/", 1)[1]
 checks["chat_page_lists_links"] = f'"shares":[{{"id":"{share_id}"' in alice.text(f"/c/{chat_id}")
-extra = alice.json(f"/api/chats/{chat_id}/share", {"n": 2})["id"]
+checks["same_content_reuses_link"] = alice.json(f"/api/chats/{chat_id}/share", {"n": 2})["id"] == share_id
+extra = alice.json(f"/api/chats/{chat_id}/share", {"n": 4, "at": 1})["id"]
+checks["different_content_new_link"] = extra != share_id
 checks["bob_cannot_delete_link"] = bob.open(f"/api/chats/{chat_id}/shares/{extra}", method="DELETE").getcode() == 204 and \
     "golden gate" in Browser(access_key=False).text(f"/s/{extra}").lower()
 alice.open(f"/api/chats/{chat_id}/shares/{extra}", method="DELETE").read()

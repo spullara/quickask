@@ -280,7 +280,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 if(!/Mac|iPhone|iPad/.test(navigator.platform))$('.new kbd').textContent='Ctrl K';
 // Make a share link and copy it. body.at shares a single answer.
 function copyShare(body,show){const made=fetch('/api/chats/'+S.id+'/share',{method:'POST',body:JSON.stringify(body)}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()});
- made.then(j=>{S.shares.unshift({id:j.id,created:j.created});SL()},()=>{});
+ made.then(j=>{if(!S.shares.some(x=>x.id===j.id)){S.shares.unshift({id:j.id,created:j.created});SL()}},()=>{});
  const link=made.then(j=>j.url),plain=()=>link.then(u=>navigator.clipboard.writeText(u));
  (window.ClipboardItem&&navigator.clipboard.write?navigator.clipboard.write([new ClipboardItem({'text/plain':link.then(u=>new Blob([u],{type:'text/plain'}))})]).catch(plain):plain())
   .then(()=>show('Link copied'),()=>show('Could not copy'))}

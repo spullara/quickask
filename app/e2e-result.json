@@ -3,53 +3,53 @@
  "runs": [
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.167,
-   "first_token": 1.073,
-   "total": 1.187,
+   "ttfb": 0.043,
+   "first_token": 1.011,
+   "total": 1.124,
    "inline_images": 1
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.054,
-   "first_token": 0.736,
-   "total": 1.304,
+   "ttfb": 0.106,
+   "first_token": 1.006,
+   "total": 1.753,
    "inline_images": 1
   },
   {
    "q": "how old was the ceo of amd when nvidia was founded",
-   "ttfb": 0.061,
-   "first_token": 0.893,
-   "total": 1.209,
+   "ttfb": 0.063,
+   "first_token": 1.045,
+   "total": 1.302,
    "inline_images": 0
   },
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.057,
-   "first_token": 0.718,
-   "total": 0.844,
+   "ttfb": 0.047,
+   "first_token": 0.854,
+   "total": 0.914,
    "inline_images": 1
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.055,
-   "first_token": 0.583,
-   "total": 1.048,
+   "ttfb": 0.056,
+   "first_token": 0.879,
+   "total": 1.51,
    "inline_images": 1
   },
   {
    "q": "how old was the ceo of amd when nvidia was founded",
-   "ttfb": 0.065,
-   "first_token": 0.84,
-   "total": 1.192,
+   "ttfb": 0.035,
+   "first_token": 0.772,
+   "total": 1.015,
    "inline_images": 0
   }
  ],
  "avg": {
-  "ttfb": 0.076,
-  "first_token": 0.807,
-  "total": 1.131
+  "ttfb": 0.058,
+  "first_token": 0.928,
+  "total": 1.27
  },
- "followup_first_token": 1.743,
+ "followup_first_token": 1.883,
  "checks": {
   "public_page_offers_waitlist": true,
   "register_passkey": true,
@@ -73,7 +73,7 @@
   "unknown_passkey_rejected": true,
   "answer_streams": true,
   "images_for_visual_query": true,
-  "multi_step_answer_leads_with_23": false,
+  "multi_step_answer_leads_with_23": true,
   "no_images_for_plain_fact": true,
   "nav_query_leads_with_link": true,
   "plain_question_no_link": true,
@@ -97,6 +97,8 @@
   "share_card_tags": true,
   "share_card_png": true,
   "chat_page_lists_links": true,
+  "same_content_reuses_link": true,
+  "different_content_new_link": true,
   "bob_cannot_delete_link": true,
   "delete_one_link": true,
   "share_needs_account": true,
