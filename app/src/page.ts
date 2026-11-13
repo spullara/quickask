@@ -16,6 +16,9 @@ const ICON_LINKS = `<link rel="icon" href="/icon.svg" type="image/svg+xml"><link
 const mark = (px: number) => LOGO_SVG.replace("<svg ", `<svg width="${px}" height="${px}" aria-hidden="true" `);
 const BRAND = `<div class="brand">${mark(44)}<span>QuickAsk</span></div>`;
 
+/** Chat text size chosen with A−/A+, saved per browser; set before the page draws so there is no flash. */
+const TEXT_SIZE = `<script>document.documentElement.style.setProperty('--chat',15*(+localStorage.zoom||1)+'px')</script>`;
+
 /** iOS ignores user-scalable=no for pinch, so cancel WebKit gesture events and two-finger moves. */
 const NO_ZOOM = `<script>for(const t of ['gesturestart','gesturechange'])document.addEventListener(t,e=>e.preventDefault());
 document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false})</script>`;
@@ -25,8 +28,8 @@ const CSS = `
 @media (prefers-color-scheme:dark){:root{--bg:#18181b;--fg:#ececee;--mute:#9a9aa1;--soft:#232327;--line:#2f2f34;--accent:#7aa2ff}}
 *{box-sizing:border-box}html,body{margin:0;height:100%}html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 body{font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;background:var(--bg);color:var(--fg);display:flex}
-/* The conversation and its input are 1.5x the base size; sizes inside are relative to it. */
-#log,main form{font-size:22.5px}
+/* The conversation and its input use the chosen text size (A−/A+); sizes inside are relative to it. */
+#log,main form{font-size:var(--chat,15px)}
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 #side{width:260px;flex:none;background:var(--soft);height:100vh;height:100dvh;overflow:hidden;padding:12px 8px;display:flex;flex-direction:column}
 /* The chat list shows a thin scrollbar only on hover (its space is always kept, so nothing shifts); the footer
@@ -71,6 +74,7 @@ textarea{width:100%;resize:none;border:1px solid var(--line);border-radius:14px;
 textarea:focus{border-color:var(--mute)}
 .home{display:flex;flex-direction:column;justify-content:center}.home #log{flex:none;padding:0}.home form{position:static}
 #tg{display:none}
+#zm{position:fixed;top:10px;left:272px;z-index:3;display:flex;gap:2px}#zm button{border:0;background:var(--soft);color:var(--fg);border-radius:8px;height:30px;padding:0 9px;font:600 13px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;cursor:pointer}#zm button:hover{background:var(--line)}
 .brand{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 0 24px}.brand span{font-size:28px;font-weight:700;letter-spacing:-.02em}
 #brand{display:none}.home #brand{display:flex}
 .sbrand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;max-width:760px;margin:0 auto;padding:20px 24px 0}
@@ -98,7 +102,7 @@ textarea:focus{border-color:var(--mute)}
 .navl{display:flex;flex-direction:column;gap:1px;width:fit-content;max-width:100%;background:var(--soft);border-radius:12px;padding:10px 14px;margin:2px 0 14px}
 .navl:hover{background:var(--line);text-decoration:none}.navl b{font-weight:600}.navl span{color:var(--mute);font-size:.87em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gal{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
-.m img.mi{height:270px;max-width:100%;object-fit:cover;border-radius:10px;display:block;background:var(--soft)}
+.m img.mi{height:12em;max-width:100%;object-fit:cover;border-radius:10px;display:block;background:var(--soft)}
 .m p img.mi{margin:6px 0}
 #side .me{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;font-size:13px;color:var(--mute)}
 #side .me span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -111,7 +115,7 @@ textarea:focus{border-color:var(--mute)}
 #up input{flex:1;min-width:0;font:inherit;padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);outline:none}
 #up button{font:inherit;padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer}
 @media (max-width:720px){#side{position:fixed;z-index:2;left:0;top:0;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 24px #0003;padding-top:52px}
-body.open #side{transform:none}#tg{display:block;position:fixed;top:10px;left:10px;z-index:3;border:0;background:var(--soft);color:var(--fg);border-radius:8px;width:34px;height:34px;font-size:16px}
+#zm{left:52px;top:12px}body.open #side{transform:none}#tg{display:block;position:fixed;top:10px;left:10px;z-index:3;border:0;background:var(--soft);color:var(--fg);border-radius:8px;width:34px;height:34px;font-size:16px}
 #log{padding-top:52px}}
 `;
 
@@ -253,6 +257,11 @@ function fresh(){document.body.classList.remove('open');
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='k'){e.preventDefault();fresh()}});
 $('.new').addEventListener('click',e=>{if(e.metaKey||e.ctrlKey||e.shiftKey||e.button)return;e.preventDefault();fresh()});
 addEventListener('popstate',()=>location.reload());
+// Text size: steps saved in this browser (localStorage), applied through the --chat CSS variable.
+const ZOOMS=[.85,1,1.15,1.3,1.5,1.75,2];
+$('#zm').onclick=e=>{const b=e.target.closest('button');if(!b)return;let i=ZOOMS.indexOf(+localStorage.zoom||1);if(i<0)i=1;
+ const z=ZOOMS[Math.max(0,Math.min(ZOOMS.length-1,i+ +b.dataset.z))];localStorage.zoom=z;
+ document.documentElement.style.setProperty('--chat',15*z+'px');toast('Text '+Math.round(z*100)+'%')};
 // Another window added to this chat: load the saved copy and redraw it.
 function sync(){const id=S.id;fetch('/api/chats/'+id).then(r=>r.ok?r.json():null).then(c=>{if(!c||S.id!==id||busy)return;
  S.title=c.title;S.model=c.model;ML();show(c.msgs);S.msgs=c.msgs},()=>{})}
@@ -315,11 +324,11 @@ if(sh){SL();
 export function shell(o: { id: string | null; title: string; msgs: Msg[]; streaming: boolean; user: { u: string; n: string }; shares?: ShareRef[]; model?: string }) {
   const state = { id: o.id, title: o.title, msgs: o.msgs, streaming: o.streaming, uid: o.user.u, shares: o.shares ?? [], model: o.model ?? "lite" };
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}${TEXT_SIZE}
 <title>${esc(o.title)}</title>
 <link rel="search" type="application/opensearchdescription+xml" title="QuickAsk" href="/opensearch.xml">
 <style>${CSS}</style></head>
-<body><button id="tg" aria-label="Chats">☰</button>
+<body><button id="tg" aria-label="Chats">☰</button><div id="zm"><button data-z="-1" aria-label="Smaller text" title="Smaller text">A−</button><button data-z="1" aria-label="Larger text" title="Larger text">A+</button></div>
 <nav id="side"><div id="scroll"><div class="top"><a class="new" href="/">+ New chat<kbd>⌘K</kbd></a><button id="fs" aria-label="Search chats" title="Search chats"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button></div>
 <div id="find" hidden><input placeholder="Search chats" autocomplete="off" enterkeyhint="search"><button aria-label="Close search">×</button></div><div id="list"></div>
 </div><footer id="foot"><a id="usage" href="/admin" hidden></a>
@@ -362,7 +371,7 @@ export function sharePage(s: { title: string; msgs: Msg[] }, url: string) {
   // Previews show the card image only: the title is just the app name and there is no description, so chat apps that
   // print text under the image (Signal, Slack, WhatsApp) do not repeat the question and answer the card already shows.
   const card = esc(`${url}/card.png`), title = esc(s.title);
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}${TEXT_SIZE}
 <title>${esc(s.title)}</title><meta name="robots" content="noindex">
 <meta property="og:site_name" content="QuickAsk"><meta property="og:type" content="article"><meta property="og:url" content="${esc(url)}">
 <meta property="og:title" content="QuickAsk">
