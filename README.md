@@ -118,7 +118,8 @@ Passkeys are tied to a hostname. Pick the domain before people create accounts.
 The deploy also turns on Cloudflare Email Sending for the domain and sends sign-up codes from
 `login@<domain>`. This needs the Workers Paid plan, and the token needs **Zone → Email Sending: Edit**
 (or create the sender in the dashboard: **Compute → Email Service → Email Sending → Onboard Domain**).
-Without a custom domain, sign-up asks for no code.
+Without a custom domain, sign-up asks for no code. To turn codes off, add `EMAIL_CODES=off` to `app/.env` and run
+`./deploy.sh` again.
 
 ### Add it to your browser
 
@@ -141,6 +142,7 @@ Without a custom domain, sign-up asks for no code.
 | `EXA_API_KEY` | yes | Web search and images. |
 | `CLOUDFLARE_ACCOUNT_ID` | no | Needed only when the token can see more than one account. |
 | `QUICK_DOMAIN` | no | Custom domain, for example `ask.example.com`. |
+| `EMAIL_CODES` | no | `off` turns off email codes at sign-up (passkey only). On by default with a custom domain. |
 | `ADMIN_NAME` | no | Account (email address) that can see costs. The oldest account with this name is the admin. |
 | `ACCESS_KEY`, `SESSION_SECRET` | created for you | Change `SESSION_SECRET` to sign everyone out. |
 

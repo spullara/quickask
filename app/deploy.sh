@@ -21,6 +21,7 @@ export CLOUDFLARE_API_TOKEN="$(key CLOUDFLARE_API_TOKEN CF_TOKEN)"
 export CLOUDFLARE_ACCOUNT_ID="$(key CLOUDFLARE_ACCOUNT_ID)"
 export QUICK_DOMAIN="$(key QUICK_DOMAIN)"
 export ADMIN_NAME="$(key ADMIN_NAME)"
+export EMAIL_CODES="$(key EMAIL_CODES)"
 need GEMINI_API_KEY; need EXA_API_KEY; need CLOUDFLARE_API_TOKEN
 
 # App secrets: created once, then reused so sessions and the access key survive redeploys.
@@ -35,7 +36,8 @@ if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
 fi
 
 # Email sign-up codes are sent from the custom domain's zone (Cloudflare Email Service). Try the domain, then its parents.
-if [ -n "$QUICK_DOMAIN" ] && [ -z "${QUICK_ZONE_ID:-}" ]; then
+# Set EMAIL_CODES=off to sign up with a passkey only.
+if [ -n "$QUICK_DOMAIN" ] && [ "$EMAIL_CODES" != off ] && [ -z "${QUICK_ZONE_ID:-}" ]; then
   d="$QUICK_DOMAIN"
   while [ -z "${QUICK_ZONE_ID:-}" ] && [[ "$d" == *.* ]]; do
     QUICK_ZONE_ID="$(curl -fsS "https://api.cloudflare.com/client/v4/zones?name=$d" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \

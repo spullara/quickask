@@ -16,8 +16,11 @@ export const CardWorker = Cloudflare.Worker("QuickCard", {
 });
 
 const DOMAIN = process.env.QUICK_DOMAIN, ZONE = process.env.QUICK_ZONE_ID;
-/** Sign-up codes come from this address. Only with a custom domain on Cloudflare DNS: Email Service needs the zone. */
-export const SENDER = DOMAIN && ZONE ? `login@${DOMAIN}` : undefined;
+/**
+ * Sign-up codes come from this address. Only with a custom domain on Cloudflare DNS (Email Service needs the zone),
+ * and not when EMAIL_CODES=off.
+ */
+export const SENDER = DOMAIN && ZONE && process.env.EMAIL_CODES !== "off" ? `login@${DOMAIN}` : undefined;
 const Sending = SENDER ? Cloudflare.Email.SendingSubdomain("Sending", { zoneId: ZONE!, name: DOMAIN! }) : undefined;
 
 export const Worker = Cloudflare.Worker("Quick", {
