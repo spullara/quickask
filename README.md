@@ -13,6 +13,8 @@ with sources and, when they help, pictures.
 - Passkey accounts, behind a shared access key.
 - Read-only share links that anyone can open, with no account. Links show a rich preview card on X, iMessage and Slack.
 - Press ⌘K (Ctrl K) for a new search.
+- A faint ⋯ under each answer opens a menu: the raw search results, copy the answer, rerun just that answer with
+  the other model, or share just that answer.
 - A chat can switch to Gemini 4 Carbon: the last answer is rerun with it, and follow-ups use it. New searches always start on Flash Lite.
 - Exa calls are limited to 10 per second for the whole app. Extra searches wait their turn.
 - The admin sees live costs in the sidebar and a breakdown by user and day at `/admin`.

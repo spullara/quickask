@@ -1,5 +1,6 @@
 export type Source = { title: string; uri: string };
-export type Msg = { role: "user" | "model"; text: string; sources?: Source[]; images?: string[] };
+export type Result = { title: string; url: string; date?: string; text: string };
+export type Msg = { role: "user" | "model"; text: string; sources?: Source[]; images?: string[]; results?: Result[]; model?: string };
 export type ShareRef = { id: string; created: number };
 type Row = { day?: string; user?: string; searches: number; exa: number; gemini: number; cost: number; tokensIn: number; tokensOut: number };
 
@@ -64,6 +65,17 @@ textarea:focus{border-color:var(--mute)}
 .sr{display:flex;align-items:center;gap:4px;padding:4px 8px;font-size:13px}.sr span{flex:1;color:var(--mute)}
 .sr button{border:0;background:none;color:var(--accent);cursor:pointer;font:inherit;font-size:13px;padding:2px 6px;border-radius:6px}.sr button:hover{background:var(--soft)}
 .sr button[data-d]{color:var(--mute)}.sr button[data-d]:hover{color:#dc2626}
+.acts{height:26px;margin:-6px 0 6px}.acts button{border:0;background:none;color:var(--mute);font-size:18px;line-height:1;padding:3px 8px;border-radius:8px;cursor:pointer;opacity:0;transition:opacity .15s}
+.m:hover+.acts button,.acts:hover button,.acts button:focus-visible{opacity:1}.acts button:hover{background:var(--soft);color:var(--fg)}
+@media (hover:none){.acts button{opacity:.45}}
+#menu{position:fixed;z-index:5;min-width:220px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:4px;box-shadow:0 8px 24px #0002;display:flex;flex-direction:column}#menu[hidden]{display:none}
+#menu button{border:0;background:none;color:var(--fg);font:inherit;font-size:14px;text-align:left;padding:8px 10px;border-radius:6px;cursor:pointer}#menu button:hover:not(:disabled){background:var(--soft)}#menu button:disabled{color:var(--mute);cursor:default}
+#sheet{position:fixed;inset:0;z-index:6;background:#0003;display:flex;justify-content:flex-end}#sheet[hidden]{display:none}
+.sh-in{width:440px;max-width:100%;height:100%;overflow-y:auto;background:var(--bg);padding:0 20px 20px;box-shadow:-8px 0 24px #0002}
+.sh-hd{position:sticky;top:0;background:var(--bg);display:flex;align-items:center;justify-content:space-between;padding:16px 0 8px}.sh-hd button{border:0;background:none;color:var(--mute);font-size:22px;cursor:pointer}
+#sheet .r{margin:14px 0 0;font-size:14px}#sheet .r a{font-weight:500}#sheet .r span{display:block;color:var(--mute);font-size:12px}#sheet .r p{margin:2px 0 0;font-size:13px;line-height:1.5}
+@media (max-width:720px){#sheet{align-items:flex-end}.sh-in{width:100%;height:75vh;border-radius:16px 16px 0 0}}
+#toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:10px;font-size:14px;z-index:7}#toast[hidden]{display:none}
 .navl{display:flex;flex-direction:column;gap:1px;width:fit-content;max-width:100%;background:var(--soft);border-radius:12px;padding:10px 14px;margin:2px 0 14px}
 .navl:hover{background:var(--line);text-decoration:none}.navl b{font-weight:600}.navl span{color:var(--mute);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gal{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
@@ -114,13 +126,15 @@ function add(c,html){const d=document.createElement('div');d.className=c;d.inner
 const JS = `
 const ta=$('textarea'),side=$('#list');
 let cur=null,raf=0;
-function start(){cur={el:add('m wait',''),buf:'',imgs:[]}}
+function start(el){if(el){el.classList.add('wait');el.innerHTML='';cur={el,buf:'',imgs:[]}}else cur={el:add('m wait',''),buf:'',imgs:[]};cur.model=S.model}
 function paint(){raf=0;cur.el.innerHTML=md(cur.buf.replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs,cur.src)}
 const main=$('main');let nearEnd=true;main.addEventListener('scroll',()=>{nearEnd=main.scrollHeight-main.scrollTop-main.clientHeight<80});
 new ResizeObserver(()=>{if(nearEnd)main.scrollTop=main.scrollHeight}).observe(log);
 function T(t){cur.buf+=t;if(!raf)raf=requestAnimationFrame(paint)}
 function D(s){cur.src=s;paint();cur.el.classList.remove('wait');
- S.msgs.push({role:'model',text:cur.buf});cur=null;busy=false}
+ const m={role:'model',text:cur.buf,sources:s,images:cur.imgs,results:cur.res||[],model:cur.model},at=cur.at;
+ if(at!=null)S.msgs[at]=m;else S.msgs.push(m);acts(cur.el,at!=null?at:S.msgs.length-1);cur=null;busy=false}
+function R(r){cur.res=r}
 function I(u){cur.imgs=u}
 function E(m){cur.el.classList.remove('wait');cur.el.insertAdjacentHTML('beforeend','<p class="err">'+E1(m)+'</p>');cur=null;busy=false}
 function L(list){if(S.id&&!list.some(c=>c.id===S.id))list.unshift({id:S.id,title:S.title});
@@ -143,9 +157,10 @@ side.addEventListener('click',e=>{const id=e.target.dataset&&e.target.dataset.id
  if(id){e.preventDefault();del(id);return}
  if(swiped||opened){e.preventDefault();if(opened)shut(opened)}});
 try{L(JSON.parse(localStorage['chats:'+S.uid]||'[]'))}catch{}
-function show(msgs){log.innerHTML='';for(const m of msgs){if(m.role==='user')add('u',E1(m.text));else add('m',md(m.text,m.images,m.sources))}}
+// Each answer gets a faint ⋯ button below it (index into S.msgs in data-i).
+function acts(el,i){let a=el.nextElementSibling;if(!a||!a.classList.contains('acts')){a=document.createElement('div');a.className='acts';a.innerHTML='<button aria-label="More">⋯</button>';el.after(a)}a.dataset.i=i}
+function show(msgs){log.innerHTML='';msgs.forEach((m,i)=>{if(m.role==='user')add('u',E1(m.text));else acts(add('m',md(m.text,m.images,m.sources)),i)})}
 show(S.msgs);
-S.msgs=S.msgs.map(({role,text})=>({role,text}));
 let busy=false;
 if(S.streaming){busy=true;start();history.replaceState(null,'','/c/'+S.id)}
 // This page's id, so live updates it caused itself are skipped.
@@ -154,12 +169,14 @@ async function ask(q){if(busy)return;busy=true;S.msgs.push({role:'user',text:q})
 // Rerun the last question (after a model switch): drop the old answer and answer again.
 function rerun(){if(busy)return;let i=S.msgs.length-1;while(i>=0&&S.msgs[i].role!=='user')i--;if(i<0)return;
  S.msgs=S.msgs.slice(0,i+1);const us=log.querySelectorAll('.u'),lu=us[us.length-1];while(lu&&lu.nextSibling)lu.nextSibling.remove();busy=true;run()}
-async function run(){start();main.scrollTop=main.scrollHeight;
- try{const r=await fetch('/api/chats/'+S.id,{method:'POST',body:JSON.stringify({title:S.title,msgs:S.msgs,model:S.model,cid:CID})});
+// o.el/o.at: answer again in place of that answer (o.model for this answer only); otherwise answer the last question.
+async function run(o={}){start(o.el);if(o.model)cur.model=o.model;cur.at=o.at;if(!o.el)main.scrollTop=main.scrollHeight;
+ const hist=(o.at!=null?S.msgs.slice(0,o.at):S.msgs).map(({role,text})=>({role,text}));
+ try{const r=await fetch('/api/chats/'+S.id,{method:'POST',body:JSON.stringify({title:S.title,msgs:hist,model:cur.model,cid:CID,replace:o.at!=null})});
   if(!r.ok)throw new Error('HTTP '+r.status);
   const rd=r.body.pipeThrough(new TextDecoderStream()).getReader();let buf='';
   for(;;){const {value,done}=await rd.read();if(done)break;buf+=value;const parts=buf.split('\\u0000');buf=parts.pop();
-   for(const p of parts){const k=p[0],v=p.slice(1);if(k==='T')T(v);else if(k==='I')I(JSON.parse(v));else if(k==='D')D(JSON.parse(v));else if(k==='E')E(v)}}
+   for(const p of parts){const k=p[0],v=p.slice(1);if(k==='T')T(v);else if(k==='I')I(JSON.parse(v));else if(k==='R')R(JSON.parse(v));else if(k==='D')D(JSON.parse(v));else if(k==='E')E(v)}}
   if(cur)E('Connection closed.')}catch(e){E(String(e.message||e))}}
 $('form').addEventListener('submit',e=>{const q=ta.value.trim();if(!S.id)return;e.preventDefault();if(!q||busy)return;ta.value='';fit();if(matchMedia('(hover:none)').matches)ta.blur();ask(q)});
 ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('form').requestSubmit()}});
@@ -183,7 +200,7 @@ $('.new').addEventListener('click',e=>{if(e.metaKey||e.ctrlKey||e.shiftKey||e.bu
 addEventListener('popstate',()=>location.reload());
 // Another window added to this chat: load the saved copy and redraw it.
 function sync(){const id=S.id;fetch('/api/chats/'+id).then(r=>r.ok?r.json():null).then(c=>{if(!c||S.id!==id||busy)return;
- S.title=c.title;S.model=c.model;ML();show(c.msgs);S.msgs=c.msgs.map(({role,text})=>({role,text}))},()=>{})}
+ S.title=c.title;S.model=c.model;ML();show(c.msgs);S.msgs=c.msgs},()=>{})}
 // Live sidebar: the server pushes the chat list when any tab or device changes it.
 let live=null;function connect(){if(live&&live.readyState<2)return;live=new WebSocket(location.origin.replace(/^http/,'ws')+'/api/live');
  live.onmessage=e=>{try{const m=JSON.parse(e.data);
@@ -200,6 +217,32 @@ if(!/Mac|iPhone|iPad/.test(navigator.platform))$('.new kbd').textContent='Ctrl K
 const mdl=$('#mdl');function ML(){if(!mdl)return;const c=S.model==='carbon';mdl.classList.toggle('on',c);mdl.textContent=(c?'✓ ':'')+'Gemini 4 Carbon';
  mdl.title=c?'Answering with Gemini 4 Carbon. Click to go back to Flash Lite and rerun.':'Rerun with Gemini 4 Carbon and use it for follow-ups'}
 ML();if(mdl)mdl.onclick=()=>{if(busy)return;S.model=S.model==='carbon'?'lite':'carbon';ML();rerun()};
+// Make a share link and copy it. body.at shares a single answer.
+function copyShare(body,show){const made=fetch('/api/chats/'+S.id+'/share',{method:'POST',body:JSON.stringify(body)}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()});
+ made.then(j=>{S.shares.unshift({id:j.id,created:j.created});SL()},()=>{});
+ const link=made.then(j=>j.url),plain=()=>link.then(u=>navigator.clipboard.writeText(u));
+ (window.ClipboardItem&&navigator.clipboard.write?navigator.clipboard.write([new ClipboardItem({'text/plain':link.then(u=>new Blob([u],{type:'text/plain'}))})]).catch(plain):plain())
+  .then(()=>show('Link copied'),()=>show('Could not copy'))}
+function toast(t){let e=$('#toast');if(!e){e=document.createElement('div');e.id='toast';document.body.append(e)}e.textContent=t;e.hidden=false;clearTimeout(e.t);e.t=setTimeout(()=>e.hidden=true,1600)}
+// Per-answer ⋯ menu.
+const menu=document.createElement('div');menu.id='menu';menu.hidden=true;document.body.append(menu);let menuI=-1;
+const sheet=document.createElement('div');sheet.id='sheet';sheet.hidden=true;document.body.append(sheet);
+log.addEventListener('click',e=>{const b=e.target.closest('.acts button');if(!b)return;e.stopPropagation();
+ const i=+b.parentNode.dataset.i,m=S.msgs[i];if(!m)return;menuI=i;
+ menu.innerHTML='<button data-a="res"'+(m.results&&m.results.length?'':' disabled')+'>Search results</button><button data-a="copy">Copy answer</button>'
+  +'<button data-a="rerun"'+(busy?' disabled':'')+'>Rerun with '+(m.model==='carbon'?'Flash Lite':'Gemini 4 Carbon')+'</button><button data-a="share">Share this answer</button>';
+ menu.hidden=false;const r=b.getBoundingClientRect(),w=menu.offsetWidth,h=menu.offsetHeight;
+ menu.style.left=Math.max(8,Math.min(r.left,innerWidth-w-8))+'px';menu.style.top=(r.bottom+h+8>innerHeight?r.top-h-4:r.bottom+4)+'px'});
+document.addEventListener('click',e=>{if(!menu.hidden&&!menu.contains(e.target))menu.hidden=true});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){menu.hidden=true;sheet.hidden=true}});
+main.addEventListener('scroll',()=>{menu.hidden=true});
+menu.onclick=e=>{const a=e.target.dataset&&e.target.dataset.a;if(!a||e.target.disabled)return;menu.hidden=true;const i=menuI,m=S.msgs[i];if(!m)return;
+ if(a==='res'){sheet.innerHTML='<div class="sh-in"><div class="sh-hd"><b>Search results</b><button aria-label="Close">×</button></div>'+m.results.map(x=>'<div class="r"><a href="'+E1(x.url)+'" target="_blank" rel="noopener">'
+  +E1(x.title||x.url)+'</a><span>'+E1(x.url.split('/')[2].replace(/^www\\./,'')+(x.date?' · '+x.date:''))+'</span><p>'+E1(x.text)+'</p></div>').join('')+'</div>';sheet.hidden=false}
+ if(a==='copy')navigator.clipboard.writeText(m.text.replace(/^\\s*!\\[[^\\]]*\\]\\([^)]*\\)\\s*$/gm,'').replace(/\\s*\\[\\d+(?:,\\s*\\d+)*\\]/g,'').replace(/\\n{3,}/g,'\\n\\n').trim()).then(()=>toast('Copied'),()=>toast('Could not copy'));
+ if(a==='rerun'&&!busy){const el=log.querySelector('.acts[data-i="'+i+'"]').previousElementSibling;busy=true;run({el,at:i,model:m.model==='carbon'?'lite':'carbon'})}
+ if(a==='share')copyShare({n:S.msgs.length,at:i},toast)};
+sheet.onclick=e=>{if(e.target===sheet||e.target.closest('.sh-hd button'))sheet.hidden=true};
 const shx=$('#shx'),sh=$('#sh'),sl=$('#sl'),sp=$('#sp'),shareUrl=id=>location.origin+'/s/'+id;
 const when=t=>new Date(t).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
 function SL(){if(!sl)return;const n=S.shares.length;sl.hidden=!n;sl.textContent=n+(n>1?' links':' link');if(!n)sp.hidden=true;
@@ -210,15 +253,8 @@ if(sh){SL();
  sp.onclick=e=>{const c=e.target.dataset.c,d=e.target.dataset.d;
   if(c)navigator.clipboard.writeText(shareUrl(c)).then(()=>{e.target.textContent='Copied';setTimeout(()=>e.target.textContent='Copy',1500)});
   if(d){fetch('/api/chats/'+S.id+'/shares/'+d,{method:'DELETE'});S.shares=S.shares.filter(x=>x.id!==d);SL()}};
- sh.onclick=()=>{if(busy)return;const label=sh.textContent;
-  const made=fetch('/api/chats/'+S.id+'/share',{method:'POST',body:JSON.stringify({n:S.msgs.length})})
-   .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()});
-  made.then(j=>{S.shares.unshift({id:j.id,created:j.created});SL()},()=>{});
-  const link=made.then(j=>j.url),show=t=>{sh.textContent=t;setTimeout(()=>sh.textContent=label,2000)};
-  const plain=()=>link.then(u=>navigator.clipboard.writeText(u));
-  (window.ClipboardItem&&navigator.clipboard.write
-   ?navigator.clipboard.write([new ClipboardItem({'text/plain':link.then(u=>new Blob([u],{type:'text/plain'}))})]).catch(plain)
-   :plain()).then(()=>show('Link copied'),()=>show('Could not copy'))}}
+ sh.onclick=()=>{if(busy)return;const label=sh.textContent;copyShare({n:S.msgs.length},t=>{sh.textContent=t;setTimeout(()=>sh.textContent=label,2000)})};
+}
 `;
 
 export function shell(o: { id: string | null; title: string; msgs: Msg[]; streaming: boolean; user: { u: string; n: string }; shares?: ShareRef[]; model?: string }) {

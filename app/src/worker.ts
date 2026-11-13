@@ -1,7 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 import { cookie, session } from "./session.ts";
-import { PAGE_VERSION, adminPage, call, keyPage, opensearch, sharePage, shell, signIn, type Msg, type Source } from "./page.ts";
+import { PAGE_VERSION, adminPage, call, keyPage, opensearch, sharePage, shell, signIn, type Msg, type Result, type Source } from "./page.ts";
 import { MODELS, modelKey, type Meter, type ModelKey } from "./usage.ts";
 
 import { APPLE_ICON_PNG, FAVICON_PNG, LOGO_SVG } from "./icons.ts";
@@ -227,7 +227,7 @@ const ICONS: Record<string, [() => string | Uint8Array<ArrayBuffer>, string]> = 
 const newId = () => crypto.randomUUID().replaceAll("-", "").slice(0, 12);
 const titleOf = (q: string) => (q.length > 80 ? q.slice(0, 77) + "…" : q);
 
-type Search = { context: string; sources: Source[]; images: string[]; exa: number };
+type Search = { context: string; sources: Source[]; images: string[]; exa: number; results: Result[] };
 type ExaResult = { url: string; title?: string; publishedDate?: string; highlights?: string[]; image?: string; extras?: { imageLinks?: string[] } };
 const NOT_A_PHOTO = /\.svg(\?|$)|\/\d{1,2}px-|logo|icon|favicon|sprite|avatar|badge|banner|slide|promo|hiring|advert/i;
 
@@ -247,7 +247,7 @@ async function search(env: WorkerEnv, query: string): Promise<Search> {
     if (!res.ok) throw new Error(`Exa ${res.status}`);
     const { results = [], costDollars } = (await res.json()) as { results?: ExaResult[]; costDollars?: { total?: number } };
     results.sort((a, b) => (b.publishedDate ?? "").localeCompare(a.publishedDate ?? ""));
-    const images: string[] = [], sources: Source[] = [], parts: string[] = [];
+    const images: string[] = [], sources: Source[] = [], parts: string[] = [], shown: Result[] = [];
     results.forEach((r, i) => {
       const host = new URL(r.url).hostname.replace(/^www\./, "");
       sources.push({ title: host, uri: r.url });
@@ -256,11 +256,12 @@ async function search(env: WorkerEnv, query: string): Promise<Search> {
         if (images.length < 12 && u?.startsWith("https://") && !NOT_A_PHOTO.test(u) && !images.includes(u)) ids.push(`img:${images.push(u)}`);
       }
       const date = r.publishedDate ? `, ${r.publishedDate.slice(0, 10)}` : "";
+      shown.push({ title: r.title ?? host, url: r.url, date: r.publishedDate?.slice(0, 10), text: plain((r.highlights ?? []).join(" … ")).slice(0, 600) });
       parts.push(`[${i + 1}] ${r.title ?? host} (${r.url}${date})\n${(r.highlights ?? []).join(" … ")}${ids.length ? `\nImages: ${ids.join(", ")}` : ""}`);
     });
-    return { context: parts.join("\n\n"), sources, images, exa: costDollars?.total ?? 0 };
+    return { context: parts.join("\n\n"), sources, images, exa: costDollars?.total ?? 0, results: shown };
   } catch {
-    return { context: "", sources: [], images: [], exa: 0 };
+    return { context: "", sources: [], images: [], exa: 0, results: [] };
   }
 }
 
@@ -271,17 +272,21 @@ function queryOf(msgs: Msg[]) {
   return last.split(/\s+/).length < 8 && asked.length > 1 ? `${asked.at(-2)} ${last}` : last;
 }
 
-type Emit = (type: "T" | "I" | "D" | "E", value: unknown) => void;
+type Emit = (type: "T" | "I" | "R" | "D" | "E", value: unknown) => void;
+
+/** Highlights are page Markdown; strip the marks for the search results panel. */
+const plain = (t: string) => t.replace(/(^|\s)#{1,6}(?=\s|$)/g, "$1").replace(/\*\*|__|`/g, "").replace(/\s+/g, " ").trim();
 
 /** One answer turn as events: I image ids, T text delta, D done with sources, E error. Returns what to save and what it cost. */
 async function turn(env: WorkerEnv, msgs: Msg[], searching: Promise<Search>, emit: Emit, model: ModelKey = "lite"): Promise<{ msg: Msg; meter: Meter } | null> {
   try {
     const found = await searching;
     if (found.images.length) emit("I", found.images);
+    emit("R", found.results);
     const { text, tokensIn, tokensOut } = await relay(gemini(env, msgs, found, model), (t) => emit("T", t));
     emit("D", found.sources);
     const gemini$ = tokensIn * MODELS[model].in + tokensOut * MODELS[model].out;
-    return { msg: { role: "model", text, sources: found.sources, images: found.images }, meter: { exa: found.exa, tokensIn, tokensOut, gemini: gemini$ } };
+    return { msg: { role: "model", text, sources: found.sources, images: found.images, results: found.results, model }, meter: { exa: found.exa, tokensIn, tokensOut, gemini: gemini$ } };
   } catch (e) {
     emit("E", (e as Error).message);
     return null;
@@ -408,11 +413,16 @@ export default {
     if (share && req.method === "POST") {
       // Snapshot from storage, not from the client, so nobody can publish made-up answers on this domain.
       // The chat saves after its stream ends, so wait briefly when the newest answer is not stored yet.
-      const { n } = (await req.json()) as { n: number };
+      // at: share only this answer (with its question).
+      const { n, at } = (await req.json()) as { n: number; at?: number };
       const chat = await stored(chats, share[1]!, n);
       if (!chat) return new Response("Not found", { status: 404 });
+      const one = typeof at === "number" && chat.msgs[at]?.role === "model" && chat.msgs[at - 1]?.role === "user";
+      const picked = one ? chat.msgs.slice(at - 1, at + 1) : chat.msgs;
+      const title = one ? titleOf(chat.msgs[at - 1]!.text) : chat.title;
       const id = newId();
-      const created = await shares.put(id, `${user.u}/${share[1]}`, chat.title, chat.msgs);
+      // Search results stay with the chat; share pages do not show them.
+      const created = await shares.put(id, `${user.u}/${share[1]}`, title, picked.map(({ results: _, ...m }) => m));
       return Response.json({ url: `${url.origin}/s/${id}`, id, created });
     }
 
@@ -427,7 +437,8 @@ export default {
     if (api && req.method === "POST") {
       // Follow-up, or a rerun of the last question: the client sends the history it already has (ending with the
       // question to answer), so no storage read is on the critical path. model is the chat's chosen model.
-      const body = (await req.json()) as { title: string; msgs: Msg[]; model?: string; cid?: string };
+      // replace: answer again in place of the answer that follows these messages, keeping later turns and the chat's model.
+      const body = (await req.json()) as { title: string; msgs: Msg[]; model?: string; cid?: string; replace?: boolean };
       const model = modelKey(body.model);
       const searching = search(env, queryOf(body.msgs));
       const out = stream();
@@ -437,10 +448,12 @@ export default {
         await out.close();
         // Save the stored history up to this question, plus this turn. A rerun drops the old answer. The client's copy
         // of earlier answers is never written back.
-        const base = await stored(chats, api[1]!, body.msgs.length - 1);
+        const n = body.msgs.length;
+        const base = await stored(chats, api[1]!, body.replace ? n + 1 : n - 1);
         if (result) await charge(env, user.u, result.meter);
         if (result && base) {
-          await chats.save(api[1]!, base.title, [...base.msgs.slice(0, body.msgs.length - 1), body.msgs.at(-1)!, result.msg], model, body.cid);
+          if (body.replace) await chats.save(api[1]!, base.title, [...base.msgs.slice(0, n), result.msg, ...base.msgs.slice(n + 1)], undefined, body.cid);
+          else await chats.save(api[1]!, base.title, [...base.msgs.slice(0, n - 1), body.msgs.at(-1)!, result.msg], model, body.cid);
         }
       })());
       return new Response(out.readable, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });

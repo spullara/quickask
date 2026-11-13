@@ -188,6 +188,21 @@ checks["followup_frames"] = any(f.startswith("T") for f in frames) and any(f.sta
 time.sleep(1)
 stored_chat = alice.text(f"/c/{chat_id}")
 checks["followup_cannot_rewrite_history"] = "It is a suspension bridge in San Francisco." not in stored_chat and "how long is it?" in stored_chat
+
+def chat_state(cid):
+    return json.loads(re.search(r"const S=(\{.*?\});", alice.text(f"/c/{cid}")).group(1))
+st = chat_state(chat_id)
+checks["answers_keep_results_and_model"] = all(m.get("results") and m.get("model") == "lite" for m in st["msgs"] if m["role"] == "model")
+# Rerun only the first answer with Carbon: it is replaced in place, later turns and the chat's model stay.
+later = st["msgs"][3]["text"]
+alice.open(f"/api/chats/{chat_id}", {"title": "x", "msgs": st["msgs"][:1], "model": "carbon", "cid": "e2e", "replace": True}, "POST").read()
+time.sleep(1.5)
+st2 = chat_state(chat_id)
+checks["rerun_one_answer_in_place"] = (len(st2["msgs"]) == 4 and st2["msgs"][1]["model"] == "carbon" and st2["msgs"][3]["text"] == later
+                                       and st2["model"] == "lite")
+one = alice.json(f"/api/chats/{chat_id}/share", {"n": 4, "at": 3})
+one_page = Browser(access_key=False).text("/s/" + one["id"])
+checks["share_one_answer"] = one_page.count('"role":"user"') == 1 and "how long is it?" in one_page and '"results"' not in one_page
 link = alice.json(f"/api/chats/{chat_id}/share", {"n": 2})["url"]
 share_path = "/s/" + link.rsplit("/", 1)[1]
 public = Browser(access_key=False).text(share_path)
