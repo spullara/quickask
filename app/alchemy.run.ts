@@ -57,7 +57,8 @@ export const Worker = Cloudflare.Worker("Quick", {
     ...(SENDER ? { EMAIL: Cloudflare.Email.SendEmail("EMAIL", { allowedSenderAddresses: [SENDER] }) } : {}),
     SENDER: SENDER ?? "",
     APP_DOMAIN: DOMAIN ?? "",
-    OLD_DOMAINS: OLD.join(","),
+    // MOVE=off keeps old domains serving the app (for example until a new domain's DNS is live).
+    OLD_DOMAINS: process.env.MOVE === "off" ? "" : OLD.join(","),
     GEMINI_API_KEY: Config.Redacted("GEMINI_API_KEY"),
     EXA_API_KEY: Config.Redacted("EXA_API_KEY"),
     ACCESS_KEY: Config.Redacted("ACCESS_KEY"),

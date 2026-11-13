@@ -25,6 +25,7 @@ export WAITLIST="$(key WAITLIST)"
 export DAILY_QUERIES="$(key DAILY_QUERIES)"
 export MAIL_FORWARD_TO="$(key MAIL_FORWARD_TO)"
 export OLD_DOMAINS="$(key OLD_DOMAINS)"
+export MOVE="$(key MOVE)"
 need GEMINI_API_KEY; need EXA_API_KEY; need CLOUDFLARE_API_TOKEN
 
 # App secrets: created once, then reused so sessions and the access key survive redeploys.
