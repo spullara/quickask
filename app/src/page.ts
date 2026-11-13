@@ -359,15 +359,15 @@ th,td{padding:6px 8px 6px 0}td+td,th+th{text-align:right}tr+tr td{border-top:1px
 
 /** Read-only snapshot of a chat for anyone with the link: no sidebar, no input, no account. */
 export function sharePage(s: { title: string; msgs: Msg[] }, url: string) {
-  const answer = s.msgs.find((m) => m.role === "model");
-  const summary = (answer?.text ?? "").replace(/!\[[^\]]*\]\([^)]*\)|\s*\[\d+(?:,\s*\d+)*\]|[*#`>_]/g, "").replace(/\s+/g, " ").trim().slice(0, 200);
+  // Previews show the card image only: the title is just the app name and there is no description, so chat apps that
+  // print text under the image (Signal, Slack, WhatsApp) do not repeat the question and answer the card already shows.
   const card = esc(`${url}/card.png`), title = esc(s.title);
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}
 <title>${esc(s.title)}</title><meta name="robots" content="noindex">
 <meta property="og:site_name" content="QuickAsk"><meta property="og:type" content="article"><meta property="og:url" content="${esc(url)}">
-<meta property="og:title" content="${title}"><meta property="og:description" content="${esc(summary)}">
+<meta property="og:title" content="QuickAsk">
 <meta property="og:image" content="${card}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${title}">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${title}"><meta name="twitter:description" content="${esc(summary)}">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="QuickAsk">
 <meta name="twitter:image" content="${card}"><meta name="twitter:image:alt" content="${title}">
 <style>${CSS}</style></head><body style="display:block;overflow:auto"><main style="height:auto;display:block"><div class="sbrand">${mark(22)}QuickAsk</div><div id="log"></div></main>
 <script>const S=${json({ msgs: s.msgs })};${RENDER}function show(msgs){log.innerHTML='';for(const m of msgs){if(m.role==='user')add('u',E1(m.text));else add('m',md(m.text,m.images,m.sources))}}
