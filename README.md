@@ -14,6 +14,8 @@ with sources and, when they help, pictures.
 - Passkey accounts, behind a shared access key.
 - Read-only share links that anyone can open, with no account. Links show a rich preview card on X, iMessage and Slack.
 - Press ⌘K (Ctrl K) for a new search.
+- Answers know your approximate city and local time (from Cloudflare), so local questions like the weather work.
+- Each answer ends with three suggested follow-up questions you can tap. Plain URLs and domains in answers are links.
 - A faint ⋯ under each answer opens a menu: the raw search results, copy the answer, rerun just that answer with
   the other model, or share just that answer.
 - A chat can switch to Gemini 4 Carbon: the last answer is rerun with it, and follow-ups use it. New searches always start on Flash Lite.

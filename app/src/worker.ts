@@ -113,6 +113,9 @@ export class Chats extends DurableObject<WorkerEnv> {
   }
 }
 
+/** Marks the follow-up suggestions at the end of an answer. Stripped before the answer is shown or saved. */
+const FOLLOWUPS = ":::followups";
+
 const SYSTEM = `You are a fast answer engine. Answer the latest question, using the search results when they are relevant.
 Lead with the direct answer in the first sentence. Keep it short; add detail only when it helps. Use Markdown.
 Cite the search results you use as [n] (their numbers) right after the sentence they support, for example [1] or [2, 5].
@@ -124,7 +127,39 @@ page, documentation or homepage, such as "github", "chase login" or "react docs"
 likely official link from the results, as [Site name](url). Use a listed URL without its query string, or the site's root
 (https://host/) when the results only show inner pages of that site. Then answer as usual below it, pictures included.
 Results are sorted newest first and show publish dates. For questions about the latest, newest, current or most recent
-anything, the most recently published reports decide the answer: lead with what they say, then mention older context.`;
+anything, the most recently published reports decide the answer: lead with what they say, then mention older context.
+End every answer with a line containing only ${FOLLOWUPS}, then 3 short follow-up questions the user might ask next,
+one per line, with no numbering, bullets or quotes.`;
+
+/** Split the model's text into the answer and its follow-up suggestions. */
+function splitFollowups(text: string) {
+  const [answer = "", tail = ""] = text.split(/\n?\s*:::followups\s*/);
+  const followups = tail.split("\n").map((l) => l.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").replace(/^["“]|["”]$/g, "").trim())
+    .filter(Boolean).slice(0, 3);
+  return { answer: answer.trim(), followups };
+}
+
+/** Approximate place and time zone of the person asking, from Cloudflare's IP geolocation. */
+type Loc = { city?: string; region?: string; country?: string; tz?: string };
+const locOf = (req: Request): Loc => {
+  const cf = req.cf as { city?: string; region?: string; country?: string; timezone?: string } | undefined;
+  return { city: cf?.city, region: cf?.region, country: cf?.country, tz: cf?.timezone };
+};
+const placeOf = (loc: Loc) => [loc.city, loc.region, loc.country].filter(Boolean).join(", ");
+
+/** Local date and time, plus where the user is, for the model. */
+function context(loc: Loc) {
+  let now = new Date().toUTCString();
+  try {
+    if (loc.tz) now = `${new Date().toLocaleString("en-US", { timeZone: loc.tz, dateStyle: "full", timeStyle: "short" })} (${loc.tz})`;
+  } catch {}
+  const place = placeOf(loc);
+  return `Today is ${now}.` + (place ? `\nThe user is near ${place} (approximate, from their network). Use this for local questions such as
+weather, time, events or places nearby; do not mention it otherwise.` : "");
+}
+
+/** Questions that need the user's place in the search itself. */
+const LOCAL = /\b(near me|nearby|around here|weather|forecast|temperature|rain|snow|local|open now|tonight|restaurants?|cafes?|bars?|delivery|takeout|traffic|things to do|showtimes|movie times|events? (?:today|tonight|this week(?:end)?))\b/i;
 
 /** Gemini with the search results attached to the latest question. No search tool: Exa already did the search. */
 /** Read-only chat snapshots behind share links. One global instance. */
@@ -165,14 +200,14 @@ export class Shares extends DurableObject<WorkerEnv> {
   }
 }
 
-function gemini(env: WorkerEnv, msgs: Msg[], found: Search, model: ModelKey) {
+function gemini(env: WorkerEnv, msgs: Msg[], found: Search, model: ModelKey, loc: Loc) {
   const results = found.context ? `<search_results>\n${found.context}\n</search_results>` : "(No search results.)";
   const m = MODELS[model];
   return fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m.id}:streamGenerateContent?alt=sse`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: `Today is ${new Date().toUTCString()}.\n${SYSTEM}` }] },
+      systemInstruction: { parts: [{ text: `${context(loc)}\n${SYSTEM}` }] },
       contents: msgs.map((m, i) => ({
         role: m.role,
         parts: [{ text: i === msgs.length - 1 ? `${m.text}\n\n${results}` : m.text }],
@@ -267,7 +302,8 @@ type ExaResult = { url: string; title?: string; publishedDate?: string; highligh
 const NOT_A_PHOTO = /\.svg(\?|$)|\/\d{1,2}px-|logo|icon|favicon|sprite|avatar|badge|banner|slide|promo|hiring|advert/i;
 
 /** Exa search: the most query-relevant sentences of each page (anywhere in it, not just the top) for the model, plus each page's images as short ids (img:N) the model can place. */
-async function search(env: WorkerEnv, query: string): Promise<Search> {
+async function search(env: WorkerEnv, query: string, loc: Loc = {}): Promise<Search> {
+  if (LOCAL.test(query) && loc.city) query = `${query} in ${[loc.city, loc.region].filter(Boolean).join(", ")}`;
   try {
     // Global 10 searches/s limit. Over a 3 s queue, answer without search instead of making the user wait.
     const wait = await env.USAGE.get(env.USAGE.idFromName("global")).acquire();
@@ -276,7 +312,7 @@ async function search(env: WorkerEnv, query: string): Promise<Search> {
     const res = await fetch("https://api.exa.ai/search", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": env.EXA_API_KEY },
-      body: JSON.stringify({ query, type: "fast", numResults: 10, contents: { highlights: { numSentences: 3, highlightsPerUrl: 3 }, extras: { imageLinks: 2 } } }),
+      body: JSON.stringify({ query, type: "fast", numResults: 10, ...(loc.country ? { userLocation: loc.country } : {}), contents: { highlights: { numSentences: 3, highlightsPerUrl: 3 }, extras: { imageLinks: 2 } } }),
       signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) throw new Error(`Exa ${res.status}`);
@@ -307,21 +343,23 @@ function queryOf(msgs: Msg[]) {
   return last.split(/\s+/).length < 8 && asked.length > 1 ? `${asked.at(-2)} ${last}` : last;
 }
 
-type Emit = (type: "T" | "I" | "R" | "D" | "E", value: unknown) => void;
+type Emit = (type: "T" | "I" | "R" | "F" | "D" | "E", value: unknown) => void;
 
 /** Highlights are page Markdown; strip the marks for the search results panel. */
 const plain = (t: string) => t.replace(/(^|\s)#{1,6}(?=\s|$)/g, "$1").replace(/\*\*|__|`/g, "").replace(/\s+/g, " ").trim();
 
 /** One answer turn as events: I image ids, T text delta, D done with sources, E error. Returns what to save and what it cost. */
-async function turn(env: WorkerEnv, msgs: Msg[], searching: Promise<Search>, emit: Emit, model: ModelKey = "lite"): Promise<{ msg: Msg; meter: Meter } | null> {
+async function turn(env: WorkerEnv, msgs: Msg[], searching: Promise<Search>, emit: Emit, model: ModelKey, loc: Loc): Promise<{ msg: Msg; meter: Meter } | null> {
   try {
     const found = await searching;
     if (found.images.length) emit("I", found.images);
     emit("R", found.results);
-    const { text, tokensIn, tokensOut } = await relay(gemini(env, msgs, found, model), (t) => emit("T", t));
+    const { text: raw, tokensIn, tokensOut } = await relay(gemini(env, msgs, found, model, loc), (t) => emit("T", t));
+    const { answer: text, followups } = splitFollowups(raw);
+    emit("F", followups);
     emit("D", found.sources);
     const gemini$ = tokensIn * MODELS[model].in + tokensOut * MODELS[model].out;
-    return { msg: { role: "model", text, sources: found.sources, images: found.images, results: found.results, model }, meter: { exa: found.exa, tokensIn, tokensOut, gemini: gemini$ } };
+    return { msg: { role: "model", text, sources: found.sources, images: found.images, results: found.results, followups, model }, meter: { exa: found.exa, tokensIn, tokensOut, gemini: gemini$ } };
   } catch (e) {
     emit("E", (e as Error).message);
     return null;
@@ -394,7 +432,8 @@ export default {
 
     // Start the search before any other work: it is the first step of the critical path.
     const msgs: Msg[] = q ? [{ role: "user", text: q }] : [];
-    const searching = q ? search(env, q) : null;
+    const loc = locOf(req);
+    const searching = q ? search(env, q, loc) : null;
     const chats = env.CHATS.get(env.CHATS.idFromName(user.u));
     const shares = env.SHARES.get(env.SHARES.idFromName("shares"));
     const usage = env.USAGE.get(env.USAGE.idFromName("global"));
@@ -407,7 +446,7 @@ export default {
       out.send(shell({ id, title, msgs, streaming: true, user }));
       ctx.waitUntil((async () => {
         list.then((l) => out.send(call("L", l)), () => {});
-        const result = await turn(env, msgs, searching, (t, v) => out.send(call(t, v)));
+        const result = await turn(env, msgs, searching, (t, v) => out.send(call(t, v)), "lite", loc);
         await list.catch(() => {});
         await out.close();
         if (result) await Promise.all([chats.save(id, title, [...msgs, result.msg]), charge(env, user.u, result.meter)]);
@@ -463,7 +502,7 @@ export default {
       const title = one ? titleOf(chat.msgs[at - 1]!.text) : chat.title;
       const id = newId();
       // Search results stay with the chat; share pages do not show them.
-      const created = await shares.put(id, `${user.u}/${share[1]}`, title, picked.map(({ results: _, ...m }) => m));
+      const created = await shares.put(id, `${user.u}/${share[1]}`, title, picked.map(({ results: _, followups: __, ...m }) => m));
       return Response.json({ url: `${url.origin}/s/${id}`, id, created });
     }
 
@@ -481,11 +520,11 @@ export default {
       // replace: answer again in place of the answer that follows these messages, keeping later turns and the chat's model.
       const body = (await req.json()) as { title: string; msgs: Msg[]; model?: string; cid?: string; replace?: boolean };
       const model = modelKey(body.model);
-      const searching = search(env, queryOf(body.msgs));
+      const searching = search(env, queryOf(body.msgs), loc);
       const out = stream();
       ctx.waitUntil((async () => {
         const result = await turn(env, body.msgs, searching,
-          (t, v) => out.send(t + (typeof v === "string" ? v : JSON.stringify(v)) + "\u0000"), model);
+          (t, v) => out.send(t + (typeof v === "string" ? v : JSON.stringify(v)) + "\u0000"), model, loc);
         await out.close();
         // Save the stored history up to this question, plus this turn. A rerun drops the old answer. The client's copy
         // of earlier answers is never written back.

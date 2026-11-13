@@ -198,6 +198,8 @@ checks["followup_cannot_rewrite_history"] = "It is a suspension bridge in San Fr
 def chat_state(cid):
     return json.loads(re.search(r"const S=(\{.*?\});", alice.text(f"/c/{cid}")).group(1))
 st = chat_state(chat_id)
+first_answer = st["msgs"][1]
+checks["followups_saved_not_shown"] = len(first_answer.get("followups") or []) == 3 and ":::" not in first_answer["text"] and "<script>F(" in bridge
 checks["answers_keep_results_and_model"] = all(m.get("results") and m.get("model") == "lite" for m in st["msgs"] if m["role"] == "model")
 # Rerun only the first answer with Carbon: it is replaced in place, later turns and the chat's model stay.
 later = st["msgs"][3]["text"]

@@ -1,6 +1,6 @@
 export type Source = { title: string; uri: string };
 export type Result = { title: string; url: string; date?: string; text: string };
-export type Msg = { role: "user" | "model"; text: string; sources?: Source[]; images?: string[]; results?: Result[]; model?: string };
+export type Msg = { role: "user" | "model"; text: string; sources?: Source[]; images?: string[]; results?: Result[]; followups?: string[]; model?: string };
 export type ShareRef = { id: string; created: number };
 type Row = { day?: string; user?: string; searches: number; exa: number; gemini: number; cost: number; tokensIn: number; tokensOut: number };
 
@@ -84,6 +84,8 @@ textarea:focus{border-color:var(--mute)}
 #sheet .r{margin:14px 0 0;font-size:14px}#sheet .r a{font-weight:500}#sheet .r span{display:block;color:var(--mute);font-size:12px}#sheet .r p{margin:2px 0 0;font-size:13px;line-height:1.5}
 @media (max-width:720px){#sheet{align-items:flex-end}.sh-in{width:100%;height:75vh;border-radius:16px 16px 0 0}}
 #toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:10px;font-size:14px;z-index:7}#toast[hidden]{display:none}
+.fups{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin:0 0 18px}
+.fu{border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:12px;padding:7px 12px;font:inherit;font-size:14px;text-align:left;cursor:pointer;max-width:100%}.fu:hover{background:var(--soft)}
 .navl{display:flex;flex-direction:column;gap:1px;width:fit-content;max-width:100%;background:var(--soft);border-radius:12px;padding:10px 14px;margin:2px 0 14px}
 .navl:hover{background:var(--line);text-decoration:none}.navl b{font-weight:600}.navl span{color:var(--mute);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gal{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
@@ -113,7 +115,9 @@ const pic=(u,alt)=>u?'<a href="'+u+'" target="_blank" rel="noopener"><img class=
 const inl=s=>E1(s).replace(/\`([^\`]+)\`/g,'<code>$1</code>').replace(/\\*\\*([^*]+)\\*\\*/g,'<b>$1</b>')
  .replace(/!\\[([^\\]]*)\\]\\((?:img:(\\d+)|(https:[^)\\s]+))\\)/g,(_,a,n,u)=>pic(n?E1(IM[n-1]||''):u,a))
  .replace(/\\[([^\\]]+)\\]\\((https?:[^()\\s]*(?:\\([^()\\s]*\\)[^()\\s]*)*)\\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
- .replace(/\\[(\\d+(?:,\\s*\\d+)*)\\](?!\\()/g,(m,l)=>SRC.length?'<sup>'+l.split(/,\\s*/).map(n=>SRC[n-1]?'<a href="'+E1(SRC[n-1].uri)+'" target="_blank" rel="noopener" data-t="'+E1(SRC[n-1].title)+'" aria-label="'+E1(SRC[n-1].title)+'">'+n+'</a>':n).join(',')+'</sup>':m);
+ .replace(/\\[(\\d+(?:,\\s*\\d+)*)\\](?!\\()/g,(m,l)=>SRC.length?'<sup>'+l.split(/,\\s*/).map(n=>SRC[n-1]?'<a href="'+E1(SRC[n-1].uri)+'" target="_blank" rel="noopener" data-t="'+E1(SRC[n-1].title)+'" aria-label="'+E1(SRC[n-1].title)+'">'+n+'</a>':n).join(',')+'</sup>':m)
+ .replace(/(?<![\\w"'=\\/@.>-])((?:https?:\\/\\/|www\\.)(?:[^\\s<()]|\\([^\\s<()]*\\))+|(?:[a-z0-9-]+\\.)+(?:com|org|net|io|dev|ai|app|co|gov|edu|me|tv|us|uk|ca|de|fr|jp|info|news)(?![\\w-])(?:\\/(?:[^\\s<()]|\\([^\\s<()]*\\))*)?)/gi,u=>{
+  let t='';while(/[.,;:!?'"\\]]$/.test(u)){t=u.slice(-1)+t;u=u.slice(0,-1)}return '<a href="'+(/^https?:/i.test(u)?u:'https://'+u)+'" target="_blank" rel="noopener">'+u+'</a>'+t})
 function blk(p){let o='',l=null,pa=[],ga=[];
  const fp=()=>{if(pa.length){o+='<p>'+pa.map(inl).join('<br>')+'</p>';pa=[]}if(l){o+='</'+l+'>';l=null}};
  const fg=()=>{if(ga.length){o+='<div class="gal">'+ga.map(inl).join('')+'</div>';ga=[]}};
@@ -135,14 +139,22 @@ const JS = `
 const ta=$('textarea'),side=$('#list');
 let cur=null,raf=0;
 function start(el){if(el){el.classList.add('wait');el.innerHTML='';cur={el,buf:'',imgs:[]}}else cur={el:add('m wait',''),buf:'',imgs:[]};cur.model=S.model}
-function paint(){raf=0;cur.el.innerHTML=md(cur.buf.replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs,cur.src)}
+function paint(){raf=0;cur.el.innerHTML=md(cutF(cur.buf).replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs,cur.src)}
 const main=$('main');let nearEnd=true;main.addEventListener('scroll',()=>{nearEnd=main.scrollHeight-main.scrollTop-main.clientHeight<80});
 new ResizeObserver(()=>{if(nearEnd)main.scrollTop=main.scrollHeight}).observe(log);
 function T(t){cur.buf+=t;if(!raf)raf=requestAnimationFrame(paint)}
-function D(s){cur.src=s;paint();cur.el.classList.remove('wait');
- const m={role:'model',text:cur.buf,sources:s,images:cur.imgs,results:cur.res||[],model:cur.model},at=cur.at;
- if(at!=null)S.msgs[at]=m;else S.msgs.push(m);acts(cur.el,at!=null?at:S.msgs.length-1);cur=null;busy=false}
+function D(s){cur.src=s;cur.buf=cutF(cur.buf).trim();paint();cur.el.classList.remove('wait');
+ const m={role:'model',followups:cur.fups||[],text:cur.buf,sources:s,images:cur.imgs,results:cur.res||[],model:cur.model},at=cur.at;
+ if(at!=null)S.msgs[at]=m;else S.msgs.push(m);acts(cur.el,at!=null?at:S.msgs.length-1);cur=null;busy=false;chips()}
 function R(r){cur.res=r}
+function F(f){cur.fups=f}
+// The model ends with ':::followups' and suggestions; never show that part (also while it is half streamed).
+const cutF=s=>s.split(/\\n\\s*:::/)[0].replace(/\\n\\s*:{1,3}[a-z]*$/,'');
+// Suggested follow-ups as chips under the latest answer only.
+function chips(){log.querySelectorAll('.fups').forEach(e=>e.remove());const last=S.msgs[S.msgs.length-1];
+ if(!last||last.role!=='model'||!last.followups||!last.followups.length)return;const a=log.querySelector('.acts[data-i="'+(S.msgs.length-1)+'"]');if(!a)return;
+ const d=document.createElement('div');d.className='fups';d.innerHTML=last.followups.map(q=>'<button class="fu">'+E1(q)+'</button>').join('');a.after(d)}
+log.addEventListener('click',e=>{const b=e.target.closest('.fu');if(!b||busy)return;ask(b.textContent)});
 function I(u){cur.imgs=u}
 function E(m){cur.el.classList.remove('wait');cur.el.insertAdjacentHTML('beforeend','<p class="err">'+E1(m)+'</p>');cur=null;busy=false}
 // Sidebar: base is the loaded list (newest first, 50 per page, more on scroll). A search shows its own results instead.
@@ -189,13 +201,13 @@ side.addEventListener('click',e=>{const id=e.target.dataset&&e.target.dataset.id
 try{L(JSON.parse(localStorage['chats:'+S.uid]||'[]'))}catch{}
 // Each answer gets a faint ⋯ button below it (index into S.msgs in data-i).
 function acts(el,i){let a=el.nextElementSibling;if(!a||!a.classList.contains('acts')){a=document.createElement('div');a.className='acts';a.innerHTML='<button aria-label="More">⋯</button>';el.after(a)}a.dataset.i=i}
-function show(msgs){log.innerHTML='';msgs.forEach((m,i)=>{if(m.role==='user')add('u',E1(m.text));else acts(add('m',md(m.text,m.images,m.sources)),i)})}
+function show(msgs){log.innerHTML='';msgs.forEach((m,i)=>{if(m.role==='user')add('u',E1(m.text));else acts(add('m',md(m.text,m.images,m.sources)),i)});chips()}
 show(S.msgs);
 let busy=false;
 if(S.streaming){busy=true;start();history.replaceState(null,'','/c/'+S.id)}
 // This page's id, so live updates it caused itself are skipped.
 const CID=Math.random().toString(36).slice(2);
-async function ask(q){if(busy)return;busy=true;S.msgs.push({role:'user',text:q});add('u',E1(q));run()}
+async function ask(q){if(busy)return;busy=true;log.querySelectorAll('.fups').forEach(e=>e.remove());S.msgs.push({role:'user',text:q});add('u',E1(q));run()}
 // Rerun the last question (after a model switch): drop the old answer and answer again.
 function rerun(){if(busy)return;let i=S.msgs.length-1;while(i>=0&&S.msgs[i].role!=='user')i--;if(i<0)return;
  S.msgs=S.msgs.slice(0,i+1);const us=log.querySelectorAll('.u'),lu=us[us.length-1];while(lu&&lu.nextSibling)lu.nextSibling.remove();busy=true;run()}
@@ -206,7 +218,7 @@ async function run(o={}){start(o.el);if(o.model)cur.model=o.model;cur.at=o.at;if
   if(!r.ok)throw new Error('HTTP '+r.status);
   const rd=r.body.pipeThrough(new TextDecoderStream()).getReader();let buf='';
   for(;;){const {value,done}=await rd.read();if(done)break;buf+=value;const parts=buf.split('\\u0000');buf=parts.pop();
-   for(const p of parts){const k=p[0],v=p.slice(1);if(k==='T')T(v);else if(k==='I')I(JSON.parse(v));else if(k==='R')R(JSON.parse(v));else if(k==='D')D(JSON.parse(v));else if(k==='E')E(v)}}
+   for(const p of parts){const k=p[0],v=p.slice(1);if(k==='T')T(v);else if(k==='I')I(JSON.parse(v));else if(k==='R')R(JSON.parse(v));else if(k==='F')F(JSON.parse(v));else if(k==='D')D(JSON.parse(v));else if(k==='E')E(v)}}
   if(cur)E('Connection closed.')}catch(e){E(String(e.message||e))}}
 $('form').addEventListener('submit',e=>{const q=ta.value.trim();if(!S.id)return;e.preventDefault();if(!q||busy)return;ta.value='';fit();if(matchMedia('(hover:none)').matches)ta.blur();ask(q)});
 ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('form').requestSubmit()}});
