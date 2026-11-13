@@ -349,12 +349,28 @@ const usd = (n: number) => "$" + (n < 1 ? n.toFixed(4) : n.toFixed(2));
 
 const ADMIN_JS = String.raw`
 const api=(a,b)=>fetch('/api/admin/'+a,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
+function bind(){
 document.querySelectorAll('.wl button').forEach(b=>b.onclick=async()=>{const tr=b.closest('tr'),e=tr.dataset.e;b.disabled=true;
  const r=await api(b.dataset.a,{email:e});if(r.error&&!r.ok){alert(r.error);b.disabled=false;return}
  if(b.dataset.a==='remove')tr.remove();else{tr.cells[1].innerHTML='<span class="mute">'+(r.error?'approved, email failed':'approved, email sent')+'</span>';b.textContent='Resend';b.disabled=false}});
 const save=async(i,v)=>{const tr=i.closest('tr');const r=await api('limit',{email:tr.dataset.e,daily:v});if(r.error){alert(r.error);return}i.value=r.daily;i.defaultValue=r.daily};
 document.querySelectorAll('.us input').forEach(i=>{i.onchange=()=>save(i,Math.max(0,Math.round(+i.value||0)));i.onkeydown=e=>{if(e.key==='Enter')i.blur()}});
-document.querySelectorAll('.us button').forEach(b=>b.onclick=()=>{const i=b.closest('tr').querySelector('input');save(i,(+i.value||0)+100)});
+document.querySelectorAll('.us button').forEach(b=>b.onclick=()=>{const i=b.closest('tr').querySelector('input');save(i,(+i.value||0)+100)})}
+bind();
+// Live: the server pings this socket when someone joins, is approved or signs up, and after each answer (usage).
+// The lists are refetched and swapped in, except while a limit is being edited. New rows flash.
+const sec=document.getElementById('live');let timer=0,sock=null;
+async function refresh(){const a=document.activeElement;if(a&&a.tagName==='INPUT'&&sec.contains(a)){timer=setTimeout(refresh,2000);return}
+ try{const seen=new Set([...sec.querySelectorAll('tr[data-e]')].map(t=>t.dataset.e));
+  const d=new DOMParser().parseFromString(await (await fetch('/admin',{cache:'no-store'})).text(),'text/html');
+  const next=d.getElementById('live');if(!next)return;sec.innerHTML=next.innerHTML;
+  sec.querySelectorAll('tr[data-e]').forEach(t=>{if(!seen.has(t.dataset.e))t.classList.add('new')});bind()}catch{}}
+const later=()=>{clearTimeout(timer);timer=setTimeout(refresh,300)};
+function connect(){if(sock&&sock.readyState<2)return;sock=new WebSocket(location.origin.replace(/^http/,'ws')+'/api/live');
+ sock.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.admin||m.usage)later()}catch{}};
+ sock.onclose=()=>{if(document.visibilityState==='visible')setTimeout(connect,3000)}}
+connect();setInterval(()=>{if(sock&&sock.readyState===1)sock.send('ping')},50000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){connect();later()}});
 `;
 
 /** Admin cost page: variable costs from Exa and Gemini, recorded per search. */
@@ -382,10 +398,11 @@ table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:ta
 .admin button{font:inherit;font-size:13px;padding:4px 10px;margin-left:6px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer}
 .admin input{font:inherit;font-size:14px;width:6em;text-align:right;padding:3px 6px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--fg)}
 .admin input:hover,.admin input:focus{border-color:var(--line);outline:none}td input{margin-right:-7px}
-.wl td:first-child,.us td:first-child{overflow-wrap:anywhere}th{text-align:left;color:var(--mute);font-weight:500;font-size:13px}
+.wl td:first-child,.us td:first-child{overflow-wrap:anywhere}
+tr.new td{animation:flash 2.4s ease-out}@keyframes flash{from{background:color-mix(in srgb,var(--fg) 10%,transparent)}to{background:transparent}}th{text-align:left;color:var(--mute);font-weight:500;font-size:13px}
 th,td{padding:6px 8px 6px 0}td+td,th+th{text-align:right}tr+tr td{border-top:1px solid var(--line)}
 </style></head><body style="display:block;overflow:auto"><main class="admin"><a class="back" href="/">← QuickAsk</a>
-${waiting}${users}
+<section id="live">${waiting}${users}</section>
 <h1 style="margin-top:32px">Usage</h1><p class="note">Exa and Gemini charges, recorded per search. Cloudflare's $5/month plan is not included.</p>
 <div class="cards">${card("Today", d.today)}${card("This month", d.month)}</div>
 <h2>This month by user</h2>${table("User", d.byUser, (r) => d.names[r.user ?? ""] ?? "(deleted)")}

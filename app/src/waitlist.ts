@@ -36,6 +36,17 @@ async function testReply(env: WorkerEnv, req: Request, email: string, ok: object
 }
 
 const store = (env: WorkerEnv) => env.AUTH.get(env.AUTH.idFromName("auth"));
+
+/** Test accounts and sign-ups (reserved test domains). The admin page hides them. */
+export const isTest = (email: string) => TEST_ADDRESS.test(email);
+
+/** Tell the admin's open pages that the waitlist or the users changed, so /admin refreshes itself. */
+export async function notifyAdmin(env: WorkerEnv) {
+  try {
+    const id = env.ADMIN_NAME ? await store(env).firstNamed(env.ADMIN_NAME) : null;
+    if (id) await env.CHATS.get(env.CHATS.idFromName(id)).broadcast({ admin: Date.now() });
+  } catch {}
+}
 const json = (v: unknown, status = 200) => Response.json(v, { status });
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 
@@ -100,6 +111,7 @@ export async function waitlistRoute(req: Request, env: WorkerEnv, url: URL): Pro
     }
     // The admin's own address skips the wait, so a new install can make its first account.
     await store(env).join(email, !!env.ADMIN_NAME && email === env.ADMIN_NAME.toLowerCase());
+    if (!isTest(email)) await notifyAdmin(env);
     const w = await sign(env.SESSION_SECRET, { w: email, e: Date.now() + 30 * DAY });
     return new Response(null, { status: 302, headers: { location: "/", "set-cookie": setCookie("w", w, 30 * 86400) } });
   }
@@ -112,6 +124,7 @@ export async function adminRoute(req: Request, env: WorkerEnv, url: URL): Promis
   const email = emailOf(body.email);
   if (!email || req.method !== "POST") return json({ error: "Bad request" }, 400);
   const auth = store(env);
+  if (!isTest(email)) await notifyAdmin(env);
   switch (url.pathname) {
     case "/api/admin/approve": {
       if (!(await auth.approve(email))) return json({ error: "Not on the waitlist." }, 404);

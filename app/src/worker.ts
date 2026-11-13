@@ -588,9 +588,12 @@ export default {
         auth.names(), auth.users(), waitlist ? auth.waitlist() : [], usage.totals(today, "user"),
       ]);
       const used = Object.fromEntries(usedToday.map((r) => [r.user ?? "", r.searches]));
+      // Test accounts are left out of the lists (their costs still count in the totals).
+      const { isTest } = await import("./waitlist.ts");
       return new Response(adminPage({
-        today: t[0]!, month: m[0]!, byUser, byDay, names, waitlist: waitlist ? waiting : null, daily: Number(env.DAILY_QUERIES) || 100,
-        users: users.map((u) => ({ email: u.name, created: u.created, daily: u.daily, today: used[u.id] ?? 0, admin: u.id === adminId })),
+        today: t[0]!, month: m[0]!, byUser: byUser.filter((r) => !isTest(names[r.user ?? ""] ?? "")), byDay, names,
+        waitlist: waitlist ? waiting.filter((w) => !isTest(w.email)) : null, daily: Number(env.DAILY_QUERIES) || 100,
+        users: users.filter((u) => !isTest(u.name)).map((u) => ({ email: u.name, created: u.created, daily: u.daily, today: used[u.id] ?? 0, admin: u.id === adminId })),
       }), { headers });
     }
 

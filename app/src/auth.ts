@@ -8,7 +8,7 @@ import {
 import { isoBase64URL } from "@simplewebauthn/server/helpers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 import { cookie, setCookie, sign, unsign, type Session } from "./session.ts";
-import { confirmed, emailOf } from "./waitlist.ts";
+import { confirmed, emailOf, isTest, notifyAdmin } from "./waitlist.ts";
 
 const DAY = 86400;
 /** JSON reply. Several Set-Cookie headers are allowed (session plus remaining ceremonies). */
@@ -104,6 +104,7 @@ async function route(req: Request, env: WorkerEnv, url: URL): Promise<Response |
         counter: info.credential.counter,
         transports: JSON.stringify(info.credential.transports ?? []),
       }, !!env.EMAIL);
+      if (env.EMAIL && !isTest(entry.n)) await notifyAdmin(env);
       return json({ ok: true }, [await finish(env, entry.u, entry.n), await ceremonies(env, rest), setCookie("w", "", 0)]);
     }
     case "/auth/login/options": {
