@@ -7,6 +7,13 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 
 BASE, KEY = sys.argv[1].rstrip("/"), sys.argv[2]
+# With email sign-up codes on, the test proves it knows SESSION_SECRET (from app/.env) to get codes for @example.com without mail.
+def _secret():
+    try:
+        return next(l.split("=", 1)[1].strip() for l in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")) if l.startswith("SESSION_SECRET="))
+    except (OSError, StopIteration):
+        return os.environ.get("SESSION_SECRET", "")
+E2E = hashlib.sha256(f"{_secret()}:e2e".encode()).hexdigest()
 CTX = ssl.create_default_context(cafile="/etc/ssl/cert.pem" if os.path.exists("/etc/ssl/cert.pem") else None)
 UA = {"User-Agent": "Mozilla/5.0 quick-e2e", "Accept-Encoding": "identity"}
 
@@ -67,7 +74,7 @@ class Browser:
         self.cookies = {"k": KEY} if access_key else {}
 
     def open(self, path, body=None, method=None):
-        headers = {**UA, "Cookie": "; ".join(f"{k}={v}" for k, v in self.cookies.items())}
+        headers = {**UA, "x-e2e": E2E, "Cookie": "; ".join(f"{k}={v}" for k, v in self.cookies.items())}
         data = None if body is None else json.dumps(body).encode()
         if data: headers["content-type"] = "application/json"
         try:
@@ -94,7 +101,8 @@ def signup(name):
     """Create an account with a software passkey. Accounts are named by email address."""
     name = name if "@" in name else f"{name}@example.com"
     b, a = Browser(), Authenticator()
-    o = b.json("/auth/register/options", {"name": name})
+    sent = b.json("/auth/register/code", {"name": name})
+    o = b.json("/auth/register/options", {"name": name, "code": sent.get("code", "")})
     return b, a, b.json("/auth/register/verify", a.create(o)).get("ok") is True
 
 
@@ -125,6 +133,9 @@ alice, alice_key, ok_a = signup(f"e2e-alice-{RUN}")
 bob, _, ok_b = signup(f"e2e-bob-{RUN}")
 checks["register_passkey"] = ok_a and ok_b
 checks["email_must_be_unique"] = Browser().json("/auth/register/options", {"name": f"E2E-ALICE-{RUN}@EXAMPLE.COM"}).get("error") == "That email address already has an account."
+checks["wrong_code_rejected"] = Browser().json("/auth/register/code", {"name": f"e2e-carol-{RUN}@example.com"}).get("sent") is not True or \
+    Browser().json("/auth/register/options", {"name": f"e2e-carol-{RUN}@example.com", "code": "000000"}).get("error", "").startswith(("Wrong code", "That code"))
+checks["code_resend_waits"] = "skip" in (r := Browser().json("/auth/register/code", {"name": f"e2e-carol-{RUN}@example.com"})) or r.get("error", "").startswith("A code was just sent")
 checks["name_must_be_email"] = Browser().json("/auth/register/options", {"name": "not an email"}).get("error") == "Enter a valid email address."
 def status(b, path):
     try:

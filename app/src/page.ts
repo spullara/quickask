@@ -111,8 +111,10 @@ textarea:focus{border-color:var(--mute)}
 .auth h1{font-size:22px;margin:0 0 8px;text-align:center}
 .btn{font:inherit;padding:10px 14px;border-radius:12px;border:0;background:var(--fg);color:var(--bg);cursor:pointer;font-weight:600}
 .or{text-align:center;color:var(--mute);font-size:13px;margin-top:8px}
-#up{display:flex;gap:8px;padding:0;margin:0;position:static;max-width:none}
+#up{display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0;position:static;max-width:none}
 #up input{flex:1;min-width:0;font:inherit;padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);outline:none}
+#up:has(input[name=c]:not([hidden])) input[name=n]{flex-basis:100%}#up input[name=c]{letter-spacing:2px}
+.auth p.note{color:var(--mute);font-size:13px}
 #up button{font:inherit;padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer}
 @media (max-width:720px){#side{position:fixed;z-index:2;left:0;top:0;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 24px #0003;padding-top:52px}
 #zm{left:52px;top:12px}body.open #side{transform:none}#tg{display:block;position:fixed;top:10px;left:10px;z-index:3;border:0;background:var(--soft);color:var(--fg);border-radius:8px;width:34px;height:34px;font-size:16px}
@@ -406,18 +408,30 @@ document.getElementById('in').onclick=()=>go(async()=>{const o=await post('/auth
  const r=c.response;return post('/auth/login/verify',{id:c.id,rawId:b2u(c.rawId),type:c.type,clientExtensionResults:c.getClientExtensionResults(),
   authenticatorAttachment:c.authenticatorAttachment,response:{clientDataJSON:b2u(r.clientDataJSON),authenticatorData:b2u(r.authenticatorData),
   signature:b2u(r.signature),userHandle:r.userHandle?b2u(r.userHandle):undefined}})});
-document.getElementById('up').onsubmit=e=>{e.preventDefault();const n=e.target.n.value.trim();if(!n)return;
- go(async()=>{const o=await post('/auth/register/options',{name:n});if(o.error)return o;
-  const c=await navigator.credentials.create({publicKey:{...o,challenge:u2b(o.challenge),user:{...o.user,id:u2b(o.user.id)},excludeCredentials:ids(o.excludeCredentials)}});
-  const r=c.response;return post('/auth/register/verify',{id:c.id,rawId:b2u(c.rawId),type:c.type,clientExtensionResults:c.getClientExtensionResults(),
-   authenticatorAttachment:c.authenticatorAttachment,response:{clientDataJSON:b2u(r.clientDataJSON),attestationObject:b2u(r.attestationObject),
-   transports:r.getTransports?r.getTransports():[]}})})};
+// Sign-up: email address, then the emailed code (when the server sends codes), then the passkey.
+const up=document.getElementById('up'),code=up.c;let sentTo='';
+up.n.oninput=()=>{if(sentTo){sentTo='';code.hidden=true;code.value='';up.b.textContent='Create';msg.className='err';msg.textContent=''}};
+const create=(n,c)=>go(async()=>{const o=await post('/auth/register/options',{name:n,code:c});if(o.error)return o;
+  const k=await navigator.credentials.create({publicKey:{...o,challenge:u2b(o.challenge),user:{...o.user,id:u2b(o.user.id)},excludeCredentials:ids(o.excludeCredentials)}});
+  const r=k.response;return post('/auth/register/verify',{id:k.id,rawId:b2u(k.rawId),type:k.type,clientExtensionResults:k.getClientExtensionResults(),
+   authenticatorAttachment:k.authenticatorAttachment,response:{clientDataJSON:b2u(r.clientDataJSON),attestationObject:b2u(r.attestationObject),
+   transports:r.getTransports?r.getTransports():[]}})});
+async function send(n){if(running)return;running=true;up.b.disabled=true;msg.className='err';msg.textContent='';
+ try{const r=await post('/auth/register/code',{name:n});if(r.error){msg.textContent=r.error;return}
+  if(r.skip){running=false;return create(n)}
+  sentTo=n;code.hidden=false;code.focus();up.b.textContent='Create';msg.className='note';
+  msg.innerHTML='Code sent to '+n.replace(/[<>&]/g,'')+'. <a href="#" id="again">Send again</a>';
+  document.getElementById('again').onclick=e=>{e.preventDefault();send(n)}}
+ finally{running=false;up.b.disabled=false}}
+up.onsubmit=e=>{e.preventDefault();const n=up.n.value.trim().toLowerCase();if(!n)return;
+ if(sentTo!==n)return send(n);const c=code.value.replace(/\D/g,'');if(c.length!==6){msg.className='err';msg.textContent='Enter the 6-digit code from the email.';return}
+ create(n,c)};
 `;
 
 export const signIn = () => page(`<div class="auth">${BRAND}
 <button id="in" class="btn">Sign in with passkey</button>
 <div class="or">New here? Create an account</div>
-<form id="up"><input name="n" type="email" inputmode="email" placeholder="Email address" autocomplete="email" autocapitalize="off" spellcheck="false"><button>Create</button></form>
+<form id="up"><input name="n" type="email" inputmode="email" placeholder="Email address" autocomplete="email" autocapitalize="off" spellcheck="false"><input name="c" hidden inputmode="numeric" autocomplete="one-time-code" maxlength="7" placeholder="6-digit code"><button name="b">Create</button></form>
 <p id="msg" class="err"></p></div><script>${AUTH_JS}</script>`);
 
 export const opensearch = (origin: string) => `<?xml version="1.0" encoding="UTF-8"?>

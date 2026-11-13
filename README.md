@@ -11,7 +11,8 @@ with sources and, when they help, pictures.
 - Each search is a chat. Previous chats are in the sidebar, one history per account.
 - The sidebar updates live across tabs and devices over a hibernating WebSocket.
 - Search your chats from the sidebar (keywords across titles and messages, SQLite FTS5); the list loads 50 at a time as you scroll.
-- Passkey accounts, behind a shared access key.
+- Passkey accounts, behind a shared access key. With a custom domain, sign-up confirms the email address with a
+  6-digit code sent by Cloudflare Email Service.
 - Read-only share links that anyone can open, with no account. Links show a rich preview card on X, iMessage and Slack.
 - Press ⌘K (Ctrl K) for a new search.
 - Answers know your approximate city and local time (from Cloudflare), so local questions like the weather work.
@@ -114,6 +115,11 @@ Passkeys are tied to a hostname. Pick the domain before people create accounts.
 3. Run `./deploy.sh` again. Your app is now at `https://example.com`. The
    `workers.dev` address keeps working.
 
+The deploy also turns on Cloudflare Email Sending for the domain and sends sign-up codes from
+`login@<domain>`. This needs the Workers Paid plan, and the token needs **Zone → Email Sending: Edit**
+(or create the sender in the dashboard: **Compute → Email Service → Email Sending → Onboard Domain**).
+Without a custom domain, sign-up asks for no code.
+
 ### Add it to your browser
 
 - **Chrome, Arc, Edge:** Settings → Search engine → Manage search engines and site search →
@@ -161,7 +167,8 @@ python3 -m pip install cryptography
 python3 e2e.py https://<your app> "$(grep ^ACCESS_KEY= .env | cut -d= -f2)"
 ```
 
-It checks the access gate, passkey sign-up and sign-in, streaming, images, separate
+It reads `SESSION_SECRET` from `app/.env` to get sign-up codes for its `@example.com` accounts without email.
+It checks the access gate, email codes, passkey sign-up and sign-in, streaming, images, separate
 histories per account, follow-ups, share links and deletes. It writes `e2e-result.json`.
 Each run creates two test accounts (`e2e-alice-<random>@example.com`, `e2e-bob-<random>@example.com`).
 

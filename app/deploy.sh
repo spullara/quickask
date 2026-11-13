@@ -34,6 +34,17 @@ if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
     -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" | bun -e 'console.log((await Bun.stdin.json()).result[0].id)')"
 fi
 
+# Email sign-up codes are sent from the custom domain's zone (Cloudflare Email Service). Try the domain, then its parents.
+if [ -n "$QUICK_DOMAIN" ] && [ -z "${QUICK_ZONE_ID:-}" ]; then
+  d="$QUICK_DOMAIN"
+  while [ -z "${QUICK_ZONE_ID:-}" ] && [[ "$d" == *.* ]]; do
+    QUICK_ZONE_ID="$(curl -fsS "https://api.cloudflare.com/client/v4/zones?name=$d" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+      | bun -e 'console.log((await Bun.stdin.json()).result[0]?.id ?? "")')"
+    d="${d#*.}"
+  done
+  export QUICK_ZONE_ID
+fi
+
 bun install --frozen-lockfile >/dev/null
 if [ "${1:-}" = destroy ]; then exec bunx alchemy destroy --yes; fi
 log="$(mktemp)"

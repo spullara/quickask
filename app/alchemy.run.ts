@@ -15,13 +15,18 @@ export const CardWorker = Cloudflare.Worker("QuickCard", {
   rules: [{ globs: ["**/*.wasm"], type: "CompiledWasm" }, { globs: ["**/*.woff"], type: "Data" }],
 });
 
+const DOMAIN = process.env.QUICK_DOMAIN, ZONE = process.env.QUICK_ZONE_ID;
+/** Sign-up codes come from this address. Only with a custom domain on Cloudflare DNS: Email Service needs the zone. */
+export const SENDER = DOMAIN && ZONE ? `login@${DOMAIN}` : undefined;
+const Sending = SENDER ? Cloudflare.Email.SendingSubdomain("Sending", { zoneId: ZONE!, name: DOMAIN! }) : undefined;
+
 export const Worker = Cloudflare.Worker("Quick", {
   main: "./src/worker.ts",
   compatibility: { date: "2026-11-01" },
   observability: { enabled: true },
   build: { output: { minify: true } },
   // Passkeys bind to this hostname. Set QUICK_DOMAIN in app/.env once the domain is in this Cloudflare account.
-  ...(process.env.QUICK_DOMAIN ? { domain: process.env.QUICK_DOMAIN } : {}),
+  ...(DOMAIN ? { domain: DOMAIN } : {}),
   env: {
     CARD: CardWorker,
     CHATS: Cloudflare.DurableObject<Chats>("Chats", { className: "Chats" }),
@@ -30,6 +35,10 @@ export const Worker = Cloudflare.Worker("Quick", {
     USAGE: Cloudflare.DurableObject<Usage>("Usage", { className: "Usage" }),
     // Exa allows 10 searches a second. Counted in each Cloudflare location, so it needs no long-distance call.
     EXA_LIMIT: Cloudflare.RateLimit("EXA_LIMIT", { namespaceId: 2001, simple: { limit: 100, period: 10 } }),
+    // Sign-up codes, at most 5 a minute from one IP address.
+    EMAIL_LIMIT: Cloudflare.RateLimit("EMAIL_LIMIT", { namespaceId: 2002, simple: { limit: 5, period: 60 } }),
+    ...(SENDER ? { EMAIL: Cloudflare.Email.SendEmail("EMAIL", { allowedSenderAddresses: [SENDER] }) } : {}),
+    SENDER: SENDER ?? "",
     GEMINI_API_KEY: Config.Redacted("GEMINI_API_KEY"),
     EXA_API_KEY: Config.Redacted("EXA_API_KEY"),
     ACCESS_KEY: Config.Redacted("ACCESS_KEY"),
@@ -38,12 +47,16 @@ export const Worker = Cloudflare.Worker("Quick", {
   },
 });
 
-export interface WorkerEnv extends Cloudflare.InferEnv<typeof Worker> {}
+export interface WorkerEnv extends Omit<Cloudflare.InferEnv<typeof Worker>, "EMAIL"> {
+  /** Absent without a custom domain: sign-up then needs no email code. */
+  EMAIL?: SendEmail;
+}
 
 export default Alchemy.Stack(
   "Quick",
   { providers: Cloudflare.providers(), state: State.localState() },
   Effect.gen(function* () {
+    if (Sending) yield* Sending;
     yield* CardWorker;
     const worker = yield* Worker;
     return { url: worker.url };
