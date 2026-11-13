@@ -361,6 +361,7 @@ async function turn(env: WorkerEnv, msgs: Msg[], searching: Promise<Search>, emi
     emit("F", followups);
     emit("D", found.sources);
     const gemini$ = tokensIn * MODELS[model].in + tokensOut * MODELS[model].out;
+    // results: [] marks an answer given without search results; the page labels it.
     return { msg: { role: "model", text, sources: found.sources, images: found.images, results: found.results, followups, model }, meter: { exa: found.exa, tokensIn, tokensOut, gemini: gemini$ } };
   } catch (e) {
     emit("E", (e as Error).message);

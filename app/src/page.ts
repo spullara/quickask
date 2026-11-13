@@ -84,6 +84,7 @@ textarea:focus{border-color:var(--mute)}
 #sheet .r{margin:14px 0 0;font-size:14px}#sheet .r a{font-weight:500}#sheet .r span{display:block;color:var(--mute);font-size:12px}#sheet .r p{margin:2px 0 0;font-size:13px;line-height:1.5}
 @media (max-width:720px){#sheet{align-items:flex-end}.sh-in{width:100%;height:75vh;border-radius:16px 16px 0 0}}
 #toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:10px;font-size:14px;z-index:7}#toast[hidden]{display:none}
+.ugn{color:var(--mute);font-size:12px;margin:0 0 8px}
 .fups{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin:0 0 18px}
 .fu{border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:12px;padding:7px 12px;font:inherit;font-size:14px;text-align:left;cursor:pointer;max-width:100%}.fu:hover{background:var(--soft)}
 .navl{display:flex;flex-direction:column;gap:1px;width:fit-content;max-width:100%;background:var(--soft);border-radius:12px;padding:10px 14px;margin:2px 0 14px}
@@ -139,14 +140,18 @@ const JS = `
 const ta=$('textarea'),side=$('#list');
 let cur=null,raf=0;
 function start(el){if(el){el.classList.add('wait');el.innerHTML='';cur={el,buf:'',imgs:[]}}else cur={el:add('m wait',''),buf:'',imgs:[]};cur.model=S.model}
-function paint(){raf=0;cur.el.innerHTML=md(cutF(cur.buf).replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs,cur.src)}
+function paint(){raf=0;cur.el.innerHTML=(noSearch(cur.res)?NOSEARCH:'')+md(cutF(cur.buf).replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs,cur.src)}
 const main=$('main');let nearEnd=true;main.addEventListener('scroll',()=>{nearEnd=main.scrollHeight-main.scrollTop-main.clientHeight<80});
 new ResizeObserver(()=>{if(nearEnd)main.scrollTop=main.scrollHeight}).observe(log);
 function T(t){cur.buf+=t;if(!raf)raf=requestAnimationFrame(paint)}
 function D(s){cur.src=s;cur.buf=cutF(cur.buf).trim();paint();cur.el.classList.remove('wait');
  const m={role:'model',followups:cur.fups||[],text:cur.buf,sources:s,images:cur.imgs,results:cur.res||[],model:cur.model},at=cur.at;
- if(at!=null)S.msgs[at]=m;else S.msgs.push(m);acts(cur.el,at!=null?at:S.msgs.length-1);cur=null;busy=false;chips()}
+ if(at!=null)S.msgs[at]=m;else S.msgs.push(m);note(cur.el,m);acts(cur.el,at!=null?at:S.msgs.length-1);cur=null;busy=false;chips()}
 function R(r){cur.res=r}
+// Label an answer given without search results (search failed, timed out or was rate limited): it is model memory only.
+const NOSEARCH='<p class="ugn">Answered without search results – may be out of date or wrong</p>';
+const noSearch=r=>Array.isArray(r)&&!r.length;
+function note(el,m){if(noSearch(m.results)&&!el.querySelector('.ugn'))el.insertAdjacentHTML('afterbegin',NOSEARCH)}
 function F(f){cur.fups=f}
 // The model ends with ':::followups' and suggestions; never show that part (also while it is half streamed).
 const cutF=s=>s.split(/\\n\\s*:::/)[0].replace(/\\n\\s*:{1,3}[a-z]*$/,'');
@@ -201,7 +206,7 @@ side.addEventListener('click',e=>{const id=e.target.dataset&&e.target.dataset.id
 try{L(JSON.parse(localStorage['chats:'+S.uid]||'[]'))}catch{}
 // Each answer gets a faint ⋯ button below it (index into S.msgs in data-i).
 function acts(el,i){let a=el.nextElementSibling;if(!a||!a.classList.contains('acts')){a=document.createElement('div');a.className='acts';a.innerHTML='<button aria-label="More">⋯</button>';el.after(a)}a.dataset.i=i}
-function show(msgs){log.innerHTML='';msgs.forEach((m,i)=>{if(m.role==='user')add('u',E1(m.text));else acts(add('m',md(m.text,m.images,m.sources)),i)});chips()}
+function show(msgs){log.innerHTML='';msgs.forEach((m,i)=>{if(m.role==='user')add('u',E1(m.text));else{const el=add('m',md(m.text,m.images,m.sources));note(el,m);acts(el,i)}});chips()}
 show(S.msgs);
 let busy=false;
 if(S.streaming){busy=true;start();history.replaceState(null,'','/c/'+S.id)}
