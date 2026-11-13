@@ -77,6 +77,7 @@ textarea:focus{border-color:var(--mute)}
 #zm{position:fixed;top:10px;left:272px;z-index:3;display:flex;gap:2px}#zm button{border:0;background:var(--soft);color:var(--fg);border-radius:8px;height:30px;padding:0 9px;font:600 13px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;cursor:pointer}#zm button:hover{background:var(--line)}
 .brand{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 0 24px}.brand span{font-size:28px;font-weight:700;letter-spacing:-.02em}
 #brand{display:none}.home #brand{display:flex}
+#tag{display:none}.home #tag{display:block;margin:10px 0 0;text-align:center;font-style:italic;font-size:13px;color:var(--mute)}
 .sbrand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;max-width:760px;margin:0 auto;padding:20px 24px 0}
 #shx{position:fixed;top:10px;right:14px;z-index:1;display:flex;gap:6px}
 #shx>button{border:0;background:var(--soft);color:var(--fg);border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}#shx>button:hover{background:var(--line)}
@@ -335,7 +336,7 @@ export function shell(o: { id: string | null; title: string; msgs: Msg[]; stream
 </div><footer id="foot"><a id="usage" href="/admin" hidden></a>
 <div class="me"><span>${esc(o.user.n)}</span><a href="/auth/logout">Sign out</a></div></footer></nav>
 <main class="${o.id ? "" : "home"}"><div id="brand" class="brand">${mark(44)}<span>QuickAsk</span></div><div id="log"></div>
-<form action="/" method="get"><textarea name="q" rows="1" placeholder="${o.id ? "Ask a follow-up" : "Ask anything"}" autocomplete="off"></textarea></form></main>
+<form action="/" method="get"><textarea name="q" rows="1" placeholder="${o.id ? "Ask a follow-up" : "Ask anything"}" autocomplete="off"></textarea></form><p id="tag">I feel the need, the need for speed!</p></main>
 ${o.id ? '<div id="shx"><button id="sl" hidden></button><button id="mdl"></button><button id="sh">Share</button><div id="sp" hidden></div></div>' : ""}
 <script>const S=${json(state)};${RENDER}${JS}</script>
 `;

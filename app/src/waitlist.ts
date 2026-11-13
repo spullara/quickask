@@ -34,7 +34,7 @@ async function link(env: WorkerEnv, origin: string, email: string) {
 }
 
 async function mail(env: WorkerEnv, to: string, subject: string, intro: string, button: string, url: string, outro: string) {
-  await env.EMAIL!.send({
+  const { messageId } = await env.EMAIL!.send({
     from: { name: "QuickAsk", email: env.SENDER },
     to,
     subject,
@@ -44,6 +44,8 @@ async function mail(env: WorkerEnv, to: string, subject: string, intro: string, 
 <p style="margin:20px 0"><a href="${esc(url)}" style="background:#111;color:#fff;text-decoration:none;padding:10px 16px;border-radius:10px;font-weight:600;display:inline-block">${esc(button)}</a></p>
 <p style="color:#666;font-size:13px">${esc(outro)}</p></div>`,
   });
+  // Shows in Workers logs; the same message is in Compute → Email Service → Activity log.
+  console.log(JSON.stringify({ email: "sent", subject, messageId }));
 }
 
 /** Public waitlist routes, or null. */
