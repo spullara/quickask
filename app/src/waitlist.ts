@@ -37,8 +37,11 @@ async function testReply(env: WorkerEnv, req: Request, email: string, ok: object
 
 const store = (env: WorkerEnv) => env.AUTH.get(env.AUTH.idFromName("auth"));
 
-/** Test accounts and sign-ups (reserved test domains). The admin page hides them. */
-export const isTest = (email: string) => TEST_ADDRESS.test(email);
+/**
+ * Test accounts and sign-ups: reserved test domains, plus accounts from before names were email addresses
+ * ("e2e-alice", "Sam (demo)"). The admin page hides them or rolls them into one row.
+ */
+export const isTest = (name: string) => TEST_ADDRESS.test(name) || /^e2e-/i.test(name) || /\(demo\)$/i.test(name);
 
 /** Tell the admin's open pages that the waitlist or the users changed, so /admin refreshes itself. */
 export async function notifyAdmin(env: WorkerEnv) {

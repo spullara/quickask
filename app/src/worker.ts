@@ -348,6 +348,16 @@ async function adminIdOf(env: WorkerEnv) {
 }
 const isAdmin = async (env: WorkerEnv, user: string) => user === (await adminIdOf(env));
 
+/** Cost rows with every test account summed into one "Test accounts" row, kept in cost order. */
+const TESTS = "~tests";
+function rollUpTests<R extends { user?: string; searches: number; exa: number; gemini: number; cost: number; tokensIn: number; tokensOut: number }>(rows: R[], test: (r: R) => boolean): R[] {
+  const tests = rows.filter(test);
+  if (!tests.length) return rows;
+  const sum = (k: "searches" | "exa" | "gemini" | "cost" | "tokensIn" | "tokensOut") => tests.reduce((a, r) => a + r[k], 0);
+  const one = { ...tests[0]!, user: TESTS, searches: sum("searches"), exa: sum("exa"), gemini: sum("gemini"), cost: sum("cost"), tokensIn: sum("tokensIn"), tokensOut: sum("tokensOut") };
+  return [...rows.filter((r) => !test(r)), one].sort((a, b) => b.cost - a.cost);
+}
+
 /** Record a turn's cost and push the new month total to the admin's open pages. Runs after the stream. */
 async function charge(env: WorkerEnv, user: string, meter: Meter) {
   const month = await env.USAGE.get(env.USAGE.idFromName("global")).record(user, meter);
@@ -591,7 +601,8 @@ export default {
       // Test accounts are left out of the lists (their costs still count in the totals).
       const { isTest } = await import("./waitlist.ts");
       return new Response(adminPage({
-        today: t[0]!, month: m[0]!, byUser: byUser.filter((r) => !isTest(names[r.user ?? ""] ?? "")), byDay, names,
+        today: t[0]!, month: m[0]!, byUser: rollUpTests(byUser, (r) => isTest(names[r.user ?? ""] ?? "")), byDay,
+        names: { ...names, [TESTS]: "Test accounts" },
         waitlist: waitlist ? waiting.filter((w) => !isTest(w.email)) : null, daily: Number(env.DAILY_QUERIES) || 100,
         users: users.filter((u) => !isTest(u.name)).map((u) => ({ email: u.name, created: u.created, daily: u.daily, today: used[u.id] ?? 0, admin: u.id === adminId })),
       }), { headers });
