@@ -413,7 +413,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
 /** Admin cost page: variable costs from Exa and Gemini, recorded per search. */
 type Waiting = { email: string; status: string; created: number; approved: number | null };
-type UserRow = { email: string; created: number; daily: number | null; today: number; admin: boolean };
+type UserRow = { email: string; created: number; daily: number | null; today: number; admin: boolean; invite?: { created: number; note: string } };
 
 type Delivery = { email: string; status: string; detail: string; subject: string; at: number };
 
@@ -435,7 +435,7 @@ export function adminPage(d: { today: Row; month: Row; byUser: Row[]; byDay: Row
     `<tr data-e="${esc(w.email)}"><td>${esc(w.email)}${mark(w.email)}</td><td>${w.status === "approved" ? `<span class="mute">approved ${date(w.approved ?? w.created)}</span>` : `<span class="mute">${date(w.created)}</span>`}</td>
 <td><button data-a="approve">${w.status === "approved" ? "Resend" : "Approve"}</button><button data-a="remove">Remove</button></td></tr>`).join("")}</table>` : `<p class="note">Nobody is waiting.</p>`}${problems}`;
   const users = `<h2>Users</h2><p class="note">Questions a day, reset at midnight UTC. Default ${d.daily}.</p><table class="us"><tr><th>User</th><th>Today</th><th>Daily limit</th><th></th></tr>${
-    d.users.map((u) => `<tr data-e="${esc(u.email)}"><td>${esc(u.email)}</td><td>${u.today}</td>${u.admin ? `<td class="mute">no limit</td><td></td>`
+    d.users.map((u) => `<tr data-e="${esc(u.email)}"><td>${esc(u.email)}${u.invite ? ` <span class="tag" title="Invite made ${date(u.invite.created)}${u.invite.note ? ` for ${esc(u.invite.note)}` : ""}">invite</span>` : ""}</td><td>${u.today}</td>${u.admin ? `<td class="mute">no limit</td><td></td>`
       : `<td><input type="number" min="0" value="${u.daily ?? d.daily}" data-d="${u.daily ?? ""}"></td><td><button data-a="boost">+100</button></td>`}</tr>`).join("")}</table>`;
   const card = (label: string, r: Row) => `<div class="card"><span>${label}</span><b>${usd(r.cost)}</b><span>${r.searches} searches · ${usd(r.searches ? r.cost / r.searches : 0)} each</span></div>`;
   const table = (head: string, rows: Row[], name: (r: Row) => string) => rows.length ? `<table><tr><th>${head}</th><th>Searches</th><th>Exa</th><th>Gemini</th><th>Total</th></tr>${
@@ -450,7 +450,7 @@ table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:ta
 .admin button{font:inherit;font-size:13px;padding:4px 10px;margin-left:6px;border-radius:8px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer}
 .admin input{font:inherit;font-size:14px;width:6em;text-align:right;padding:3px 6px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--fg)}
 .admin input:hover,.admin input:focus{border-color:var(--line);outline:none}td input{margin-right:-7px}
-.wl td:first-child,.us td:first-child{overflow-wrap:anywhere}.bad{color:#dc2626;font-size:12px}.small{font-size:12px}
+.wl td:first-child,.us td:first-child{overflow-wrap:anywhere}.bad{color:#dc2626;font-size:12px}.tag{font-size:11px;color:var(--mute);border:1px solid var(--line);border-radius:6px;padding:1px 5px;margin-left:4px;vertical-align:1px}.small{font-size:12px}
 #inv{display:flex;gap:10px;align-items:center;margin:0 0 8px}#inv button{margin:0}.ivs{margin:0 0 16px}.ivs td{padding:3px 8px 3px 0}
 tr.new td{animation:flash 2.4s ease-out}@keyframes flash{from{background:color-mix(in srgb,var(--fg) 10%,transparent)}to{background:transparent}}th{text-align:left;color:var(--mute);font-weight:500;font-size:13px}
 th,td{padding:6px 8px 6px 0}td+td,th+th{text-align:right}tr+tr td{border-top:1px solid var(--line)}

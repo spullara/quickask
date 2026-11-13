@@ -710,6 +710,7 @@ export default {
         waitlist ? auth.deliveries(Date.now() - 14 * 86400_000) : [],
       ]);
       const used = Object.fromEntries(usedToday.map((r) => [r.user ?? "", r.searches]));
+      const invitedBy: Record<string, { created: number; note: string }> = waitlist ? await auth.invitedUsers() : {};
       // Test accounts are left out of the lists (their costs still count in the totals).
       const { isTest } = await import("./waitlist.ts");
       return new Response(adminPage({
@@ -717,7 +718,7 @@ export default {
         names: { ...names, [TESTS]: "Test accounts" },
         waitlist: waitlist ? waiting.filter((w) => !isTest(w.email)) : null, daily: Number(env.DAILY_QUERIES) || 100,
         deliveries: sent.filter((d) => !isTest(d.email)), invites: waitlist ? (await auth.invites(30)).filter((v) => !v.used_by || !isTest(v.used_by)).slice(0, 10) : [],
-        users: users.filter((u) => !isTest(u.name)).map((u) => ({ email: u.name, created: u.created, daily: u.daily, today: used[u.id] ?? 0, admin: u.id === adminId })),
+        users: users.filter((u) => !isTest(u.name)).map((u) => ({ email: u.name, created: u.created, daily: u.daily, today: used[u.id] ?? 0, admin: u.id === adminId, invite: invitedBy[u.name] })),
       }), { headers });
     }
 

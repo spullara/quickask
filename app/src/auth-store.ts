@@ -125,6 +125,12 @@ export class Auth extends DurableObject<WorkerEnv> {
       email, Date.now(), code, Date.now()).rowsWritten > 0;
   }
 
+  /** Who signed up with an invite, and when the invite was made (with its note). */
+  invitedUsers(): Record<string, { created: number; note: string }> {
+    return Object.fromEntries(this.sql.exec<{ used_by: string; created: number; note: string }>(
+      "SELECT used_by, created, note FROM invites WHERE used_by IS NOT NULL").toArray().map((r) => [r.used_by, { created: r.created, note: r.note }]));
+  }
+
   invites(limit: number) {
     return this.sql.exec<{ code: string; created: number; expires: number; used_by: string | null; used_at: number | null; note: string }>(
       "SELECT code, created, expires, used_by, used_at, note FROM invites ORDER BY created DESC LIMIT ?", limit).toArray();
