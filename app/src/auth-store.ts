@@ -21,6 +21,8 @@ export class Auth extends DurableObject<WorkerEnv> {
     if (!this.sql.exec("SELECT 1 FROM pragma_table_info('users') WHERE name = 'daily'").toArray().length) {
       this.sql.exec("ALTER TABLE users ADD COLUMN daily INTEGER");
     }
+    // Invite codes from the admin: single use, not tied to an email address.
+    this.sql.exec("CREATE TABLE IF NOT EXISTS invites (code TEXT PRIMARY KEY, created INTEGER, expires INTEGER, used_by TEXT, used_at INTEGER, note TEXT)");
     // The latest delivery result of the emails sent to each address (from Email Service events).
     this.sql.exec("CREATE TABLE IF NOT EXISTS deliveries (email TEXT PRIMARY KEY, status TEXT, detail TEXT, subject TEXT, at INTEGER)");
     // Confirmed addresses waiting for an account. Rows are added only after the email link is opened.
@@ -107,6 +109,25 @@ export class Auth extends DurableObject<WorkerEnv> {
     this.sql.exec("DELETE FROM links WHERE email = ?", name);
     this.sql.exec("UPDATE waitlist SET status = 'joined' WHERE email = ?", name);
     this.sql.exec("INSERT INTO creds VALUES (?, ?, ?, ?, ?)", cred.id, userId, cred.publicKey, cred.counter, cred.transports);
+  }
+
+  newInvite(code: string, ttl: number, note: string) {
+    this.sql.exec("INSERT INTO invites (code, created, expires, note) VALUES (?, ?, ?, ?)", code, Date.now(), Date.now() + ttl, note);
+  }
+
+  inviteOk(code: string) {
+    return this.sql.exec("SELECT 1 FROM invites WHERE code = ? AND used_at IS NULL AND expires > ?", code, Date.now()).toArray().length > 0;
+  }
+
+  /** Spend an invite. Returns false when it was already used or has expired (so two sign-ups cannot share one). */
+  useInvite(code: string, email: string) {
+    return this.sql.exec("UPDATE invites SET used_by = ?, used_at = ? WHERE code = ? AND used_at IS NULL AND expires > ?",
+      email, Date.now(), code, Date.now()).rowsWritten > 0;
+  }
+
+  invites(limit: number) {
+    return this.sql.exec<{ code: string; created: number; expires: number; used_by: string | null; used_at: number | null; note: string }>(
+      "SELECT code, created, expires, used_by, used_at, note FROM invites ORDER BY created DESC LIMIT ?", limit).toArray();
   }
 
   /** Keep the newest delivery result per address. Returns false for an older, out-of-order event. */

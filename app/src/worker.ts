@@ -624,6 +624,11 @@ export default {
       if (keyParam && !hasKey) headers["set-cookie"] = `k=${env.ACCESS_KEY}; Path=/; Max-Age=31536000; Secure; HttpOnly; SameSite=Lax`;
     }
 
+    const inviteCode = waitlist ? path.match(/^\/i\/([\w-]{6,40})$/)?.[1] : undefined;
+    if (inviteCode) {
+      if (await session(req, env)) return Response.redirect(`${url.origin}/`, 302);
+      return (await import("./waitlist.ts")).inviteRoute(req, env, inviteCode);
+    }
     if (waitlist && (path === "/auth/waitlist" || path === "/auth/confirm")) {
       const res = await (await import("./waitlist.ts")).waitlistRoute(req, env, url);
       if (res) return res;
@@ -711,7 +716,7 @@ export default {
         today: t[0]!, month: m[0]!, byUser: rollUpTests(byUser, (r) => isTest(names[r.user ?? ""] ?? "")), byDay,
         names: { ...names, [TESTS]: "Test accounts" },
         waitlist: waitlist ? waiting.filter((w) => !isTest(w.email)) : null, daily: Number(env.DAILY_QUERIES) || 100,
-        deliveries: sent.filter((d) => !isTest(d.email)),
+        deliveries: sent.filter((d) => !isTest(d.email)), invites: waitlist ? (await auth.invites(30)).filter((v) => !v.used_by || !isTest(v.used_by)).slice(0, 10) : [],
         users: users.filter((u) => !isTest(u.name)).map((u) => ({ email: u.name, created: u.created, daily: u.daily, today: used[u.id] ?? 0, admin: u.id === adminId })),
       }), { headers });
     }

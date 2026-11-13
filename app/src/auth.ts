@@ -8,7 +8,7 @@ import {
 import { isoBase64URL } from "@simplewebauthn/server/helpers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 import { cookie, session, setCookie, sign, unsign, type Session } from "./session.ts";
-import { confirmed, emailOf, isTest, notifyAdmin } from "./waitlist.ts";
+import { confirmed, emailOf, invited, isTest, notifyAdmin } from "./waitlist.ts";
 
 const DAY = 86400;
 /** JSON reply. Several Set-Cookie headers are allowed (session plus remaining ceremonies). */
@@ -22,7 +22,7 @@ const json = (v: unknown, cookies: string[] = [], status = 200) => {
  * Pending passkey ceremonies, kept in the signed "c" cookie. The last three are kept, so a second tap, a second tab or a
  * retried request does not overwrite the challenge an authenticator is still signing.
  */
-type Pending = { ch: string; e: number; u?: string; n?: string; add?: 1 };
+type Pending = { ch: string; e: number; u?: string; n?: string; add?: 1; i?: string };
 const KEEP = 3, TTL = 300_000;
 
 async function pendingOf(env: WorkerEnv, req: Request): Promise<Pending[]> {
@@ -73,12 +73,15 @@ async function route(req: Request, env: WorkerEnv, url: URL): Promise<Response |
     case "/auth/register/options": {
       // With the waitlist, the account is for the address this browser confirmed by email link, once the admin approved it.
       // Without it (no email sending), anyone with the access key may sign up with any address.
+      // With an invite code (from the admin), any email address may sign up, without the waitlist.
       let userName: string | null;
-      if (env.EMAIL) {
+      const body = (await req.json().catch(() => ({}))) as { name?: string };
+      const code = env.EMAIL ? await invited(env, req) : null;
+      if (env.EMAIL && !code) {
         userName = await confirmed(env, req);
         if (!userName || (await store.statusOf(userName)) !== "approved") return json({ error: "This email address is not approved yet." });
       } else {
-        userName = emailOf(((await req.json()) as { name?: string }).name);
+        userName = emailOf(body.name);
         if (!userName) return json({ error: "Enter a valid email address." });
         if (await store.nameTaken(userName)) return json({ error: "That email address already has an account." });
       }
@@ -87,7 +90,7 @@ async function route(req: Request, env: WorkerEnv, url: URL): Promise<Response |
         rpName: "Quisk", rpID, userName, userID: isoBase64URL.toBuffer(userId), attestationType: "none",
         authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
       });
-      return json(options, [await start(env, req, options.challenge, { u: userId, n: userName })]);
+      return json(options, [await start(env, req, options.challenge, { u: userId, n: userName, ...(code ? { i: code } : {}) })]);
     }
     case "/auth/addkey/options": {
       // A passkey for this domain on the signed-in account, with the same user handle as its first passkey.
@@ -124,14 +127,15 @@ async function route(req: Request, env: WorkerEnv, url: URL): Promise<Response |
       });
       if (!verified) return json({ error: "Passkey not verified." });
       if (await store.nameTaken(entry.n)) return json({ error: "That email address already has an account." });
+      if (entry.i && !(await store.useInvite(entry.i, entry.n))) return json({ error: "This invite was already used." });
       await store.addUser(entry.u, entry.n, {
         id: info.credential.id,
         publicKey: isoBase64URL.fromBuffer(info.credential.publicKey),
         counter: info.credential.counter,
         transports: JSON.stringify(info.credential.transports ?? []),
-      }, !!env.EMAIL);
+      }, !!env.EMAIL && !entry.i);
       if (env.EMAIL && !isTest(entry.n)) await notifyAdmin(env);
-      return json({ ok: true }, [await finish(env, entry.u, entry.n), await ceremonies(env, rest), setCookie("w", "", 0)]);
+      return json({ ok: true }, [await finish(env, entry.u, entry.n), await ceremonies(env, rest), setCookie("w", "", 0), setCookie("inv", "", 0)]);
     }
     case "/auth/login/options": {
       const options = await generateAuthenticationOptions({ rpID, userVerification: "preferred" });

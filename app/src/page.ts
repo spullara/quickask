@@ -383,11 +383,11 @@ const usd = (n: number) => "$" + (n < 1 ? n.toFixed(4) : n.toFixed(2));
 const ADMIN_JS = String.raw`
 const api=(a,b)=>fetch('/api/admin/'+a,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
 // Copy an invite link. The clipboard write starts inside the click (Safari), with the link still on its way.
-function invite(email,b){const t=b.textContent,link=api('invite',{email}).then(r=>{if(!r.link)throw new Error(r.error||'No link');return r.link});
+function invite(note,b){const t=b.textContent,link=api('invite',{note}).then(r=>{if(!r.link)throw new Error(r.error||'No link');return r.link});
  const w=window.ClipboardItem&&navigator.clipboard.write?navigator.clipboard.write([new ClipboardItem({'text/plain':link.then(u=>new Blob([u],{type:'text/plain'}))})]).catch(()=>link.then(u=>navigator.clipboard.writeText(u))):link.then(u=>navigator.clipboard.writeText(u));
  w.then(()=>{b.textContent='Copied'},()=>link.then(u=>{prompt('Copy this link',u)},e=>alert(e.message))).finally(()=>setTimeout(()=>b.textContent=t,2000))}
 function bind(){
-const inv=document.getElementById('inv');if(inv)inv.onsubmit=e=>{e.preventDefault();const i=inv.querySelector('input');if(i.value.trim())invite(i.value.trim(),inv.querySelector('button'))};
+const inv=document.querySelector('#inv button');if(inv)inv.onclick=()=>invite('',inv);
 document.querySelectorAll('.wl button').forEach(b=>b.onclick=async()=>{const tr=b.closest('tr'),e=tr.dataset.e;if(b.dataset.a==='invite')return invite(e,b);b.disabled=true;
  const r=await api(b.dataset.a,{email:e});if(r.error&&!r.ok){alert(r.error);b.disabled=false;return}
  if(b.dataset.a==='remove')tr.remove();else{tr.cells[1].innerHTML='<span class="mute">'+(r.error?'approved, email failed':'approved, email sent')+'</span>';b.textContent='Resend';b.disabled=false}});
@@ -417,19 +417,23 @@ type UserRow = { email: string; created: number; daily: number | null; today: nu
 
 type Delivery = { email: string; status: string; detail: string; subject: string; at: number };
 
-export function adminPage(d: { today: Row; month: Row; byUser: Row[]; byDay: Row[]; names: Record<string, string>; waitlist: Waiting[] | null; users: UserRow[]; daily: number; deliveries?: Delivery[] }) {
+type Invite = { code: string; created: number; expires: number; used_by: string | null; used_at: number | null; note: string };
+
+export function adminPage(d: { today: Row; month: Row; byUser: Row[]; byDay: Row[]; names: Record<string, string>; waitlist: Waiting[] | null; users: UserRow[]; daily: number; deliveries?: Delivery[]; invites?: Invite[] }) {
   const date = (t: number) => new Date(t).toISOString().slice(0, 10);
   const when = (t: number) => new Date(t).toISOString().slice(5, 16).replace("T", " ");
   // The last email to an address did not arrive (yet): deferred, bounced, failed, rejected or marked as spam.
   const bad = new Map((d.deliveries ?? []).filter((x) => x.status !== "delivered").map((x) => [x.email, x]));
   const mark = (e: string) => { const x = bad.get(e); return x ? ` <span class="bad" title="${esc(x.detail)}">email ${esc(x.status)}</span>` : ""; };
-  const invite = d.waitlist === null ? "" : `<form id="inv"><input type="email" placeholder="Email address" required><button>Copy invite link</button></form>`;
+  const invite = d.waitlist === null ? "" : `<div id="inv"><button>Copy invite link</button><span class="mute small">Single use, works for 14 days, any email address.</span></div>${
+    d.invites?.length ? `<table class="ivs">${d.invites.map((v) => `<tr><td class="mute small">${date(v.created)}${v.note ? ` · for ${esc(v.note)}` : ""}</td><td class="small">${
+      v.used_by ? `used by ${esc(v.used_by)}` : v.expires < Date.now() ? `<span class="mute">expired</span>` : `<span class="mute">unused</span>`}</td></tr>`).join("")}</table>` : ""}`;
   const problems = bad.size ? `<h2>Email problems</h2><p class="note">The last email to these addresses has not arrived. Send them an invite link yourself.</p><table class="wl">${
     [...bad.values()].map((x) => `<tr data-e="${esc(x.email)}"><td>${esc(x.email)}<div class="mute small">${esc(x.subject)}</div></td><td><span class="bad">${esc(x.status)}</span> <span class="mute small" title="${esc(x.detail)}">${esc(x.detail.slice(0, 70))}</span><div class="mute small">${when(x.at)} UTC</div></td>
-<td><button data-a="invite">Copy link</button></td></tr>`).join("")}</table>` : "";
+<td><button data-a="invite">Copy invite link</button></td></tr>`).join("")}</table>` : "";
   const waiting = d.waitlist === null ? "" : `<h2>Waitlist</h2>${invite}${d.waitlist.length ? `<table class="wl">${d.waitlist.map((w) =>
     `<tr data-e="${esc(w.email)}"><td>${esc(w.email)}${mark(w.email)}</td><td>${w.status === "approved" ? `<span class="mute">approved ${date(w.approved ?? w.created)}</span>` : `<span class="mute">${date(w.created)}</span>`}</td>
-<td><button data-a="approve">${w.status === "approved" ? "Resend" : "Approve"}</button><button data-a="invite">Copy link</button><button data-a="remove">Remove</button></td></tr>`).join("")}</table>` : `<p class="note">Nobody is waiting.</p>`}${problems}`;
+<td><button data-a="approve">${w.status === "approved" ? "Resend" : "Approve"}</button><button data-a="remove">Remove</button></td></tr>`).join("")}</table>` : `<p class="note">Nobody is waiting.</p>`}${problems}`;
   const users = `<h2>Users</h2><p class="note">Questions a day, reset at midnight UTC. Default ${d.daily}.</p><table class="us"><tr><th>User</th><th>Today</th><th>Daily limit</th><th></th></tr>${
     d.users.map((u) => `<tr data-e="${esc(u.email)}"><td>${esc(u.email)}</td><td>${u.today}</td>${u.admin ? `<td class="mute">no limit</td><td></td>`
       : `<td><input type="number" min="0" value="${u.daily ?? d.daily}" data-d="${u.daily ?? ""}"></td><td><button data-a="boost">+100</button></td>`}</tr>`).join("")}</table>`;
@@ -447,7 +451,7 @@ table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:ta
 .admin input{font:inherit;font-size:14px;width:6em;text-align:right;padding:3px 6px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--fg)}
 .admin input:hover,.admin input:focus{border-color:var(--line);outline:none}td input{margin-right:-7px}
 .wl td:first-child,.us td:first-child{overflow-wrap:anywhere}.bad{color:#dc2626;font-size:12px}.small{font-size:12px}
-#inv{display:flex;gap:8px;margin:0 0 12px;max-width:none;position:static;padding:0}#inv input{flex:1;max-width:320px;text-align:left;width:auto;border-color:var(--line)}#inv button{margin:0}
+#inv{display:flex;gap:10px;align-items:center;margin:0 0 8px}#inv button{margin:0}.ivs{margin:0 0 16px}.ivs td{padding:3px 8px 3px 0}
 tr.new td{animation:flash 2.4s ease-out}@keyframes flash{from{background:color-mix(in srgb,var(--fg) 10%,transparent)}to{background:transparent}}th{text-align:left;color:var(--mute);font-weight:500;font-size:13px}
 th,td{padding:6px 8px 6px 0}td+td,th+th{text-align:right}tr+tr td{border-top:1px solid var(--line)}
 </style></head><body style="display:block;overflow:auto"><main class="admin"><a class="back" href="/">← Quisk</a>
@@ -516,13 +520,14 @@ if(up)up.onsubmit=e=>{e.preventDefault();const n=up.n.value.trim().toLowerCase()
  * Signed-out page. With the waitlist: join by email; after the email link, "waiting" or (once approved) create a passkey.
  * Without it: open sign-up with any email address (the access key already gates the app).
  */
-export function signIn(o: { waitlist: boolean; email?: string | null; status?: string | null; error?: string }) {
+export function signIn(o: { waitlist: boolean; email?: string | null; status?: string | null; error?: string; invite?: boolean }) {
   const inBtn = `<button id="in" class="btn">Sign in with passkey</button>`;
   const form = (mode: string, label: string) =>
     `<form id="up" data-mode="${mode}"><input name="n" type="email" inputmode="email" placeholder="Email address" autocomplete="email" autocapitalize="off" spellcheck="false"><button>${label}</button></form>`;
   const who = esc(o.email ?? "");
   let body: string, note = "";
   if (!o.waitlist) body = `${inBtn}<div class="or">New here? Create an account</div>${form("create", "Create")}`;
+  else if (o.invite) body = `<p class="lead">You're invited to Quisk. Enter your email address, then create a passkey.</p>${form("create", "Create")}<div class="or"><a href="#" id="in">Have an account? Sign in</a></div>`;
   else if (o.status === "approved") body = `<p class="lead">You're in. Create a passkey for ${who} to start.</p><button id="mk" class="btn">Create passkey</button><div class="or"><a href="#" id="in">Sign in instead</a></div>`;
   else if (o.status === "waiting") { body = inBtn; note = `You're on the waitlist as ${who}. You'll get an email when you're in.`; }
   else body = `${inBtn}<div class="or">New here, or no passkey on this device? Use your email</div>${form("wait", "Continue")}`;

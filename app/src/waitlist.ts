@@ -153,9 +153,31 @@ export async function waitlistRoute(req: Request, env: WorkerEnv, url: URL): Pro
   return null;
 }
 
+/** The invite code this browser opened (signed "inv" cookie), if it is still unused. */
+export async function invited(env: WorkerEnv, req: Request) {
+  const v = await unsign<{ i?: string; e: number }>(env.SESSION_SECRET, cookie(req, "inv"));
+  return typeof v?.i === "string" && (await store(env).inviteOk(v.i)) ? v.i : null;
+}
+
+/** /i/<code>: an invite link. Remembers the code in a cookie and shows the sign-up form for any email address. */
+export async function inviteRoute(req: Request, env: WorkerEnv, code: string) {
+  const html = { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" };
+  if (!(await store(env).inviteOk(code))) {
+    return new Response(signIn({ waitlist: true, error: "This invite link has expired or was already used." }), { status: 410, headers: html });
+  }
+  const inv = await sign(env.SESSION_SECRET, { i: code, e: Date.now() + 14 * DAY });
+  return new Response(signIn({ waitlist: true, invite: true }), { headers: { ...html, "set-cookie": setCookie("inv", inv, 14 * 86400) } });
+}
+
 /** Admin actions on /api/admin/*. The caller checked that this is the admin. */
 export async function adminRoute(req: Request, env: WorkerEnv, url: URL): Promise<Response> {
-  const body = (await req.json().catch(() => ({}))) as { email?: string; daily?: number | null };
+  const body = (await req.json().catch(() => ({}))) as { email?: string; daily?: number | null; note?: string };
+  if (url.pathname === "/api/admin/invite" && req.method === "POST") {
+    // A single-use link the admin sends by hand. Whoever opens it signs up with any email address, without the waitlist.
+    const code = b64u(crypto.getRandomValues(new Uint8Array(9)));
+    await store(env).newInvite(code, 14 * DAY, String(body.note ?? "").slice(0, 254));
+    return json({ ok: true, link: `${url.origin}/i/${code}` });
+  }
   const email = emailOf(body.email);
   if (!email || req.method !== "POST") return json({ error: "Bad request" }, 400);
   const auth = store(env);
@@ -174,13 +196,6 @@ export async function adminRoute(req: Request, env: WorkerEnv, url: URL): Promis
         return json({ ok: true, error: `Approved, but the email failed: ${(e as Error).message}` });
       }
       return json({ ok: true });
-    }
-    case "/api/admin/invite": {
-      // A link the admin sends by hand (when email does not get through). It approves the address; no email is sent.
-      await auth.join(email, true);
-      const { url: href, hash } = await link(env, url.origin, email);
-      await auth.forceToken(email, hash, 7 * DAY);
-      return json({ ok: true, link: href });
     }
     case "/api/admin/remove":
       await auth.unlist(email);

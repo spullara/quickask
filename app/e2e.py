@@ -159,9 +159,18 @@ checks.update(WAIT)
 carol = Browser(e2e=True)
 carol.json("/auth/waitlist", {"email": f"e2e-carol-{RUN}@example.com"})
 checks["resend_waits"] = "Wait 30 seconds" in carol.json("/auth/waitlist", {"email": f"e2e-carol-{RUN}@example.com"}).get("error", "")
-inv = ADMIN.json("/api/admin/invite", {"email": f"e2e-erin-{RUN}@example.com"}).get("link", "")
-erin = Browser()
-checks["invite_link_lets_in"] = erin.open(inv[len(BASE):]).getcode() == 302 and "Create passkey" in erin.text("/")
+# An invite code: single use, any email address, no waitlist.
+inv = ADMIN.json("/api/admin/invite", {}).get("link", "")
+erin, erin_key = Browser(), Authenticator()
+page = erin.text(inv[len(BASE):])
+o = erin.json("/auth/register/options", {"name": f"e2e-erin-{RUN}@example.com"})
+checks["invite_code_signs_up_any_email"] = "invited" in page and erin.json("/auth/register/verify", erin_key.create(o)).get("ok") is True
+try:
+    Browser().open(inv[len(BASE):])
+    checks["invite_code_single_use"] = False
+except urllib.error.HTTPError as e:
+    checks["invite_code_single_use"] = e.code == 410
+checks["no_invite_cannot_skip_waitlist"] = "not approved" in Browser().json("/auth/register/options", {"name": f"e2e-frank-{RUN}@example.com"}).get("error", "")
 checks["bad_link_refused"] = status(carol, f"/auth/confirm?e=e2e-carol-{RUN}%40example.com&t=wrong") == 400
 checks["name_must_be_email"] = Browser().json("/auth/waitlist", {"email": "not an email"}).get("error") == "Enter a valid email address."
 forged = Browser()
