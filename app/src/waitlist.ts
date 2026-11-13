@@ -23,6 +23,18 @@ export async function confirmed(env: WorkerEnv, req: Request) {
 /** The end-to-end test proves it knows the session secret, and then gets email links in replies instead of mail. */
 export const isE2E = async (env: WorkerEnv, req: Request) => req.headers.get("x-e2e") === (await hex(`${env.SESSION_SECRET}:e2e`));
 
+/** Reserved test domains (RFC 2606) never get mail. */
+const TEST_ADDRESS = /@(?:[^@]+\.)?(?:example\.(?:com|net|org)|[^@]*\.(?:test|invalid|example|localhost))$/;
+
+/**
+ * Tests never send email: test addresses, and any request that carries the test header (right or wrong), get the link
+ * in the reply when the test proved the secret, or an error otherwise.
+ */
+async function testReply(env: WorkerEnv, req: Request, email: string, ok: object) {
+  if (!TEST_ADDRESS.test(email) && !req.headers.has("x-e2e")) return null;
+  return (await isE2E(env, req)) ? json(ok) : json({ error: "This address cannot get email." });
+}
+
 const store = (env: WorkerEnv) => env.AUTH.get(env.AUTH.idFromName("auth"));
 const json = (v: unknown, status = 200) => Response.json(v, { status });
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -34,6 +46,7 @@ async function link(env: WorkerEnv, origin: string, email: string) {
 }
 
 async function mail(env: WorkerEnv, to: string, subject: string, intro: string, button: string, url: string, outro: string) {
+  if (TEST_ADDRESS.test(to)) throw new Error("test address");
   const { messageId } = await env.EMAIL!.send({
     from: { name: "QuickAsk", email: env.SENDER },
     to,
@@ -60,7 +73,8 @@ export async function waitlistRoute(req: Request, env: WorkerEnv, url: URL): Pro
     const { url: href, hash } = await link(env, url.origin, email);
     const err = await store(env).setToken(email, hash, DAY);
     if (err) return json({ error: err });
-    if (email.endsWith("@example.com") && (await isE2E(env, req))) return json({ sent: true, link: href });
+    const test = await testReply(env, req, email, { sent: true, link: href });
+    if (test) return test;
     try {
       if (status === "approved") {
         await mail(env, email, "Create your QuickAsk account", "You are approved for QuickAsk. Open this link to create your passkey.",
@@ -101,7 +115,8 @@ export async function adminRoute(req: Request, env: WorkerEnv, url: URL): Promis
       if (!(await auth.approve(email))) return json({ error: "Not on the waitlist." }, 404);
       const { url: href, hash } = await link(env, url.origin, email);
       await auth.forceToken(email, hash, 7 * DAY);
-      if (email.endsWith("@example.com") && (await isE2E(env, req))) return json({ ok: true, link: href });
+      const test = await testReply(env, req, email, { ok: true, link: href });
+      if (test) return test;
       try {
         await mail(env, email, "You're in: create your QuickAsk account", "You are off the QuickAsk waitlist. Open this link to create your passkey and start asking.",
           "Create account", href, "The link works for 7 days.");
