@@ -393,10 +393,14 @@ export const keyPage = (bad: boolean) => page(`${BRAND}<div id="log"></div>
 const AUTH_JS = String.raw`
 const b2u=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 const u2b=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-s.length%4)%4)),c=>c.charCodeAt(0));
-const post=(p,b)=>fetch(p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b||{})}).then(r=>r.json());
+const post=(p,b)=>fetch(p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b||{})})
+ .then(async r=>{const t=await r.text();try{return JSON.parse(t)}catch{return {error:'Server error ('+r.status+'). Try again.'}}});
 const msg=document.getElementById('msg'),ids=l=>(l||[]).map(x=>({...x,id:u2b(x.id)}));
-async function go(f){msg.textContent='';try{const r=await f();if(r.error)msg.textContent=r.error;else location.reload()}
- catch(e){msg.textContent=e.name==='NotAllowedError'?'Cancelled.':e.message}}
+// One passkey ceremony at a time: extra taps are ignored and the buttons are disabled until it ends.
+let running=false;
+async function go(f){if(running)return;running=true;const bs=document.querySelectorAll('.auth button');bs.forEach(b=>b.disabled=true);msg.textContent='';
+ try{const r=await f();if(r.error)msg.textContent=r.error;else location.reload()}
+ catch(e){msg.textContent=e.name==='NotAllowedError'?'Cancelled.':e.message}finally{running=false;bs.forEach(b=>b.disabled=false)}}
 document.getElementById('in').onclick=()=>go(async()=>{const o=await post('/auth/login/options');
  const c=await navigator.credentials.get({publicKey:{...o,challenge:u2b(o.challenge),allowCredentials:ids(o.allowCredentials)}});
  const r=c.response;return post('/auth/login/verify',{id:c.id,rawId:b2u(c.rawId),type:c.type,clientExtensionResults:c.getClientExtensionResults(),

@@ -138,6 +138,17 @@ o = again.json("/auth/login/options")
 checks["login_with_passkey"] = again.json("/auth/login/verify", alice_key.get(o)).get("ok") is True
 o = again.json("/auth/login/options")
 checks["login_twice_counter_ok"] = again.json("/auth/login/verify", alice_key.get(o)).get("ok") is True
+# A second tap or tab starts another ceremony; the first one must still verify.
+twice = Browser()
+o1 = twice.json("/auth/login/options"); twice.json("/auth/login/options")
+checks["overlapping_signins_ok"] = twice.json("/auth/login/verify", alice_key.get(o1)).get("ok") is True
+def reply(b, path, body):
+    try:
+        return b.open(path, body, "POST").read().decode()
+    except urllib.error.HTTPError as e:
+        return e.read().decode()
+checks["broken_signin_returns_json"] = all("error" in json.loads(reply(Browser(), p, {"id": "x", "response": {"clientDataJSON": "!!"}}))
+                                           for p in ("/auth/login/verify", "/auth/register/verify"))
 o = Browser().json("/auth/login/options")
 checks["unknown_passkey_rejected"] = "error" in Browser().json("/auth/login/verify", Authenticator().get(o))
 
