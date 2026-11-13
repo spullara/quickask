@@ -18,6 +18,8 @@ with sources and, when they help, pictures.
 - Read-only share links that anyone can open, with no account. Links show a rich preview card on X, iMessage and Slack.
 - Press ⌘K (Ctrl K) for a new search.
 - Answers know your approximate city and local time (from Cloudflare), so local questions like the weather work.
+- Follow-up questions keep the previous answer's search results in context. The model searches again (as a tool)
+  only when it needs new facts, and new results are numbered after the earlier ones.
 - Each answer ends with three suggested follow-up questions you can tap. Plain URLs and domains in answers are links.
 - A faint ⋯ under each answer opens a menu: the raw search results, copy the answer, rerun just that answer with
   the other model, or share just that answer.

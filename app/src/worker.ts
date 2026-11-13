@@ -194,7 +194,6 @@ weather, time, events or places nearby; do not mention it otherwise.` : "");
 /** Questions that need the user's place in the search itself. */
 const LOCAL = /\b(near me|nearby|around here|weather|forecast|temperature|rain|snow|local|open now|tonight|restaurants?|cafes?|bars?|delivery|takeout|traffic|things to do|showtimes|movie times|events? (?:today|tonight|this week(?:end)?))\b/i;
 
-/** Gemini with the search results attached to the latest question. No search tool: Exa already did the search. */
 /** Read-only chat snapshots behind share links. One global instance. */
 export class Shares extends DurableObject<WorkerEnv> {
   sql = this.ctx.storage.sql;
@@ -247,22 +246,46 @@ export class Shares extends DurableObject<WorkerEnv> {
   }
 }
 
-function gemini(env: WorkerEnv, msgs: Msg[], found: Search, model: ModelKey, loc: Loc) {
-  const results = found.context ? `<search_results>\n${found.context}\n</search_results>` : "(No search results.)";
+type Part = { text?: string; thought?: boolean; thoughtSignature?: string; functionCall?: { id?: string; name: string; args?: { query?: string } }; functionResponse?: unknown };
+type Content = { role: "user" | "model"; parts: Part[] };
+
+const SEARCH_TOOL = {
+  functionDeclarations: [{
+    name: "web_search",
+    description: "Search the web. Returns the most relevant passages of the top pages, newest first, numbered after the earlier results.",
+    parameters: { type: "object", properties: { query: { type: "string", description: "A complete, self-contained search query (not a fragment of the chat)" } }, required: ["query"] },
+  }],
+};
+
+/** Follow-up mode: the previous answer's results are in context, and the model searches only when it needs to. */
+const FOLLOW_UP = `This question follows earlier turns. The search results the previous answer used are attached to it as
+<earlier_results>; cite them by their numbers. When they and the chat already answer the question, answer directly
+without searching. Call web_search (once, with a precise query) only when the question needs facts they do not have:
+a new topic, more detail, or newer information. New results continue the numbering. Only images listed in new search
+results can be shown.`;
+
+/** Streamed Gemini call. tools: offer web_search ("auto"), or allow no more calls after a search ("none"). */
+function gemini(env: WorkerEnv, contents: Content[], model: ModelKey, loc: Loc, tools?: "auto" | "none") {
   const m = MODELS[model];
   return fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m.id}:streamGenerateContent?alt=sse`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: `${context(loc)}\n${SYSTEM}` }] },
-      contents: msgs.map((m, i) => ({
-        role: m.role,
-        parts: [{ text: i === msgs.length - 1 ? `${m.text}\n\n${results}` : m.text }],
-      })),
+      systemInstruction: { parts: [{ text: `${context(loc)}\n${SYSTEM}${tools ? `\n${FOLLOW_UP}` : ""}` }] },
+      contents,
+      ...(tools ? { tools: [SEARCH_TOOL], toolConfig: { functionCallingConfig: { mode: tools === "auto" ? "AUTO" : "NONE" } } } : {}),
       generationConfig: { thinkingConfig: { thinkingLevel: m.thinking } },
     }),
   });
 }
+
+/** The chat as Gemini contents, with extra text (search results) attached to the latest question. */
+const contentsOf = (msgs: Msg[], attach: string): Content[] =>
+  msgs.map((m, i) => ({ role: m.role, parts: [{ text: i === msgs.length - 1 ? `${m.text}\n\n${attach}` : m.text }] }));
+
+/** Stored results in the same numbered form the model saw them in. */
+const resultsText = (rs: Result[]) =>
+  rs.map((r, i) => `[${i + 1}] ${r.title} (${r.url}${r.date ? `, ${r.date}` : ""})\n${r.text}`).join("\n\n");
 
 /** Read Gemini SSE, call onText for each text delta. Returns the full text and the billed token counts. */
 async function relay(upstream: Promise<Response>, onText: (t: string) => void) {
@@ -270,8 +293,15 @@ async function relay(upstream: Promise<Response>, onText: (t: string) => void) {
   if (!res.ok || !res.body) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
   let text = "", buf = "", tokensIn = 0, tokensOut = 0;
+  const parts: Part[] = [];
   for (;;) {
-    const { value, done } = await reader.read();
+    // Gemini sometimes stalls mid-stream and never ends it. 30 s with no data ends the answer with an error.
+    let timer = 0 as unknown as ReturnType<typeof setTimeout>;
+    const stalled = new Promise<never>((_, no) => (timer = setTimeout(() => no(new Error("The model stopped responding. Try again.")), 30_000)));
+    const { value, done } = await Promise.race([reader.read(), stalled]).catch((e) => {
+      reader.cancel().catch(() => {});
+      throw e;
+    }).finally(() => clearTimeout(timer));
     if (done) break;
     buf += value;
     for (let i; (i = buf.indexOf("\n")) >= 0; ) {
@@ -284,7 +314,9 @@ async function relay(upstream: Promise<Response>, onText: (t: string) => void) {
         tokensIn = u.promptTokenCount ?? tokensIn;
         tokensOut = (u.candidatesTokenCount ?? 0) + (u.thoughtsTokenCount ?? 0) || tokensOut;
       }
-      for (const p of chunk.candidates?.[0]?.content?.parts ?? []) {
+      for (const p of (chunk.candidates?.[0]?.content?.parts ?? []) as Part[]) {
+        // Kept whole (thought signatures included): a tool call must be sent back exactly as the model made it.
+        if (p.functionCall || p.thoughtSignature) parts.push(p);
         if (p.text && !p.thought) {
           text += p.text;
           onText(p.text);
@@ -292,7 +324,10 @@ async function relay(upstream: Promise<Response>, onText: (t: string) => void) {
       }
     }
   }
-  return { text, tokensIn, tokensOut };
+  const calls = parts.filter((p) => p.functionCall);
+  // The model turn to send back after a tool call: its text so far, then its parts with calls and signatures.
+  const turn: Content = { role: "model", parts: [...(text ? [{ text }] : []), ...parts.filter((p) => p.functionCall || !p.text)] };
+  return { text, tokensIn, tokensOut, calls, turn };
 }
 
 function stream() {
@@ -380,7 +415,7 @@ type ExaResult = { url: string; title?: string; publishedDate?: string; highligh
 const NOT_A_PHOTO = /\.svg(\?|$)|\/\d{1,2}px-|logo|icon|favicon|sprite|avatar|badge|banner|slide|promo|hiring|advert/i;
 
 /** Exa search: the most query-relevant sentences of each page (anywhere in it, not just the top) for the model, plus each page's images as short ids (img:N) the model can place. */
-async function search(env: WorkerEnv, query: string, loc: Loc = {}, stop?: AbortSignal): Promise<Search> {
+async function search(env: WorkerEnv, query: string, loc: Loc = {}, stop?: AbortSignal, offset = 0): Promise<Search> {
   if (LOCAL.test(query) && loc.city) query = `${query} in ${[loc.city, loc.region].filter(Boolean).join(", ")}`;
   try {
     // Exa rate limit: 100 per 10 s per Cloudflare location. Over budget, retry for up to 3 s, then answer without search.
@@ -408,7 +443,7 @@ async function search(env: WorkerEnv, query: string, loc: Loc = {}, stop?: Abort
       }
       const date = r.publishedDate ? `, ${r.publishedDate.slice(0, 10)}` : "";
       shown.push({ title: r.title ?? host, url: r.url, date: r.publishedDate?.slice(0, 10), text: plain((r.highlights ?? []).join(" … ")).slice(0, 600) });
-      parts.push(`[${i + 1}] ${r.title ?? host} (${r.url}${date})\n${(r.highlights ?? []).join(" … ")}${ids.length ? `\nImages: ${ids.join(", ")}` : ""}`);
+      parts.push(`[${offset + i + 1}] ${r.title ?? host} (${r.url}${date})\n${(r.highlights ?? []).join(" … ")}${ids.length ? `\nImages: ${ids.join(", ")}` : ""}`);
     });
     return { context: parts.join("\n\n"), sources, images, exa: costDollars?.total ?? 0, results: shown };
   } catch {
@@ -434,13 +469,60 @@ type Gate = { ok: boolean; limit: number };
  * Start a question: the search, and in parallel the daily-limit check in the user's own Chats object. The check is
  * faster than the search, so it adds no wait. Over the limit, the search is cancelled and no answer is written.
  */
-function ask(env: WorkerEnv, chats: DurableObjectStub<Chats>, user: string, query: string, loc: Loc) {
+function ask(env: WorkerEnv, chats: DurableObjectStub<Chats>, user: string, query: string | null, loc: Loc) {
   const stop = new AbortController();
   const gate: Promise<Gate> = isAdmin(env, user).catch(() => false)
     .then((admin) => chats.take(Number(env.DAILY_QUERIES) || 100, admin))
     .catch(() => ({ ok: true, limit: 0 }))
     .then((g) => (g.ok || stop.abort(), g));
-  return { searching: search(env, query, loc, stop.signal), gate };
+  return { searching: query === null ? Promise.resolve(NO_SEARCH) : search(env, query, loc, stop.signal), gate };
+}
+const NO_SEARCH: Search = { context: "", sources: [], images: [], exa: 0, results: [] };
+
+/**
+ * A follow-up: the previous answer's search results stay in context, and the model calls web_search only when it needs
+ * new facts. With no search the first token comes sooner; with one, the search waits for the model to ask for it.
+ */
+async function followUp(env: WorkerEnv, msgs: Msg[], prev: Promise<Msg | undefined>, gate: Promise<Gate>, emit: Emit, model: ModelKey, loc: Loc): Promise<{ msg: Msg; meter: Meter } | null> {
+  try {
+    const [{ ok, limit }, last] = await Promise.all([gate, prev]);
+    if (!ok) {
+      emit("E", `You have asked ${limit} questions today, your daily limit. It resets at midnight UTC.`);
+      return null;
+    }
+    let sources = last?.sources ?? [], results = last?.results ?? [], images: string[] = [], exa = 0;
+    const earlier = results.length ? `<earlier_results>\n${resultsText(results)}\n</earlier_results>` : "(No earlier search results.)";
+    const contents = contentsOf(msgs, earlier);
+    const first = await relay(gemini(env, contents, model, loc, "auto"), (t) => emit("T", t));
+    let raw = first.text, tokensIn = first.tokensIn, tokensOut = first.tokensOut;
+    if (first.calls.length) {
+      // One search per answer. Extra parallel calls get a short reply, since every call needs a response.
+      const query = String(first.calls[0]!.functionCall!.args?.query ?? "").trim() || queryOf(msgs);
+      const found = await search(env, query, loc, undefined, results.length);
+      if (found.images.length) emit("I", found.images);
+      sources = [...sources, ...found.sources];
+      results = [...results, ...found.results];
+      images = found.images;
+      exa = found.exa;
+      const replies = first.calls.map((c, i) => ({
+        functionResponse: { ...(c.functionCall!.id ? { id: c.functionCall!.id } : {}), name: "web_search",
+          response: { results: i ? "Skipped: one search per answer." : found.context || "No results." } },
+      }));
+      const second = await relay(gemini(env, [...contents, first.turn, { role: "user", parts: replies }], model, loc, "none"), (t) => emit("T", t));
+      raw += second.text;
+      tokensIn += second.tokensIn;
+      tokensOut += second.tokensOut;
+    }
+    emit("R", results);
+    const { answer: text, followups } = splitFollowups(raw);
+    emit("F", followups);
+    emit("D", sources);
+    const gemini$ = tokensIn * MODELS[model].in + tokensOut * MODELS[model].out;
+    return { msg: { role: "model", text, sources, images, results, followups, model }, meter: { exa, tokensIn, tokensOut, gemini: gemini$ } };
+  } catch (e) {
+    emit("E", (e as Error).message);
+    return null;
+  }
 }
 
 /** One answer turn as events: I image ids, T text delta, D done with sources, E error. Returns what to save and what it cost. */
@@ -454,7 +536,8 @@ async function turn(env: WorkerEnv, msgs: Msg[], { searching, gate }: { searchin
     const found = await searching;
     if (found.images.length) emit("I", found.images);
     emit("R", found.results);
-    const { text: raw, tokensIn, tokensOut } = await relay(gemini(env, msgs, found, model, loc), (t) => emit("T", t));
+    const results = found.context ? `<search_results>\n${found.context}\n</search_results>` : "(No search results.)";
+    const { text: raw, tokensIn, tokensOut } = await relay(gemini(env, contentsOf(msgs, results), model, loc), (t) => emit("T", t));
     const { answer: text, followups } = splitFollowups(raw);
     emit("F", followups);
     emit("D", found.sources);
@@ -643,16 +726,23 @@ export default {
       // replace: answer again in place of the answer that follows these messages, keeping later turns and the chat's model.
       const body = (await req.json()) as { title: string; msgs: Msg[]; model?: string; cid?: string; replace?: boolean };
       const model = modelKey(body.model);
-      const searching = ask(env, chats, user.u, queryOf(body.msgs), loc);
+      const n = body.msgs.length;
+      // A follow-up (an earlier answer exists, not a rerun in place) searches only if the model asks to. The first
+      // question and reruns search first, as a new chat does.
+      const follow = !body.replace && n > 1;
+      const searching = ask(env, chats, user.u, follow ? null : queryOf(body.msgs), loc);
+      // The stored chat up to this question (the client's copy is never trusted for history or sources).
+      const base$ = stored(chats, api[1]!, body.replace ? n + 1 : n - 1);
       const out = stream();
+      const emit: Emit = (t, v) => out.send(t + (typeof v === "string" ? v : JSON.stringify(v)) + "\u0000");
       ctx.waitUntil((async () => {
-        const result = await turn(env, body.msgs, searching,
-          (t, v) => out.send(t + (typeof v === "string" ? v : JSON.stringify(v)) + "\u0000"), model, loc);
+        const result = follow
+          ? await followUp(env, body.msgs, base$.then((c) => c?.msgs.slice(0, n - 1).findLast((m) => m.role === "model")), searching.gate, emit, model, loc)
+          : await turn(env, body.msgs, searching, emit, model, loc);
         await out.close();
         // Save the stored history up to this question, plus this turn. A rerun drops the old answer. The client's copy
         // of earlier answers is never written back.
-        const n = body.msgs.length;
-        const base = await stored(chats, api[1]!, body.replace ? n + 1 : n - 1);
+        const base = await base$;
         if (result) await charge(env, user.u, result.meter);
         if (result && base) {
           if (body.replace) await chats.save(api[1]!, base.title, [...base.msgs.slice(0, n), result.msg, ...base.msgs.slice(n + 1)], undefined, body.cid);
