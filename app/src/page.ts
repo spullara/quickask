@@ -29,8 +29,11 @@ body{font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,s
 #log,main form{font-size:22.5px}
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 #side{width:260px;flex:none;background:var(--soft);height:100vh;height:100dvh;overflow:hidden;padding:12px 8px;display:flex;flex-direction:column}
-/* The chat list scrolls without a visible scrollbar; the footer (cost, user) stays pinned below it. */
-#scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px;scrollbar-width:none}#scroll::-webkit-scrollbar{display:none}
+/* The chat list shows a thin scrollbar only on hover (its space is always kept, so nothing shifts); the footer
+   (cost, user) stays pinned below it. */
+#scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px;scrollbar-width:thin;scrollbar-color:transparent transparent}
+#scroll:hover{scrollbar-color:color-mix(in srgb,var(--mute) 50%,transparent) transparent}
+#scroll::-webkit-scrollbar{width:8px}#scroll::-webkit-scrollbar-thumb{background:transparent;border-radius:4px}#scroll:hover::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--mute) 50%,transparent)}
 #foot{flex:none;padding-top:4px}
 #side .new{display:flex;align-items:center;padding:8px 10px;border-radius:8px;color:var(--fg);font-weight:600;margin-bottom:8px}
 #side .top{display:flex;align-items:center;gap:2px;margin-bottom:8px}#side .top .new{flex:1;margin-bottom:0}
