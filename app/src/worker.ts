@@ -90,6 +90,16 @@ export class Chats extends DurableObject<WorkerEnv> {
     ).toArray();
   }
 
+  setCard(id: string, png: ArrayBuffer) {
+    this.sql.exec("UPDATE shares SET card = ? WHERE id = ?", png, id);
+  }
+
+  /** The stored card, null if the share has none yet, undefined if the share does not exist. */
+  card(id: string): ArrayBuffer | null | undefined {
+    const row = this.sql.exec<{ card: ArrayBuffer | null }>("SELECT card FROM shares WHERE id = ?", id).toArray()[0];
+    return row ? row.card : undefined;
+  }
+
   get(id: string) {
     const row = this.sql.exec<{ title: string; msgs: string; model: string | null }>("SELECT title, msgs, model FROM chats WHERE id = ?", id).toArray()[0];
     return row ? { id, title: row.title, msgs: JSON.parse(row.msgs) as Msg[], model: modelKey(row.model) } : null;
@@ -173,6 +183,10 @@ export class Shares extends DurableObject<WorkerEnv> {
       this.sql.exec("ALTER TABLE shares ADD COLUMN chat TEXT");
     }
     this.sql.exec("CREATE INDEX IF NOT EXISTS shares_chat ON shares (chat)");
+    // The rendered preview card (PNG), stored so any Cloudflare location can serve it without drawing it again.
+    if (!this.sql.exec("SELECT 1 FROM pragma_table_info('shares') WHERE name = 'card'").toArray().length) {
+      this.sql.exec("ALTER TABLE shares ADD COLUMN card BLOB");
+    }
   }
 
   /** chat is "<user id>/<chat id>", so every change below is scoped to the owner. */
@@ -192,6 +206,16 @@ export class Shares extends DurableObject<WorkerEnv> {
       ...(id ? [chat, id] : [chat]),
     ).toArray();
     return gone.map((r) => r.id);
+  }
+
+  setCard(id: string, png: ArrayBuffer) {
+    this.sql.exec("UPDATE shares SET card = ? WHERE id = ?", png, id);
+  }
+
+  /** The stored card, null if the share has none yet, undefined if the share does not exist. */
+  card(id: string): ArrayBuffer | null | undefined {
+    const row = this.sql.exec<{ card: ArrayBuffer | null }>("SELECT card FROM shares WHERE id = ?", id).toArray()[0];
+    return row ? row.card : undefined;
   }
 
   get(id: string) {
@@ -268,6 +292,27 @@ async function stored(chats: DurableObjectStub<Chats>, id: string, n: number) {
     chat = await chats.get(id);
   }
   return chat;
+}
+
+const CARD_HEADERS = { "content-type": "image/png", "cache-control": "public, max-age=3600, s-maxage=3600" };
+
+/** A share's preview card: the stored PNG, or drawn by the card Worker and stored. undefined: no such share. null: failed. */
+async function storedCard(env: WorkerEnv, id: string, host: string): Promise<ArrayBuffer | null | undefined> {
+  const shares = env.SHARES.get(env.SHARES.idFromName("shares"));
+  const [stored, snap] = await Promise.all([shares.card(id), shares.get(id)]);
+  if (stored !== null || !snap) return stored === null ? undefined : stored;
+  try {
+    const res = await env.CARD.fetch("https://card/", {
+      method: "POST",
+      body: JSON.stringify({ question: snap.title, answer: snap.msgs.find((m) => m.role === "model")?.text ?? "", host }),
+    });
+    if (!res.ok) return null;
+    const png = await res.arrayBuffer();
+    await shares.setCard(id, png);
+    return png;
+  } catch {
+    return null;
+  }
 }
 
 const shareKey = (origin: string, id: string) => new Request(`${origin}/s/${id}?v=${PAGE_VERSION}`);
@@ -391,19 +436,10 @@ export default {
       const key = new Request(`${url.origin}${path}?v=${PAGE_VERSION}`);
       const hit = await caches.default.match(key);
       if (hit) return hit;
-      const snap = await env.SHARES.get(env.SHARES.idFromName("shares")).get(cardPath[1]!);
-      if (!snap) return new Response("Not found", { status: 404 });
-      let png: Response;
-      try {
-        png = await env.CARD.fetch("https://card/", {
-          method: "POST",
-          body: JSON.stringify({ question: snap.title, answer: snap.msgs.find((m) => m.role === "model")?.text ?? "", host: url.host }),
-        });
-      } catch {
-        return new Response("Card failed", { status: 502 });
-      }
-      if (!png.ok) return new Response("Card failed", { status: 502 });
-      const res = new Response(png.body, { headers: { "content-type": "image/png", "cache-control": "public, max-age=3600, s-maxage=3600" } });
+      const png = await storedCard(env, cardPath[1]!, url.host);
+      if (png === undefined) return new Response("Not found", { status: 404 });
+      if (png === null) return new Response("Card failed", { status: 502 });
+      const res = new Response(png, { headers: CARD_HEADERS });
       ctx.waitUntil(caches.default.put(key, res.clone()));
       return res;
     }
@@ -506,6 +542,10 @@ export default {
       const id = newId();
       // Search results stay with the chat; share pages do not show them.
       const created = await shares.put(id, `${user.u}/${share[1]}`, title, picked.map(({ results: _, followups: __, ...m }) => m));
+      // Draw the preview card now, in the background: the link is about to be posted somewhere.
+      ctx.waitUntil(storedCard(env, id, url.host).then((png) => {
+        if (png) return caches.default.put(new Request(`${url.origin}/s/${id}/card.png?v=${PAGE_VERSION}`), new Response(png, { headers: CARD_HEADERS }));
+      }));
       return Response.json({ url: `${url.origin}/s/${id}`, id, created });
     }
 
