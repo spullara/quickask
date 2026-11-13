@@ -1,55 +1,55 @@
 {
- "base": "https://quickask.dev",
+ "base": "https://quisk.ai",
  "runs": [
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.065,
-   "first_token": 1.165,
+   "ttfb": 0.137,
+   "first_token": 1.183,
+   "total": 1.237,
+   "inline_images": 1
+  },
+  {
+   "q": "golden gate bridge",
+   "ttfb": 0.106,
+   "first_token": 1.167,
+   "total": 1.837,
+   "inline_images": 1
+  },
+  {
+   "q": "how old was the ceo of amd when nvidia was founded",
+   "ttfb": 0.107,
+   "first_token": 1.108,
+   "total": 1.4,
+   "inline_images": 0
+  },
+  {
+   "q": "what is the capital of australia",
+   "ttfb": 0.061,
+   "first_token": 0.948,
+   "total": 1.058,
+   "inline_images": 1
+  },
+  {
+   "q": "golden gate bridge",
+   "ttfb": 0.106,
+   "first_token": 0.828,
    "total": 1.267,
    "inline_images": 1
   },
   {
-   "q": "golden gate bridge",
-   "ttfb": 0.062,
-   "first_token": 0.883,
-   "total": 1.467,
-   "inline_images": 1
-  },
-  {
    "q": "how old was the ceo of amd when nvidia was founded",
-   "ttfb": 0.04,
-   "first_token": 0.801,
-   "total": 1.176,
-   "inline_images": 0
-  },
-  {
-   "q": "what is the capital of australia",
-   "ttfb": 0.036,
-   "first_token": 0.83,
-   "total": 0.969,
-   "inline_images": 1
-  },
-  {
-   "q": "golden gate bridge",
-   "ttfb": 0.048,
-   "first_token": 1.05,
-   "total": 1.8,
-   "inline_images": 1
-  },
-  {
-   "q": "how old was the ceo of amd when nvidia was founded",
-   "ttfb": 0.064,
-   "first_token": 0.852,
-   "total": 1.26,
+   "ttfb": 0.154,
+   "first_token": 1.203,
+   "total": 1.411,
    "inline_images": 0
   }
  ],
  "avg": {
-  "ttfb": 0.052,
-  "first_token": 0.93,
-  "total": 1.323
+  "ttfb": 0.112,
+  "first_token": 1.073,
+  "total": 1.368
  },
- "followup_first_token": 2.148,
+ "followup_first_token": 1.895,
  "checks": {
   "public_page_offers_waitlist": true,
   "register_passkey": true,
@@ -68,6 +68,9 @@
   "login_with_passkey": true,
   "login_twice_counter_ok": true,
   "overlapping_signins_ok": true,
+  "old_share_redirects": true,
+  "old_domain_hands_off_with_query": true,
+  "old_domain_signed_out_move_page": true,
   "broken_signin_returns_json": true,
   "unknown_passkey_rejected": true,
   "answer_streams": true,
