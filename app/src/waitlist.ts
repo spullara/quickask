@@ -63,18 +63,42 @@ async function mail(env: WorkerEnv, to: string, subject: string, intro: string, 
   const site = new URL(url).origin, host = new URL(url).host;
   if (TEST_ADDRESS.test(to)) throw new Error("test address");
   const { messageId } = await env.EMAIL!.send({
-    from: { name: "QuickAsk", email: env.SENDER },
+    from: { name: "Quisk", email: env.SENDER },
     to,
     subject,
-    text: `${intro}\n\n${url}\n\n${outro}\n\n--\nQuickAsk, fast answers from the web. ${site}`,
+    text: `${intro}\n\n${url}\n\n${outro}\n\n--\nQuisk, fast answers from the web. ${site}`,
     html: `<div style="font:15px/1.5 -apple-system,system-ui,sans-serif;color:#111;max-width:480px">
 <p>${esc(intro)}</p>
 <p style="margin:20px 0"><a href="${esc(url)}" style="background:#111;color:#fff;text-decoration:none;padding:10px 16px;border-radius:10px;font-weight:600;display:inline-block">${esc(button)}</a></p>
 <p style="color:#666;font-size:13px">${esc(outro)}</p>
-<p style="color:#999;font-size:12px;border-top:1px solid #eee;padding-top:12px;margin-top:24px">QuickAsk, fast answers from the web. <a href="${esc(site)}" style="color:#999">${esc(host)}</a></p></div>`,
+<p style="color:#999;font-size:12px;border-top:1px solid #eee;padding-top:12px;margin-top:24px">Quisk, fast answers from the web. <a href="${esc(site)}" style="color:#999">${esc(host)}</a></p></div>`,
   });
   // Shows in Workers logs; the same message is in Compute → Email Service → Activity log.
   console.log(JSON.stringify({ email: "sent", subject, messageId }));
+}
+
+/**
+ * Sign this browser in and go to a page. Arrivals from an email link or from the old domain have no passkey for this
+ * domain yet, so the app offers to add one (the "pk" cookie) until the person adds one or says no.
+ */
+export async function arrive(env: WorkerEnv, req: Request, user: { u: string; n: string }, to: string) {
+  const headers = new Headers({ location: to.startsWith("/") && !to.startsWith("//") ? to : "/" });
+  headers.append("set-cookie", setCookie("s", await sign(env.SESSION_SECRET, { ...user, e: Date.now() + 365 * DAY }), 365 * 86400));
+  if (cookie(req, "pk") !== "done") headers.append("set-cookie", setCookie("pk", "1", 30 * 86400));
+  return new Response(null, { status: 302, headers });
+}
+
+/** Hand a signed-in person from an old domain to the new one, keeping the page and query. Valid for one minute. */
+export async function moveLink(env: WorkerEnv, user: { u: string; n: string }, to: string) {
+  const t = await sign(env.SESSION_SECRET, { mv: { u: user.u, n: user.n }, to, e: Date.now() + 60_000 });
+  return `https://${env.APP_DOMAIN}/auth/move?t=${encodeURIComponent(t)}`;
+}
+
+/** The new domain's end of a move. */
+export async function moveIn(env: WorkerEnv, req: Request, url: URL) {
+  const v = await unsign<{ mv?: { u: string; n: string }; to?: string; e: number }>(env.SESSION_SECRET, url.searchParams.get("t") ?? "");
+  if (!v?.mv || typeof v.mv.u !== "string") return Response.redirect(`${url.origin}/`, 302);
+  return arrive(env, req, v.mv, v.to ?? "/");
 }
 
 /** Public waitlist routes, or null. */
@@ -83,20 +107,23 @@ export async function waitlistRoute(req: Request, env: WorkerEnv, url: URL): Pro
     const email = emailOf(((await req.json().catch(() => ({}))) as { email?: string }).email);
     if (!email) return json({ error: "Enter a valid email address." });
     const status = await store(env).statusOf(email);
-    if (status === "joined") return json({ error: "That email address already has an account. Sign in with your passkey." });
     const ip = req.headers.get("cf-connecting-ip") ?? "";
     if (!(await env.EMAIL_LIMIT.limit({ key: ip }).catch(() => ({ success: true }))).success) return json({ error: "Too many emails. Wait a minute." });
     const { url: href, hash } = await link(env, url.origin, email);
-    const err = await store(env).setToken(email, hash, DAY);
+    // An address with an account gets a sign-in link instead (a lost passkey, or a new domain after a move).
+    const err = await store(env).setToken(email, hash, status === "joined" ? 15 * 60_000 : DAY);
     if (err) return json({ error: err });
     const test = await testReply(env, req, email, { sent: true, link: href });
     if (test) return test;
     try {
-      if (status === "approved") {
-        await mail(env, email, "Create your QuickAsk account", "You are approved for QuickAsk. Open this link to create your passkey.",
+      if (status === "joined") {
+        await mail(env, email, "Sign in to Quisk", "Open this link to sign in to Quisk. You can then add a passkey for this device.",
+          "Sign in", href, `The link works for 15 minutes. If you did not ask to sign in at ${url.host}, ignore this email.`);
+      } else if (status === "approved") {
+        await mail(env, email, "Create your Quisk account", "You are approved for Quisk. Open this link to create your passkey.",
           "Create account", href, "The link works for 24 hours.");
       } else {
-        await mail(env, email, "Confirm your email for QuickAsk", "Open this link to confirm your email address and join the QuickAsk waitlist.",
+        await mail(env, email, "Confirm your email for Quisk", "Open this link to confirm your email address and join the Quisk waitlist.",
           "Join the waitlist", href, `The link works for 24 hours. If you did not ask to join at ${url.host}, ignore this email.`);
       }
     } catch (e) {
@@ -111,6 +138,11 @@ export async function waitlistRoute(req: Request, env: WorkerEnv, url: URL): Pro
     const html = { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" };
     if (!email || !(await store(env).checkToken(email, await hex(`${email}:${token}:${env.SESSION_SECRET}`)))) {
       return new Response(signIn({ waitlist: true, error: "This link has expired or was already used. Enter your email address to get a new one." }), { status: 400, headers: html });
+    }
+    // An account's own address: the link signs in.
+    if ((await store(env).statusOf(email)) === "joined") {
+      const id = await store(env).firstNamed(email);
+      if (id) return arrive(env, req, { u: id, n: email }, "/");
     }
     // The admin's own address skips the wait, so a new install can make its first account.
     await store(env).join(email, !!env.ADMIN_NAME && email === env.ADMIN_NAME.toLowerCase());
@@ -136,7 +168,7 @@ export async function adminRoute(req: Request, env: WorkerEnv, url: URL): Promis
       const test = await testReply(env, req, email, { ok: true, link: href });
       if (test) return test;
       try {
-        await mail(env, email, "You're in: create your QuickAsk account", "You are off the QuickAsk waitlist. Open this link to create your passkey and start asking.",
+        await mail(env, email, "You're in: create your Quisk account", "You are off the Quisk waitlist. Open this link to create your passkey and start asking.",
           "Create account", href, "The link works for 7 days.");
       } catch (e) {
         return json({ ok: true, error: `Approved, but the email failed: ${(e as Error).message}` });

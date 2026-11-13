@@ -80,7 +80,7 @@ class Browser:
         data = None if body is None else json.dumps(body).encode()
         if data: headers["content-type"] = "application/json"
         try:
-            r = OPENER.open(urllib.request.Request(BASE + path, data, headers, method=method), timeout=120)
+            r = OPENER.open(urllib.request.Request(path if path.startswith("https://") else BASE + path, data, headers, method=method), timeout=120)
         except urllib.error.HTTPError as e:
             if e.code not in (301, 302): raise
             r = e
@@ -145,17 +145,17 @@ def search(b, q):
 
 checks, rows = {}, []
 home = Browser(access_key=False).text("/")
-checks["public_page_offers_waitlist"] = "Sign in with passkey" in home and "Join the waitlist" in home
+checks["public_page_offers_waitlist"] = "Sign in with passkey" in home and "Use your email" in home
 
 RUN = os.urandom(3).hex()
 alice, alice_key, ok_a = signup(f"e2e-alice-{RUN}")
+T_ALICE = time.time()  # one email per address each 30 s
 bob, _, ok_b = signup(f"e2e-bob-{RUN}")
 checks["register_passkey"] = ok_a and ok_b
 _, dave_key, ok_d = signup(f"e2e-dave-{RUN}", uv=False)
 o = (dave := Browser()).json("/auth/login/options")
 checks["passkey_without_user_verification"] = ok_d and dave.json("/auth/login/verify", dave_key.get(o)).get("ok") is True
 checks.update(WAIT)
-checks["email_must_be_unique"] = "already has an account" in Browser().json("/auth/waitlist", {"email": f"E2E-ALICE-{RUN}@EXAMPLE.COM"}).get("error", "")
 carol = Browser(e2e=True)
 carol.json("/auth/waitlist", {"email": f"e2e-carol-{RUN}@example.com"})
 checks["resend_waits"] = "Wait 30 seconds" in carol.json("/auth/waitlist", {"email": f"e2e-carol-{RUN}@example.com"}).get("error", "")
@@ -177,6 +177,17 @@ checks["login_twice_counter_ok"] = again.json("/auth/login/verify", alice_key.ge
 twice = Browser()
 o1 = twice.json("/auth/login/options"); twice.json("/auth/login/options")
 checks["overlapping_signins_ok"] = twice.json("/auth/login/verify", alice_key.get(o1)).get("ok") is True
+# The old domain (OLD_BASE): shares redirect, signed-in visitors are handed over with their query, others see the move page.
+OLD = os.environ.get("OLD_BASE", "").rstrip("/")
+if OLD:
+    r = Browser().open(f"{OLD}/s/abc123")
+    checks["old_share_redirects"] = r.getcode() == 301 and r.headers["location"] == f"{BASE}/s/abc123"
+    hop = Browser(); hop.cookies = dict(again.cookies)
+    r = hop.open(f"{OLD}/?q=hello%20world")
+    move = r.headers.get("location", "")
+    r2 = hop.open(move) if move.startswith(f"{BASE}/auth/move?t=") else None
+    checks["old_domain_hands_off_with_query"] = r.getcode() == 302 and r2 is not None and r2.getcode() == 302 and r2.headers["location"] == "/?q=hello%20world"
+    checks["old_domain_signed_out_move_page"] = "QuickAsk is now Quisk" in Browser(access_key=False).text(f"{OLD}/")
 def reply(b, path, body):
     try:
         return b.open(path, body, "POST").read().decode()
@@ -225,6 +236,18 @@ capped = search(bob, "what is the tallest mountain")[3]
 checks["daily_limit_stops_questions"] = "daily limit" in capped and "<script>T(" not in capped
 ADMIN.json("/api/admin/limit", {"email": BOB, "daily": None})
 checks["limit_restored"] = "<script>T(" in search(bob, "what is 2 plus 2")[3]
+# An address with an account gets a sign-in link. It signs in and offers a passkey for this domain.
+time.sleep(max(0, 31 - (time.time() - T_ALICE)))
+mail = Browser(e2e=True)
+signin = mail.json("/auth/waitlist", {"email": f"E2E-ALICE-{RUN}@EXAMPLE.COM"}).get("link", "")
+landed = mail.open(signin[len(BASE):])
+checks["email_link_signs_in"] = landed.getcode() == 302 and "s" in mail.cookies and mail.cookies.get("pk") == "1"
+checks["offers_passkey_after_email"] = 'id="ak"' in mail.text("/")
+second = Authenticator()
+o = mail.json("/auth/addkey/options")
+checks["add_passkey_to_account"] = mail.json("/auth/register/verify", second.create(o)).get("ok") is True and mail.cookies.get("pk") == "done"
+o = (fresh := Browser()).json("/auth/login/options")
+checks["added_passkey_signs_in"] = fresh.json("/auth/login/verify", second.get(o)).get("ok") is True and 'id="ak"' not in fresh.text("/")
 find = lambda who, q: [c["id"] for c in json.load(who.open("/api/chats?q=" + urllib.parse.quote(q)))]
 word = max(re.findall(r"[A-Za-z]{7,}", answer(bridge)), key=len)
 checks["search_by_title_prefix"] = chat_id in find(alice, "golden gat")

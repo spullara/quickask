@@ -14,7 +14,7 @@ import { LOGO_SVG } from "./icons.ts";
 
 const ICON_LINKS = `<link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png">`;
 const mark = (px: number) => LOGO_SVG.replace("<svg ", `<svg width="${px}" height="${px}" aria-hidden="true" `);
-const BRAND = `<div class="brand">${mark(44)}<span>QuickAsk</span></div>`;
+const BRAND = `<div class="brand">${mark(44)}<span>Quisk</span></div>`;
 
 /** Chat text size chosen with A−/A+, saved per browser; set before the page draws so there is no flash. */
 const TEXT_SIZE = `<script>document.documentElement.style.setProperty('--chat',15*(+localStorage.zoom||1)+'px')</script>`;
@@ -90,6 +90,8 @@ textarea:focus{border-color:var(--mute)}
 .m:hover+.acts button,.acts:hover button,.acts button:focus-visible{opacity:1}.acts button:hover{background:var(--soft);color:var(--fg)}
 @media (hover:none){.acts button{opacity:.45}}
 #menu{position:fixed;z-index:5;min-width:220px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:4px;box-shadow:0 8px 24px #0002;display:flex;flex-direction:column}#menu[hidden]{display:none}
+#ak{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:8px;align-items:center;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 14px;font-size:13px;width:max-content;max-width:calc(100% - 24px)}
+#ak button{font:inherit;border:0;border-radius:8px;cursor:pointer;padding:6px 10px;white-space:nowrap}#akb{background:var(--fg);color:var(--bg);font-weight:600}#akx{background:none;color:var(--mute)}
 #menu .ci{display:flex;flex-wrap:wrap;align-items:center;gap:2px;border-top:1px solid var(--line);margin-top:4px;padding:6px 4px 2px}
 #menu .ci span{width:100%;font-size:12px;color:var(--mute);padding:0 6px 2px}#menu .ci button{padding:6px 8px;font-size:13px}
 #menu button{border:0;background:none;color:var(--fg);font:inherit;font-size:14px;text-align:left;padding:8px 10px;border-radius:6px;cursor:pointer}#menu button:hover:not(:disabled){background:var(--soft)}#menu button:disabled{color:var(--mute);cursor:default}
@@ -252,9 +254,9 @@ U();
 function fresh(){document.body.classList.remove('open');
  if(!S.id){ta.value='';fit();ta.focus();return}
  if(cur){location.href='/';return}
- S.id=null;S.msgs=[];S.title='QuickAsk';S.shares=[];log.innerHTML='';main.classList.add('home');
+ S.id=null;S.msgs=[];S.title='Quisk';S.shares=[];log.innerHTML='';main.classList.add('home');
  const x=$('#shx');if(x)x.remove();side.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));
- document.title='QuickAsk';ta.placeholder='Ask anything';ta.value='';fit();history.pushState(null,'','/');ta.focus()}
+ document.title='Quisk';ta.placeholder='Ask anything';ta.value='';fit();history.pushState(null,'','/');ta.focus()}
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&!e.shiftKey&&!e.altKey&&e.key.toLowerCase()==='k'){e.preventDefault();fresh()}});
 $('.new').addEventListener('click',e=>{if(e.metaKey||e.ctrlKey||e.shiftKey||e.button)return;e.preventDefault();fresh()});
 addEventListener('popstate',()=>location.reload());
@@ -294,13 +296,13 @@ function handoffText(i){const msgs=S.msgs.slice(0,i+1),last=msgs[i],max=6000;
  const cited=new Set([...last.text.matchAll(/\\[(\\d+(?:,\\s*\\d+)*)\\]/g)].flatMap(x=>x[1].split(/,\\s*/).map(Number)));
  const src=[...new Set((last.sources||[]).filter((_,k)=>cited.has(k+1)).map(x=>x.uri))].slice(0,10);
  const draft=($('textarea')||{}).value||'';
- const head='This is a conversation I had in QuickAsk, a web answer engine. Use it as context and continue it with me.\\n\\n';
+ const head='This is a conversation I had in Quisk, a web answer engine. Use it as context and continue it with me.\\n\\n';
  const tail=(src.length?'\\n\\nSources for the last answer:\\n'+src.join('\\n'):'')
   +(draft.trim()?'\\n\\nMy next question: '+draft.trim():'\\n\\nConfirm in one line that you have the context, then wait for my next question.');
  // Newest turns first, whole; older answers shortened; the oldest dropped when it is still too long.
  const turns=[];let room=max-head.length-tail.length;
  for(let k=msgs.length-1;k>=0;k--){const m=msgs[k];let t=clean(m.text);if(k<msgs.length-2&&m.role==='model'&&t.length>400)t=t.slice(0,400)+'…';
-  const line=(m.role==='user'?'Me: ':'QuickAsk: ')+t;if(line.length>room){if(!turns.length)turns.unshift(line.slice(0,room)+'…');else turns.unshift('(Earlier turns left out.)');break}
+  const line=(m.role==='user'?'Me: ':'Quisk: ')+t;if(line.length>room){if(!turns.length)turns.unshift(line.slice(0,room)+'…');else turns.unshift('(Earlier turns left out.)');break}
   turns.unshift(line);room-=line.length+2}
  return head+turns.join('\\n\\n')+tail}
 function handoff(to,i){const g=GO[to],t=handoffText(i);
@@ -341,24 +343,37 @@ if(sh){SL();
 }
 `;
 
-export function shell(o: { id: string | null; title: string; msgs: Msg[]; streaming: boolean; user: { u: string; n: string }; shares?: ShareRef[]; model?: string }) {
+export function shell(o: { id: string | null; title: string; msgs: Msg[]; streaming: boolean; user: { u: string; n: string }; shares?: ShareRef[]; model?: string; addKey?: boolean }) {
   const state = { id: o.id, title: o.title, msgs: o.msgs, streaming: o.streaming, uid: o.user.u, shares: o.shares ?? [] };
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}${TEXT_SIZE}
 <title>${esc(o.title)}</title>
-<link rel="search" type="application/opensearchdescription+xml" title="QuickAsk" href="/opensearch.xml">
+<link rel="search" type="application/opensearchdescription+xml" title="Quisk" href="/opensearch.xml">
 <style>${CSS}</style></head>
 <body><button id="tg" aria-label="Chats">☰</button><div id="zm"><button data-z="-1" aria-label="Smaller text" title="Smaller text">A−</button><button data-z="1" aria-label="Larger text" title="Larger text">A+</button></div>
 <nav id="side"><div id="scroll"><div class="top"><a class="new" href="/">+ New chat<kbd>⌘K</kbd></a><button id="fs" aria-label="Search chats" title="Search chats"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button></div>
 <div id="find" hidden><input placeholder="Search chats" autocomplete="off" enterkeyhint="search"><button aria-label="Close search">×</button></div><div id="list"></div>
 </div><footer id="foot"><a id="usage" href="/admin" hidden></a>
 <div class="me"><span>${esc(o.user.n)}</span><a href="/auth/logout">Sign out</a></div></footer></nav>
-<main class="${o.id ? "" : "home"}"><div id="brand" class="brand">${mark(44)}<span>QuickAsk</span></div><div id="log"></div>
+<main class="${o.id ? "" : "home"}"><div id="brand" class="brand">${mark(44)}<span>Quisk</span></div><div id="log"></div>
 <form action="/" method="get"><textarea name="q" rows="1" placeholder="${o.id ? "Ask a follow-up" : "Ask anything"}" autocomplete="off"></textarea></form><p id="tag">I feel the need, the need for speed!</p></main>
 ${o.id ? '<div id="shx"><button id="sl" hidden></button><button id="sh">Share</button><div id="sp" hidden></div></div>' : ""}
 <script>const S=${json(state)};${RENDER}${JS}</script>
+${o.addKey ? `<div id="ak"><span>Add a passkey for this site so you can sign in here next time.</span><button id="akb">Add passkey</button><button id="akx" aria-label="Not now">×</button></div><script>${ADDKEY_JS}</script>` : ""}
 `;
 }
+
+/** After an email sign-in or a move from the old domain: add a passkey for this domain to the account. */
+const ADDKEY_JS = String.raw`(()=>{const ak=document.getElementById('ak');
+const b2u=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const u2b=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-s.length%4)%4)),c=>c.charCodeAt(0));
+const P=(p,b)=>fetch(p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b||{})}).then(r=>r.json());
+document.getElementById('akx').onclick=()=>{ak.remove();P('/auth/addkey/dismiss')};
+document.getElementById('akb').onclick=async()=>{try{const o=await P('/auth/addkey/options');if(o.error)throw new Error(o.error);
+ const k=await navigator.credentials.create({publicKey:{...o,challenge:u2b(o.challenge),user:{...o.user,id:u2b(o.user.id)},excludeCredentials:(o.excludeCredentials||[]).map(x=>({...x,id:u2b(x.id)}))}});
+ const r=k.response,v=await P('/auth/register/verify',{id:k.id,rawId:b2u(k.rawId),type:k.type,clientExtensionResults:k.getClientExtensionResults(),
+  authenticatorAttachment:k.authenticatorAttachment,response:{clientDataJSON:b2u(r.clientDataJSON),attestationObject:b2u(r.attestationObject),transports:r.getTransports?r.getTransports():[]}});
+ if(v.error)throw new Error(v.error);ak.remove();toast('Passkey added')}catch(e){toast(e.name==='NotAllowedError'?'Cancelled':e.message)}}})();`;
 
 /** Changes whenever the share page's code changes, so cached share pages never outlive a deploy. */
 export const PAGE_VERSION = [...CSS + RENDER].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0, 2166136261).toString(36);
@@ -407,7 +422,7 @@ export function adminPage(d: { today: Row; month: Row; byUser: Row[]; byDay: Row
   const table = (head: string, rows: Row[], name: (r: Row) => string) => rows.length ? `<table><tr><th>${head}</th><th>Searches</th><th>Exa</th><th>Gemini</th><th>Total</th></tr>${
     rows.map((r) => `<tr><td>${esc(name(r))}</td><td>${r.searches}</td><td>${usd(r.exa)}</td><td>${usd(r.gemini)}</td><td>${usd(r.cost)}</td></tr>`).join("")}</table>` : "<p>No searches yet.</p>";
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}
-<title>Admin · QuickAsk</title><meta name="robots" content="noindex"><style>${CSS}
+<title>Admin · Quisk</title><meta name="robots" content="noindex"><style>${CSS}
 main.admin{padding:32px 24px;max-width:760px;margin:0 auto;display:block;height:auto}.admin h1{font-size:20px;margin:0 0 4px}.admin h2{font-size:15px;margin:28px 0 8px}
 .admin .note{color:var(--mute);font-size:13px;margin:0 0 16px}.admin .back{font-size:14px}
 .cards{display:flex;gap:12px;flex-wrap:wrap}.card{flex:1;min-width:200px;background:var(--soft);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:2px}
@@ -419,7 +434,7 @@ table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:ta
 .wl td:first-child,.us td:first-child{overflow-wrap:anywhere}
 tr.new td{animation:flash 2.4s ease-out}@keyframes flash{from{background:color-mix(in srgb,var(--fg) 10%,transparent)}to{background:transparent}}th{text-align:left;color:var(--mute);font-weight:500;font-size:13px}
 th,td{padding:6px 8px 6px 0}td+td,th+th{text-align:right}tr+tr td{border-top:1px solid var(--line)}
-</style></head><body style="display:block;overflow:auto"><main class="admin"><a class="back" href="/">← QuickAsk</a>
+</style></head><body style="display:block;overflow:auto"><main class="admin"><a class="back" href="/">← Quisk</a>
 <section id="live">${waiting}${users}</section>
 <h1 style="margin-top:32px">Usage</h1><p class="note">Exa and Gemini charges, recorded per search. Cloudflare's $5/month plan is not included.</p>
 <div class="cards">${card("Today", d.today)}${card("This month", d.month)}</div>
@@ -435,18 +450,18 @@ export function sharePage(s: { title: string; msgs: Msg[] }, url: string) {
   const card = esc(`${url}/card.png`), title = esc(s.title);
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}${TEXT_SIZE}
 <title>${esc(s.title)}</title><meta name="robots" content="noindex">
-<meta property="og:site_name" content="QuickAsk"><meta property="og:type" content="article"><meta property="og:url" content="${esc(url)}">
-<meta property="og:title" content="QuickAsk">
+<meta property="og:site_name" content="Quisk"><meta property="og:type" content="article"><meta property="og:url" content="${esc(url)}">
+<meta property="og:title" content="Quisk">
 <meta property="og:image" content="${card}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${title}">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="QuickAsk">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Quisk">
 <meta name="twitter:image" content="${card}"><meta name="twitter:image:alt" content="${title}">
-<style>${CSS}</style></head><body style="display:block;overflow:auto"><main style="height:auto;display:block"><div class="sbrand">${mark(22)}QuickAsk</div><div id="log"></div></main>
+<style>${CSS}</style></head><body style="display:block;overflow:auto"><main style="height:auto;display:block"><div class="sbrand">${mark(22)}Quisk</div><div id="log"></div></main>
 <script>const S=${json({ msgs: s.msgs })};${RENDER}function show(msgs){log.innerHTML='';for(const m of msgs){if(m.role==='user')add('u',E1(m.text));else add('m',md(m.text,m.images,m.sources))}}
 show(S.msgs);</script></body></html>`;
 }
 
 const page = (body: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">${NO_ZOOM}${ICON_LINKS}
-<title>QuickAsk</title><meta name="description" content="QuickAsk: fast answers from the web, with sources and pictures."><style>${CSS}</style></head><body><main class="home">${body}</main></body></html>`;
+<title>Quisk</title><meta name="description" content="Quisk: fast answers from the web, with sources and pictures."><style>${CSS}</style></head><body><main class="home">${body}</main></body></html>`;
 
 export const keyPage = (bad: boolean) => page(`${BRAND}<div id="log"></div>
 <form action="/" method="get"><textarea name="k" rows="1" placeholder="${bad ? "Wrong key. Try again" : "Access key"}"></textarea></form>
@@ -478,7 +493,7 @@ const up=document.getElementById('up');
 if(up)up.onsubmit=e=>{e.preventDefault();const n=up.n.value.trim().toLowerCase();if(!n)return;
  if(up.dataset.mode!=='wait')return create(n);
  go(async()=>{const r=await post('/auth/waitlist',{email:n});if(r.error)return r;
-  up.style.display='none';document.querySelector('.or').hidden=true;msg.className='note';msg.textContent='Check '+n+' for a link to confirm your address.';return {stay:1}})};
+  up.style.display='none';document.querySelector('.or').hidden=true;msg.className='note';msg.textContent='Check '+n+' for a link.';return {stay:1}})};
 `;
 
 /**
@@ -494,13 +509,20 @@ export function signIn(o: { waitlist: boolean; email?: string | null; status?: s
   if (!o.waitlist) body = `${inBtn}<div class="or">New here? Create an account</div>${form("create", "Create")}`;
   else if (o.status === "approved") body = `<p class="lead">You're in. Create a passkey for ${who} to start.</p><button id="mk" class="btn">Create passkey</button><div class="or"><a href="#" id="in">Sign in instead</a></div>`;
   else if (o.status === "waiting") { body = inBtn; note = `You're on the waitlist as ${who}. You'll get an email when you're in.`; }
-  else body = `${inBtn}<div class="or">New here? Join the waitlist</div>${form("wait", "Join")}`;
+  else body = `${inBtn}<div class="or">New here, or no passkey on this device? Use your email</div>${form("wait", "Continue")}`;
   const p = o.error ? `<p id="msg" class="err">${esc(o.error)}</p>` : `<p id="msg" class="${note ? "note" : "err"}">${note}</p>`;
   return page(`<div class="auth">${BRAND}${body}${p}</div><script>${AUTH_JS}</script>`);
 }
 
+/** The old domain's page for someone not signed in there: sign in with the old passkey to move, or go to the new site. */
+export function moveSignIn(domain: string, to: string) {
+  return page(`<div class="auth">${BRAND}<p class="lead">QuickAsk is now Quisk, at ${esc(domain)}. Sign in with your passkey to move your account and chats.</p>
+<button id="in" class="btn">Sign in with passkey</button><div class="or"><a href="${esc(to)}">New here? Continue to ${esc(domain)}</a></div>
+<p id="msg" class="err"></p></div><script>${AUTH_JS}</script>`);
+}
+
 export const opensearch = (origin: string) => `<?xml version="1.0" encoding="UTF-8"?>
 <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
-<ShortName>QuickAsk</ShortName><Description>Fast answers with web search</Description><InputEncoding>UTF-8</InputEncoding>
+<ShortName>Quisk</ShortName><Description>Fast answers with web search</Description><InputEncoding>UTF-8</InputEncoding>
 <Url type="text/html" method="get" template="${origin}/?q={searchTerms}"/>
 </OpenSearchDescription>`;

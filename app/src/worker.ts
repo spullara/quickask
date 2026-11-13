@@ -1,7 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 import { cookie, session } from "./session.ts";
-import { PAGE_VERSION, adminPage, call, keyPage, opensearch, sharePage, shell, signIn, type Msg, type Result, type Source } from "./page.ts";
+import { PAGE_VERSION, adminPage, call, keyPage, moveSignIn, opensearch, sharePage, shell, signIn, type Msg, type Result, type Source } from "./page.ts";
 import { MODELS, modelKey, type Meter, type ModelKey } from "./usage.ts";
 
 import { APPLE_ICON_PNG, FAVICON_PNG, LOGO_SVG } from "./icons.ts";
@@ -565,6 +565,19 @@ export default {
     const path = url.pathname;
     const q = url.searchParams.get("q")?.trim();
 
+    // An old domain only moves people: signed in, they are handed to the new domain with this page and query (so a
+    // search engine still set to the old address keeps working); signed out, they sign in with their old passkey first.
+    // Everything else (shares, cards, email links, icons) redirects to the same path on the new domain.
+    if (env.APP_DOMAIN && url.hostname !== env.APP_DOMAIN && env.OLD_DOMAINS.split(",").includes(url.hostname)) {
+      const to = `https://${env.APP_DOMAIN}${path}${url.search}`;
+      if (path.startsWith("/auth/login/")) return (await (await import("./auth.ts")).authRoute(req, env, url)) ?? new Response("Not found", { status: 404 });
+      if (path !== "/" && !path.startsWith("/c/")) return Response.redirect(to, 301);
+      const user = await session(req, env);
+      if (user) return Response.redirect(await (await import("./waitlist.ts")).moveLink(env, user, path + url.search), 302);
+      return new Response(moveSignIn(env.APP_DOMAIN, to), { headers: HTML });
+    }
+    if (path === "/auth/move") return (await import("./waitlist.ts")).moveIn(env, req, url);
+
     if (path === "/opensearch.xml") {
       // text/xml displays inline; the OpenSearch type makes some browsers download the file.
       return new Response(opensearch(url.origin), { headers: { "content-type": "text/xml; charset=utf-8", "content-disposition": "inline" } });
@@ -636,6 +649,7 @@ export default {
     const msgs: Msg[] = q ? [{ role: "user", text: q }] : [];
     const loc = locOf(req);
     const chats = env.CHATS.get(env.CHATS.idFromName(user.u));
+    const addKey = cookie(req, "pk") === "1";
     const searching = q ? ask(env, chats, user.u, q, loc) : null;
     const shares = env.SHARES.get(env.SHARES.idFromName("shares"));
     const usage = env.USAGE.get(env.USAGE.idFromName("global"));
@@ -645,7 +659,7 @@ export default {
       const id = newId(), title = titleOf(q);
       const list = chats.list();
       const out = stream();
-      out.send(shell({ id, title, msgs, streaming: true, user }));
+      out.send(shell({ id, title, msgs, streaming: true, user, addKey }));
       ctx.waitUntil((async () => {
         list.then((l) => out.send(call("L", l)), () => {});
         const result = await turn(env, msgs, searching, (t, v) => out.send(call(t, v)), "lite", loc);
@@ -658,14 +672,14 @@ export default {
 
     if (path === "/") {
       const list = await chats.list();
-      return new Response(shell({ id: null, title: "QuickAsk", msgs: [], streaming: false, user }) + call("L", list), { headers });
+      return new Response(shell({ id: null, title: "Quisk", msgs: [], streaming: false, user, addKey }) + call("L", list), { headers });
     }
 
     const chatPage = path.match(/^\/c\/(\w+)$/);
     if (chatPage) {
       const [chat, list, links] = await Promise.all([chats.get(chatPage[1]!), chats.list(), shares.list(`${user.u}/${chatPage[1]}`)]);
       if (!chat) return Response.redirect(url.origin + "/", 302);
-      return new Response(shell({ ...chat, streaming: false, user, shares: links }) + call("L", list), { headers });
+      return new Response(shell({ ...chat, streaming: false, user, shares: links, addKey }) + call("L", list), { headers });
     }
 
     // Sidebar pages: ?before=<updated> for the next page, ?q= to search.

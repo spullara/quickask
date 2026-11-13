@@ -1,6 +1,8 @@
-<p align="center"><img src="app/icons/logo.svg" width="88" alt="QuickAsk logo"></p>
+<p align="center"><img src="app/icons/logo.svg" width="88" alt="Quisk logo"></p>
 
-# QuickAsk
+# Quisk
+
+Formerly QuickAsk.
 
 A fast answer engine that runs on Cloudflare Workers. Set it as your browser's
 search engine: every search opens a chat that streams an answer from the web,
@@ -14,6 +16,8 @@ with sources and, when they help, pictures.
 - Passkey accounts with a waitlist. People join with their email address and confirm it with a link (sent by
   Cloudflare Email Service). The admin approves them on `/admin`, and they get a link to create a passkey.
   Without a custom domain, a shared access key gates the app and anyone with it can sign up.
+- Lost your passkey, or on a new device? Enter your email address on the sign-in page to get a sign-in link, then
+  add a passkey for that device.
 - Each user can ask 100 questions a day. The admin can change the limit for each user on `/admin`.
 - Read-only share links that anyone can open, with no account. Links show a rich preview card on X, iMessage and Slack.
 - Press ⌘K (Ctrl K) for a new search.
@@ -133,7 +137,7 @@ To keep the access key and open sign-up instead, add `WAITLIST=off` to `app/.env
   Site search → Add. URL: `https://<your app>/?q=%s`. Choose **Make default** to use it
   for every search, or give it a shortcut such as `q`.
 - **Firefox:** open your app once, then right-click the address bar and choose
-  **Add "QuickAsk"**.
+  **Add "Quisk"**.
 - **Safari:** Safari has no custom search engines. Use a redirect extension such as
   "Customize Search Engine" with the same URL.
 
@@ -150,6 +154,7 @@ To keep the access key and open sign-up instead, add `WAITLIST=off` to `app/.env
 | `QUICK_DOMAIN` | no | Custom domain, for example `ask.example.com`. |
 | `WAITLIST` | no | `off` uses the access key and open sign-up even with a custom domain. |
 | `MAIL_FORWARD_TO` | no | With the waitlist: your own address. The domain then receives mail (MX and SPF records), and mail to any address at it is forwarded to you. Spam filters trust a domain that can receive mail more. Confirm the email Cloudflare sends you, then run `./deploy.sh` again. |
+| `OLD_DOMAINS` | no | Earlier custom domains, comma separated, after a move to a new `QUICK_DOMAIN`. They keep serving the Worker only to move people: signed-in visitors are handed to the new domain with their page and query, signed-out visitors sign in with their old passkey first, and everything else (share links, email links) redirects. On the new domain, people are offered a new passkey. |
 | `DAILY_QUERIES` | no | Questions a day for each user. Default 100. The admin has no limit. |
 | `ADMIN_NAME` | no | Account (email address) that can see costs. The oldest account with this name is the admin. |
 | `ACCESS_KEY`, `SESSION_SECRET` | created for you | The access key is used only without the waitlist. Change `SESSION_SECRET` to sign everyone out. |

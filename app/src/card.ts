@@ -38,7 +38,7 @@ async function render(req: Request): Promise<Response> {
     }, [
       el("div", { display: "flex", alignItems: "center", gap: 16 }, [
         el("img", { width: 56, height: 56 }, undefined, { src: `data:image/svg+xml;base64,${btoa(LOGO_SVG)}`, width: 56, height: 56 }),
-        el("div", { fontSize: 34, fontWeight: 700, letterSpacing: -0.5 }, "QuickAsk"),
+        el("div", { fontSize: 34, fontWeight: 700, letterSpacing: -0.5 }, "Quisk"),
       ]),
       el("div", { marginTop: 44, fontSize: q.length > 70 ? 48 : 60, fontWeight: 700, lineHeight: 1.15, letterSpacing: -1.5 }, q),
       el("div", { marginTop: 28, fontSize: 30, lineHeight: 1.4, color: "#4b5563" }, clip(plain(answer), q.length > 70 ? 150 : 210)),

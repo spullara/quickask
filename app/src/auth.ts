@@ -7,7 +7,7 @@ import {
 } from "@simplewebauthn/server";
 import { isoBase64URL } from "@simplewebauthn/server/helpers";
 import type { WorkerEnv } from "../alchemy.run.ts";
-import { cookie, setCookie, sign, unsign, type Session } from "./session.ts";
+import { cookie, session, setCookie, sign, unsign, type Session } from "./session.ts";
 import { confirmed, emailOf, isTest, notifyAdmin } from "./waitlist.ts";
 
 const DAY = 86400;
@@ -22,7 +22,7 @@ const json = (v: unknown, cookies: string[] = [], status = 200) => {
  * Pending passkey ceremonies, kept in the signed "c" cookie. The last three are kept, so a second tap, a second tab or a
  * retried request does not overwrite the challenge an authenticator is still signing.
  */
-type Pending = { ch: string; e: number; u?: string; n?: string };
+type Pending = { ch: string; e: number; u?: string; n?: string; add?: 1 };
 const KEEP = 3, TTL = 300_000;
 
 async function pendingOf(env: WorkerEnv, req: Request): Promise<Pending[]> {
@@ -84,15 +84,38 @@ async function route(req: Request, env: WorkerEnv, url: URL): Promise<Response |
       }
       const userId = isoBase64URL.fromBuffer(crypto.getRandomValues(new Uint8Array(16)));
       const options = await generateRegistrationOptions({
-        rpName: "Quick", rpID, userName, userID: isoBase64URL.toBuffer(userId), attestationType: "none",
+        rpName: "Quisk", rpID, userName, userID: isoBase64URL.toBuffer(userId), attestationType: "none",
         authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
       });
       return json(options, [await start(env, req, options.challenge, { u: userId, n: userName })]);
+    }
+    case "/auth/addkey/options": {
+      // A passkey for this domain on the signed-in account, with the same user handle as its first passkey.
+      const user = await session(req, env);
+      if (!user) return json({ error: "Sign in first." });
+      const options = await generateRegistrationOptions({
+        rpName: "Quisk", rpID, userName: user.n, userID: isoBase64URL.toBuffer(user.u), attestationType: "none",
+        authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
+      });
+      return json(options, [await start(env, req, options.challenge, { u: user.u, n: user.n, add: 1 })]);
     }
     case "/auth/register/verify": {
       const body = (await req.json()) as RegistrationResponseJSON;
       const { entry, rest } = await signedFor(env, req, body);
       if (!entry?.u || !entry.n) return json({ error: "Sign-up expired. Try again." });
+      if (entry.add) {
+        const user = await session(req, env);
+        if (user?.u !== entry.u) return json({ error: "Sign in first." });
+        const { verified, registrationInfo: info } = await verifyRegistrationResponse({
+          response: body, expectedChallenge: entry.ch, expectedOrigin: origin, expectedRPID: rpID, requireUserVerification: false,
+        });
+        if (!verified) return json({ error: "Passkey not verified." });
+        await store.addCred(entry.u, {
+          id: info.credential.id, publicKey: isoBase64URL.fromBuffer(info.credential.publicKey),
+          counter: info.credential.counter, transports: JSON.stringify(info.credential.transports ?? []),
+        });
+        return json({ ok: true }, [await ceremonies(env, rest), setCookie("pk", "done", 365 * DAY)]);
+      }
       const { verified, registrationInfo: info } = await verifyRegistrationResponse({
         response: body, expectedChallenge: entry.ch, expectedOrigin: origin, expectedRPID: rpID,
         // The options ask for user verification as "preferred". Some phones and password managers make passkeys
@@ -128,6 +151,8 @@ async function route(req: Request, env: WorkerEnv, url: URL): Promise<Response |
       await store.setCounter(cred.id, authenticationInfo.newCounter);
       return json({ ok: true }, [await finish(env, cred.userId, cred.name), await ceremonies(env, rest)]);
     }
+    case "/auth/addkey/dismiss":
+      return json({ ok: true }, [setCookie("pk", "done", 365 * DAY)]);
     case "/auth/logout":
       return new Response(null, { status: 302, headers: { location: "/", "set-cookie": setCookie("s", "", 0) } });
   }

@@ -107,6 +107,11 @@ export class Auth extends DurableObject<WorkerEnv> {
     this.sql.exec("INSERT INTO creds VALUES (?, ?, ?, ?, ?)", cred.id, userId, cred.publicKey, cred.counter, cred.transports);
   }
 
+  /** Another passkey for an existing account (a new domain's passkey after a move). */
+  addCred(userId: string, cred: { id: string; publicKey: string; counter: number; transports: string }) {
+    this.sql.exec("INSERT OR REPLACE INTO creds VALUES (?, ?, ?, ?, ?)", cred.id, userId, cred.publicKey, cred.counter, cred.transports);
+  }
+
   nameTaken(name: string) {
     return this.sql.exec("SELECT 1 FROM users WHERE lower(name) = lower(?) LIMIT 1", name).toArray().length > 0;
   }

@@ -3,53 +3,53 @@
  "runs": [
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.043,
-   "first_token": 1.011,
-   "total": 1.124,
+   "ttfb": 0.065,
+   "first_token": 1.165,
+   "total": 1.267,
    "inline_images": 1
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.106,
-   "first_token": 1.006,
-   "total": 1.753,
+   "ttfb": 0.062,
+   "first_token": 0.883,
+   "total": 1.467,
    "inline_images": 1
   },
   {
    "q": "how old was the ceo of amd when nvidia was founded",
-   "ttfb": 0.063,
-   "first_token": 1.045,
-   "total": 1.302,
+   "ttfb": 0.04,
+   "first_token": 0.801,
+   "total": 1.176,
    "inline_images": 0
   },
   {
    "q": "what is the capital of australia",
-   "ttfb": 0.047,
-   "first_token": 0.854,
-   "total": 0.914,
+   "ttfb": 0.036,
+   "first_token": 0.83,
+   "total": 0.969,
    "inline_images": 1
   },
   {
    "q": "golden gate bridge",
-   "ttfb": 0.056,
-   "first_token": 0.879,
-   "total": 1.51,
+   "ttfb": 0.048,
+   "first_token": 1.05,
+   "total": 1.8,
    "inline_images": 1
   },
   {
    "q": "how old was the ceo of amd when nvidia was founded",
-   "ttfb": 0.035,
-   "first_token": 0.772,
-   "total": 1.015,
+   "ttfb": 0.064,
+   "first_token": 0.852,
+   "total": 1.26,
    "inline_images": 0
   }
  ],
  "avg": {
-  "ttfb": 0.058,
-  "first_token": 0.928,
-  "total": 1.27
+  "ttfb": 0.052,
+  "first_token": 0.93,
+  "total": 1.323
  },
- "followup_first_token": 1.883,
+ "followup_first_token": 2.148,
  "checks": {
   "public_page_offers_waitlist": true,
   "register_passkey": true,
@@ -59,7 +59,6 @@
   "waiting_cannot_register": true,
   "approved_sees_create": true,
   "older_link_still_works": true,
-  "email_must_be_unique": true,
   "resend_waits": true,
   "bad_link_refused": true,
   "name_must_be_email": true,
@@ -81,6 +80,10 @@
   "chat_not_in_other_sidebar": true,
   "daily_limit_stops_questions": true,
   "limit_restored": true,
+  "email_link_signs_in": true,
+  "offers_passkey_after_email": true,
+  "add_passkey_to_account": true,
+  "added_passkey_signs_in": true,
   "search_by_title_prefix": true,
   "search_by_answer_word": true,
   "search_only_own_chats": true,

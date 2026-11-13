@@ -16,6 +16,8 @@ export const CardWorker = Cloudflare.Worker("QuickCard", {
 });
 
 const DOMAIN = process.env.QUICK_DOMAIN, ZONE = process.env.QUICK_ZONE_ID;
+/** Earlier domains (comma separated). They serve the Worker only to move people, their passkeys' sign-in and links to DOMAIN. */
+const OLD = (process.env.OLD_DOMAINS ?? "").split(",").map((d) => d.trim()).filter(Boolean);
 /**
  * Waitlist emails come from this address. Only with a custom domain on Cloudflare DNS (Email Service needs the zone),
  * and not when WAITLIST=off. Without it, the app uses the shared access key and open passkey sign-up instead.
@@ -41,7 +43,7 @@ export const Worker = Cloudflare.Worker("Quick", {
   observability: { enabled: true },
   build: { output: { minify: true } },
   // Passkeys bind to this hostname. Set QUICK_DOMAIN in app/.env once the domain is in this Cloudflare account.
-  ...(DOMAIN ? { domain: DOMAIN } : {}),
+  ...(DOMAIN ? { domain: OLD.length ? { name: DOMAIN, aliases: OLD } : DOMAIN } : {}),
   env: {
     CARD: CardWorker,
     CHATS: Cloudflare.DurableObject<Chats>("Chats", { className: "Chats" }),
@@ -54,6 +56,8 @@ export const Worker = Cloudflare.Worker("Quick", {
     EMAIL_LIMIT: Cloudflare.RateLimit("EMAIL_LIMIT", { namespaceId: 2002, simple: { limit: 5, period: 60 } }),
     ...(SENDER ? { EMAIL: Cloudflare.Email.SendEmail("EMAIL", { allowedSenderAddresses: [SENDER] }) } : {}),
     SENDER: SENDER ?? "",
+    APP_DOMAIN: DOMAIN ?? "",
+    OLD_DOMAINS: OLD.join(","),
     GEMINI_API_KEY: Config.Redacted("GEMINI_API_KEY"),
     EXA_API_KEY: Config.Redacted("EXA_API_KEY"),
     ACCESS_KEY: Config.Redacted("ACCESS_KEY"),
