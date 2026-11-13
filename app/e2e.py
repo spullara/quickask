@@ -188,6 +188,10 @@ share_path = "/s/" + link.rsplit("/", 1)[1]
 public = Browser(access_key=False).text(share_path)
 checks["share_link_public"] = link.startswith(BASE) and "golden gate" in public.lower() and "](img:" in public
 checks["share_page_read_only"] = 'id="side"' not in public and "<textarea" not in public and "og:title" in public
+checks["share_card_tags"] = 'name="twitter:card" content="summary_large_image"' in public and f'content="{link}/card.png"' in public
+card = Browser(access_key=False).open(share_path + "/card.png")
+png = card.read()
+checks["share_card_png"] = card.headers["content-type"] == "image/png" and png[:8] == b"\x89PNG\r\n\x1a\n" and int.from_bytes(png[16:20], "big") == 1200
 share_id = share_path.rsplit("/", 1)[1]
 checks["chat_page_lists_links"] = f'"shares":[{{"id":"{share_id}"' in alice.text(f"/c/{chat_id}")
 extra = alice.json(f"/api/chats/{chat_id}/share", {"n": 2})["id"]

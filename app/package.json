@@ -13,9 +13,11 @@
     "@alchemy.run/cloudflare": "^2.0.0-beta.85",
     "@effect/platform-bun": "^4.1.4",
     "@effect/platform-node": "^4.1.4",
+    "@fontsource/inter": "^5.3.0",
     "@simplewebauthn/server": "^14.1.0",
     "alchemy": "^2.0.0-beta.85",
-    "effect": "^4.1.4"
+    "effect": "^4.1.4",
+    "workers-og": "^0.0.27"
   },
   "scripts": {
     "deploy": "./deploy.sh",

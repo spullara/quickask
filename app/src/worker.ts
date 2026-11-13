@@ -288,6 +288,31 @@ export default {
     if (icon) return new Response(icon[0](), { headers: { "content-type": icon[1], "cache-control": "public, max-age=604800" } });
 
     // Share links are public: no access key, no account. The edge caches them for a minute, so a deleted link dies everywhere within a minute.
+    if (path === "/robots.txt") return new Response("User-agent: *\nAllow: /s/\nDisallow: /\n", { headers: { "content-type": "text/plain" } });
+
+    // Share card for link previews (X, iMessage, Slack): rendered by the separate card Worker, cached at the edge.
+    const cardPath = path.match(/^\/s\/(\w+)\/card\.png$/);
+    if (cardPath) {
+      const key = new Request(`${url.origin}${path}?v=${PAGE_VERSION}`);
+      const hit = await caches.default.match(key);
+      if (hit) return hit;
+      const snap = await env.SHARES.get(env.SHARES.idFromName("shares")).get(cardPath[1]!);
+      if (!snap) return new Response("Not found", { status: 404 });
+      let png: Response;
+      try {
+        png = await env.CARD.fetch("https://card/", {
+          method: "POST",
+          body: JSON.stringify({ question: snap.title, answer: snap.msgs.find((m) => m.role === "model")?.text ?? "", host: url.host }),
+        });
+      } catch {
+        return new Response("Card failed", { status: 502 });
+      }
+      if (!png.ok) return new Response("Card failed", { status: 502 });
+      const res = new Response(png.body, { headers: { "content-type": "image/png", "cache-control": "public, max-age=3600, s-maxage=3600" } });
+      ctx.waitUntil(caches.default.put(key, res.clone()));
+      return res;
+    }
+
     const shared = path.match(/^\/s\/(\w+)$/);
     if (shared) {
       const key = shareKey(url.origin, shared[1]!);
@@ -295,7 +320,7 @@ export default {
       if (hit) return hit;
       const snap = await env.SHARES.get(env.SHARES.idFromName("shares")).get(shared[1]!);
       if (!snap) return new Response("This link does not exist.", { status: 404 });
-      const res = new Response(sharePage(snap), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60, s-maxage=60" } });
+      const res = new Response(sharePage(snap, `${url.origin}/s/${shared[1]}`), { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60, s-maxage=60" } });
       ctx.waitUntil(caches.default.put(key, res.clone()));
       return res;
     }
