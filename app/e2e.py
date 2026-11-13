@@ -162,6 +162,10 @@ checks["images_for_visual_query"] = "](img:" in answer(bridge)
 # Needs two searched facts (Lisa Su born Nov 1969, Nvidia founded Apr 1993); the answer does not change over time.
 checks["multi_step_answer_leads_with_23"] = all(re.search(r"\b23\b", lead) for lead in leads)
 checks["no_images_for_plain_fact"] = "391" in plain and "](img:" not in plain
+NAV_LINE = r"^\s*\[[^\]]+\]\((https?://\S+)\)\s*(?:\[\d+(?:,\s*\d+)*\])?\s*$"
+nav = answer(search(again, "github")[3]).strip().split("\n")[0]
+checks["nav_query_leads_with_link"] = bool(re.match(NAV_LINE, nav)) and "github.com" in nav
+checks["plain_question_no_link"] = not re.match(NAV_LINE, plain.strip().split("\n")[0])
 time.sleep(1.5)
 checks["chat_in_own_sidebar"] = chat_id in alice.chat_ids()
 checks["chat_not_in_other_sidebar"] = chat_id not in bob.chat_ids()

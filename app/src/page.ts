@@ -64,6 +64,8 @@ textarea:focus{border-color:var(--mute)}
 .sr{display:flex;align-items:center;gap:4px;padding:4px 8px;font-size:13px}.sr span{flex:1;color:var(--mute)}
 .sr button{border:0;background:none;color:var(--accent);cursor:pointer;font:inherit;font-size:13px;padding:2px 6px;border-radius:6px}.sr button:hover{background:var(--soft)}
 .sr button[data-d]{color:var(--mute)}.sr button[data-d]:hover{color:#dc2626}
+.navl{display:flex;flex-direction:column;gap:1px;width:fit-content;max-width:100%;background:var(--soft);border-radius:12px;padding:10px 14px;margin:2px 0 14px}
+.navl:hover{background:var(--line);text-decoration:none}.navl b{font-weight:600}.navl span{color:var(--mute);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gal{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
 .m img.mi{height:180px;max-width:100%;object-fit:cover;border-radius:10px;display:block;background:var(--soft)}
 .m p img.mi{margin:6px 0}
@@ -90,7 +92,7 @@ let IM=[],SRC=[];
 const pic=(u,alt)=>u?'<a href="'+u+'" target="_blank" rel="noopener"><img class="mi" src="'+u+'" alt="'+alt+'" title="'+alt+'" referrerpolicy="no-referrer" onerror="this.parentNode.remove()" onload="if(this.naturalWidth<120)this.parentNode.remove()"></a>':'';
 const inl=s=>E1(s).replace(/\`([^\`]+)\`/g,'<code>$1</code>').replace(/\\*\\*([^*]+)\\*\\*/g,'<b>$1</b>')
  .replace(/!\\[([^\\]]*)\\]\\((?:img:(\\d+)|(https:[^)\\s]+))\\)/g,(_,a,n,u)=>pic(n?E1(IM[n-1]||''):u,a))
- .replace(/\\[([^\\]]+)\\]\\((https?:[^)\\s]+)\\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
+ .replace(/\\[([^\\]]+)\\]\\((https?:[^()\\s]*(?:\\([^()\\s]*\\)[^()\\s]*)*)\\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
  .replace(/\\[(\\d+(?:,\\s*\\d+)*)\\](?!\\()/g,(m,l)=>SRC.length?'<sup>'+l.split(/,\\s*/).map(n=>SRC[n-1]?'<a href="'+E1(SRC[n-1].uri)+'" target="_blank" rel="noopener" data-t="'+E1(SRC[n-1].title)+'" aria-label="'+E1(SRC[n-1].title)+'">'+n+'</a>':n).join(',')+'</sup>':m);
 function blk(p){let o='',l=null,pa=[],ga=[];
  const fp=()=>{if(pa.length){o+='<p>'+pa.map(inl).join('<br>')+'</p>';pa=[]}if(l){o+='</'+l+'>';l=null}};
@@ -99,7 +101,9 @@ function blk(p){let o='',l=null,pa=[],ga=[];
   if(/^\\s*(!\\[[^\\]]*\\]\\([^)\\s]+\\)\\s*)+$/.test(ln)){fp();ga.push(ln)}
   else if(!ln.trim())fp();
   else{fg();
-   if(m=ln.match(/^#{1,4}\\s+(.*)/)){fp();o+='<h4>'+inl(m[1])+'</h4>'}
+   if(m=ln.match(/^\\s*\\[([^\\]]+)\\]\\((https?:[^()\\s]*(?:\\([^()\\s]*\\)[^()\\s]*)*)\\)\\s*(?:\\[\\d+(?:,\\s*\\d+)*\\])?\\s*$/)){fp();const u=m[2].replace(/[?#].*$/,'');
+    o+='<a class="navl" href="'+E1(u)+'" target="_blank" rel="noopener"><b>'+E1(m[1])+'</b><span>'+E1(u.replace(/^https?:\\/\\/(www\\.)?/,'').replace(/\\/$/,''))+'</span></a>'}
+   else if(m=ln.match(/^#{1,4}\\s+(.*)/)){fp();o+='<h4>'+inl(m[1])+'</h4>'}
    else if(m=ln.match(/^\\s*([-*]|\\d+[.)])\\s+(.*)/)){const t=/\\d/.test(m[1])?'ol':'ul';if(pa.length||l!==t){fp();o+='<'+t+'>';l=t}o+='<li>'+inl(m[2])+'</li>'}
    else{if(l){o+='</'+l+'>';l=null}pa.push(ln)}}}
  fp();fg();return o}

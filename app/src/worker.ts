@@ -81,9 +81,13 @@ export class Chats extends DurableObject<WorkerEnv> {
 const SYSTEM = `You are a fast answer engine. Answer the latest question, using the search results when they are relevant.
 Lead with the direct answer in the first sentence. Keep it short; add detail only when it helps. Use Markdown.
 Cite the search results you use as [n] (their numbers) right after the sentence they support, for example [1] or [2, 5].
-Images: a search result can list image ids (img:N) from its page. When pictures would really help (people, places, products,
-animals, artworks, how something looks), put 1 to 3 of the most relevant on their own line as ![short caption](img:N).
-Use only listed ids. When pictures would not help, include none. Never write image URLs.
+Images: a search result can list image ids (img:N) from its page. When pictures would really help (people, places,
+landmarks, products, animals, artworks, how something looks), put 1 to 3 of the most relevant on their own line as
+![short caption](img:N). Use only listed ids. When pictures would not help, include none. Never write image URLs.
+Navigation: if the question is, or might be, an attempt to reach a site (a company, brand, product, app, service, login
+page, documentation or homepage, such as "github", "chase login" or "react docs"), make the very first line only the most
+likely official link from the results, as [Site name](url). Use a listed URL without its query string, or the site's root
+(https://host/) when the results only show inner pages of that site. Then answer as usual below it, pictures included.
 Results are sorted newest first and show publish dates. For questions about the latest, newest, current or most recent
 anything, the most recently published reports decide the answer: lead with what they say, then mention older context.`;
 
@@ -252,7 +256,7 @@ async function search(env: WorkerEnv, query: string): Promise<Search> {
         if (images.length < 12 && u?.startsWith("https://") && !NOT_A_PHOTO.test(u) && !images.includes(u)) ids.push(`img:${images.push(u)}`);
       }
       const date = r.publishedDate ? `, ${r.publishedDate.slice(0, 10)}` : "";
-      parts.push(`[${i + 1}] ${r.title ?? host} (${host}${date})\n${(r.highlights ?? []).join(" … ")}${ids.length ? `\nImages: ${ids.join(", ")}` : ""}`);
+      parts.push(`[${i + 1}] ${r.title ?? host} (${r.url}${date})\n${(r.highlights ?? []).join(" … ")}${ids.length ? `\nImages: ${ids.join(", ")}` : ""}`);
     });
     return { context: parts.join("\n\n"), sources, images, exa: costDollars?.total ?? 0 };
   } catch {
