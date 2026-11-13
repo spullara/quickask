@@ -28,7 +28,10 @@ body{font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,s
 /* The conversation and its input are 1.5x the base size; sizes inside are relative to it. */
 #log,main form{font-size:22.5px}
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
-#side{width:260px;flex:none;background:var(--soft);height:100vh;height:100dvh;overflow-y:auto;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+#side{width:260px;flex:none;background:var(--soft);height:100vh;height:100dvh;overflow:hidden;padding:12px 8px;display:flex;flex-direction:column}
+/* The chat list scrolls without a visible scrollbar; the footer (cost, user) stays pinned below it. */
+#scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px;scrollbar-width:none}#scroll::-webkit-scrollbar{display:none}
+#foot{flex:none;padding-top:4px}
 #side .new{display:flex;align-items:center;padding:8px 10px;border-radius:8px;color:var(--fg);font-weight:600;margin-bottom:8px}
 #side .top{display:flex;align-items:center;gap:2px;margin-bottom:8px}#side .top .new{flex:1;margin-bottom:0}
 #fs{border:0;background:none;color:var(--mute);width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}#fs:hover{background:var(--line);color:var(--fg)}
@@ -94,9 +97,9 @@ textarea:focus{border-color:var(--mute)}
 .gal{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
 .m img.mi{height:270px;max-width:100%;object-fit:cover;border-radius:10px;display:block;background:var(--soft)}
 .m p img.mi{margin:6px 0}
-#side .me{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;font-size:13px;color:var(--mute)}
+#side .me{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;font-size:13px;color:var(--mute)}
 #side .me span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#usage{margin-top:auto;padding:8px 10px 0;font-size:13px;color:var(--mute)}#usage:hover{color:var(--fg);text-decoration:none}#usage:not([hidden])+.me{margin-top:0}
+#usage[hidden]{display:none}#usage{display:block;padding:8px 10px 0;font-size:13px;color:var(--mute)}#usage:hover{color:var(--fg);text-decoration:none}#usage:not([hidden])+.me{margin-top:0}
 .auth{width:100%;max-width:340px;margin:0 auto;display:flex;flex-direction:column;gap:12px;padding:24px}
 .auth h1{font-size:22px;margin:0 0 8px;text-align:center}
 .btn{font:inherit;padding:10px 14px;border-radius:12px;border:0;background:var(--fg);color:var(--bg);cursor:pointer;font-weight:600}
@@ -165,7 +168,7 @@ log.addEventListener('click',e=>{const b=e.target.closest('.fu');if(!b||busy)ret
 function I(u){cur.imgs=u}
 function E(m){cur.el.classList.remove('wait');cur.el.insertAdjacentHTML('beforeend','<p class="err">'+E1(m)+'</p>');cur=null;busy=false}
 // Sidebar: base is the loaded list (newest first, 50 per page, more on scroll). A search shows its own results instead.
-let base=[],more=false,findQ='',found=[],findMore=false,loading=false;const PAGE=50,sideEl=$('#side');
+let base=[],more=false,findQ='',found=[],findMore=false,loading=false;const PAGE=50,sideEl=$('#scroll');
 const row=c=>'<div class="row"><button class="del" data-id="'+c.id+'">Delete</button><a class="it'+(c.id===S.id?' on':'')+'" href="/c/'+c.id+'"><span>'+E1(c.title)
  +(c.snip?'<small>'+E1(c.snip).replace(/\\u0001/g,'<b>').replace(/\\u0002/g,'</b>')+'</small>':'')+'</span><button data-id="'+c.id+'" title="Delete">×</button></a></div>';
 function paintList(){const items=findQ?found:base;side.innerHTML=items.length?items.map(row).join(''):(findQ?'<div class="none">No matching chats</div>':'');
@@ -314,10 +317,10 @@ export function shell(o: { id: string | null; title: string; msgs: Msg[]; stream
 <link rel="search" type="application/opensearchdescription+xml" title="QuickAsk" href="/opensearch.xml">
 <style>${CSS}</style></head>
 <body><button id="tg" aria-label="Chats">☰</button>
-<nav id="side"><div class="top"><a class="new" href="/">+ New chat<kbd>⌘K</kbd></a><button id="fs" aria-label="Search chats" title="Search chats"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button></div>
+<nav id="side"><div id="scroll"><div class="top"><a class="new" href="/">+ New chat<kbd>⌘K</kbd></a><button id="fs" aria-label="Search chats" title="Search chats"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button></div>
 <div id="find" hidden><input placeholder="Search chats" autocomplete="off" enterkeyhint="search"><button aria-label="Close search">×</button></div><div id="list"></div>
-<a id="usage" href="/admin" hidden></a>
-<div class="me"><span>${esc(o.user.n)}</span><a href="/auth/logout">Sign out</a></div></nav>
+</div><footer id="foot"><a id="usage" href="/admin" hidden></a>
+<div class="me"><span>${esc(o.user.n)}</span><a href="/auth/logout">Sign out</a></div></footer></nav>
 <main class="${o.id ? "" : "home"}"><div id="brand" class="brand">${mark(44)}<span>QuickAsk</span></div><div id="log"></div>
 <form action="/" method="get"><textarea name="q" rows="1" placeholder="${o.id ? "Ask a follow-up" : "Ask anything"}" autocomplete="off"></textarea></form></main>
 ${o.id ? '<div id="shx"><button id="sl" hidden></button><button id="mdl"></button><button id="sh">Share</button><div id="sp" hidden></div></div>' : ""}
