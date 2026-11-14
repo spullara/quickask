@@ -187,6 +187,10 @@ function talk(buf,done){if(!TALK)return;let s=buf.split(/\n\s*:::/)[0];
  if(!done){const m=s.slice(tk.said).match(/^[\s\S]*[.!?;:](?=\s)|^[\s\S]*\n/);if(!m)return;s=s.slice(0,tk.said+m[0].length)}
  const part=s.slice(tk.said);tk.said=s.length;tk.text+=part;tk.pend+=part;
  if(!tk.sent||tk.pend.length>=300||done){if(speakable(tk.pend)){enqueue(tk.pend);tk.sent++}tk.pend=''}tkShow()}
+// Unlock audio inside a user action: then later answers can play by themselves (iPhone needs the same audio element).
+function tkUnlock(){if(!TALK)return;au.src=SILENT;au.play().then(()=>{tk.blocked=false;tkShow()},()=>{})}
+// Blocked autoplay: any tap, click or key on the page starts reading, not only the button.
+if(TALK){const go=e=>{if(tk.blocked&&!(tkb&&tkb.contains(e.target)))tkTap()};addEventListener('pointerdown',go,true);addEventListener('keydown',go,true)}
 function talkReset(){au.pause();tk.q=[];tk.busy=false;Object.assign(tk,{said:0,text:'',pend:'',sent:0})}
 if(TALK)addEventListener('DOMContentLoaded',()=>{const f=document.querySelector('form[action="/"]');if(f&&!f.querySelector('[name=talk]'))
  f.insertAdjacentHTML('beforeend','<input type="hidden" name="talk" value="true">')});
@@ -269,7 +273,7 @@ let busy=false;
 if(S.streaming){busy=true;start();history.replaceState(null,'','/c/'+S.id)}
 // This page's id, so live updates it caused itself are skipped.
 const CID=Math.random().toString(36).slice(2);
-async function ask(q){if(busy)return;busy=true;log.querySelectorAll('.fups').forEach(e=>e.remove());S.msgs.push({role:'user',text:q});add('u',E1(q));run()}
+async function ask(q){if(busy)return;busy=true;tkUnlock();log.querySelectorAll('.fups').forEach(e=>e.remove());S.msgs.push({role:'user',text:q});add('u',E1(q));run()}
 // o.el/o.at: answer again in place of that answer; otherwise answer the last question.
 async function run(o={}){start(o.el);cur.at=o.at;if(!o.el)main.scrollTop=main.scrollHeight;
  const hist=(o.at!=null?S.msgs.slice(0,o.at):S.msgs).map(({role,text})=>({role,text}));

@@ -2,6 +2,9 @@ import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 
 /** The answer model, with list prices in USD per token (thinking tokens bill as output). */
+/** Gemini 3.8 Flash-Lite TTS: text in, audio out (25 audio tokens a second). $12/M audio tokens from Jan 1, 2027. */
+export const TTS = { id: "gemini-3.8-flash-lite-tts", in: 0.5 / 1e6, out: 6 / 1e6 } as const;
+
 export const MODELS = {
   lite: { id: "gemini-3.5-flash-lite", thinking: "minimal", name: "Gemini 3.5 Flash Lite", in: 0.3 / 1e6, out: 2.5 / 1e6 },
 } as const;
@@ -28,10 +31,11 @@ export class Usage extends DurableObject<WorkerEnv> {
     }
   }
 
-  record(user: string, m: Meter) {
+  /** searches: 1 for an answer, 0 for extra spend on the same answer (read-aloud audio). */
+  record(user: string, m: Meter, searches = 1) {
     this.sql.exec(
-      `INSERT INTO usage (day, user, searches, exa, tokens_in, tokens_out, gemini) VALUES (?, ?, 1, ?, ?, ?, ?)
-       ON CONFLICT (day, user) DO UPDATE SET searches = searches + 1, exa = exa + excluded.exa,
+      `INSERT INTO usage (day, user, searches, exa, tokens_in, tokens_out, gemini) VALUES (?, ?, ${searches ? 1 : 0}, ?, ?, ?, ?)
+       ON CONFLICT (day, user) DO UPDATE SET searches = searches + ${searches ? 1 : 0}, exa = exa + excluded.exa,
        gemini = COALESCE(gemini, tokens_in * ${LITE_IN} + tokens_out * ${LITE_OUT}) + excluded.gemini,
        tokens_in = tokens_in + excluded.tokens_in, tokens_out = tokens_out + excluded.tokens_out`,
       new Date().toISOString().slice(0, 10), user, m.exa, m.tokensIn, m.tokensOut, m.gemini,

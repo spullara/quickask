@@ -2,7 +2,7 @@ import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 import { cookie, session } from "./session.ts";
 import { PAGE_VERSION, adminPage, call, keyPage, moveSignIn, opensearch, sharePage, shell, signIn, type Msg, type Result, type Source } from "./page.ts";
-import { MODELS, modelKey, type Meter, type ModelKey } from "./usage.ts";
+import { MODELS, TTS, modelKey, type Meter, type ModelKey } from "./usage.ts";
 
 import { APPLE_ICON_PNG, FAVICON_PNG, LOGO_SVG } from "./icons.ts";
 
@@ -410,8 +410,8 @@ function rollUpTests<R extends { user?: string; searches: number; exa: number; g
 }
 
 /** Record a turn's cost and push the new month total to the admin's open pages. Runs after the stream. */
-async function charge(env: WorkerEnv, user: string, meter: Meter) {
-  const month = await env.USAGE.get(env.USAGE.idFromName("global")).record(user, meter);
+async function charge(env: WorkerEnv, user: string, meter: Meter, searches = 1) {
+  const month = await env.USAGE.get(env.USAGE.idFromName("global")).record(user, meter, searches);
   const admin = await adminIdOf(env);
   if (admin) await env.CHATS.get(env.CHATS.idFromName(admin)).broadcast({ usage: month });
 }
@@ -704,14 +704,18 @@ export default {
     if (path === "/api/tts" && req.method === "POST") {
       const text = String(((await req.json().catch(() => ({}))) as { text?: string }).text ?? "").trim().slice(0, 1200);
       if (!text) return new Response("No text", { status: 400 });
-      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-lite-tts:generateContent", {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${TTS.id}:generateContent`, {
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
         body: JSON.stringify({ contents: [{ parts: [{ text }] }], generationConfig: { responseModalities: ["AUDIO"] } }),
       });
-      const audio = r.ok ? ((await r.json()) as { candidates?: { content?: { parts?: { inlineData?: { mimeType: string; data: string } }[] } }[] })
-        .candidates?.[0]?.content?.parts?.find((x) => x.inlineData)?.inlineData : undefined;
+      const d = r.ok ? ((await r.json()) as { candidates?: { content?: { parts?: { inlineData?: { mimeType: string; data: string } }[] } }[];
+        usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number } }) : undefined;
+      const audio = d?.candidates?.[0]?.content?.parts?.find((x) => x.inlineData)?.inlineData;
       if (!audio) return new Response("Speech failed", { status: 502 });
+      // Audio is billed like the answer it reads, without counting another search.
+      const tin = d?.usageMetadata?.promptTokenCount ?? 0, tout = d?.usageMetadata?.candidatesTokenCount ?? 0;
+      ctx.waitUntil(charge(env, user.u, { exa: 0, tokensIn: tin, tokensOut: tout, gemini: tin * TTS.in + tout * TTS.out }, 0));
       return new Response(Uint8Array.from(atob(audio.data), (c) => c.charCodeAt(0)), { headers: { "content-type": audio.mimeType || "audio/wav", "cache-control": "no-store" } });
     }
 
