@@ -222,6 +222,8 @@ The scripts at the repo root are how the stack was chosen. They read API keys fr
   same Exa results. Better search context fixed accuracy more than a bigger model did.
 - `openrouter_eval.py`: the fastest OpenRouter models (by OpenRouter's own latency figures) against production, with the
   production prompt and the same Exa results. Writes `openrouter_eval.json`.
+- `parallel_eval.py`: Parallel.ai Search (turbo, fast, basic, with its Image Search) against Exa, with Flash Lite and the
+  production prompt. Parallel `fast` was as accurate or slightly better, but first tokens came about 0.75 s later.
 - `tool_eval.py`: direct search compared with letting the model call search as a tool.
   The tool adds about 0.6 to 0.9 s and did not improve accuracy on the test questions.
 

@@ -1,0 +1,874 @@
+{
+ "when": "2026-11-14T00:45:21.838180+00:00",
+ "runs": 3,
+ "questions": [
+  [
+   "who is the latest person jensen huang had an affair with",
+   "latest = third, unnamed employee"
+  ],
+  [
+   "how old was the ceo of amd when nvidia was founded",
+   "leads with 23"
+  ],
+  [
+   "what is the capital of australia",
+   "Canberra"
+  ],
+  [
+   "github",
+   "GitHub link first"
+  ],
+  [
+   "golden gate bridge",
+   "shows a picture"
+  ],
+  [
+   "who won the 2026 world series",
+   "names a winner"
+  ],
+  [
+   "I'm a baby bear and I lost my mommy",
+   "no role-play"
+  ]
+ ],
+ "summary": [
+  {
+   "search": "exa fast (production)",
+   "search_p50": 0.08,
+   "first_after_search_p50": 0.65,
+   "first_p50": 0.79,
+   "context_chars_p50": 13872,
+   "correct": "19/21",
+   "errors": 0,
+   "per_question": [
+    "1/3",
+    "3/3",
+    "3/3",
+    "3/3",
+    "3/3",
+    "3/3",
+    "3/3"
+   ]
+  },
+  {
+   "search": "parallel turbo",
+   "search_p50": 0.91,
+   "first_after_search_p50": 0.59,
+   "first_p50": 1.53,
+   "context_chars_p50": 10235.0,
+   "correct": "16/21",
+   "errors": 1,
+   "per_question": [
+    "0/3",
+    "1/2",
+    "3/3",
+    "3/3",
+    "3/3",
+    "3/3",
+    "3/3"
+   ]
+  },
+  {
+   "search": "parallel fast",
+   "search_p50": 0.91,
+   "first_after_search_p50": 0.62,
+   "first_p50": 1.55,
+   "context_chars_p50": 26449.0,
+   "correct": "20/21",
+   "errors": 1,
+   "per_question": [
+    "3/3",
+    "2/2",
+    "3/3",
+    "3/3",
+    "3/3",
+    "3/3",
+    "3/3"
+   ]
+  },
+  {
+   "search": "parallel basic",
+   "search_p50": 1.04,
+   "first_after_search_p50": 0.7,
+   "first_p50": 1.71,
+   "context_chars_p50": 26445.5,
+   "correct": "17/21",
+   "errors": 1,
+   "per_question": [
+    "2/3",
+    "0/2",
+    "3/3",
+    "3/3",
+    "3/3",
+    "3/3",
+    "3/3"
+   ]
+  }
+ ],
+ "results": {
+  "exa fast (production)": [
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "search": 0.277,
+    "first_after_search": 0.619,
+    "first": 0.896,
+    "chars": 13196,
+    "ok": true,
+    "answer": "Jensen Huang has been linked to three women in the affair scandal that led to his resignation: Alice Huang (a datacenter executive suspected by US officials of being a Chinese spy), Kimberly Powell (Nvidia\u2019s vice president of health care), and an unnamed third Nvidia employee whose identity has been withheld by reporting outlets [1, 2, 3].\n\n:::followups\nWhat led to Jensen Huang's resignation from "
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "search": 0.083,
+    "first_after_search": 0.539,
+    "first": 0.623,
+    "chars": 13196,
+    "ok": false,
+    "answer": "Reports indicate that former Nvidia CEO Jensen Huang has been linked to three extramarital affairs: Alice Huang (a tech executive suspected by U.S. officials of being a Chinese spy), Kimberly Powell (Nvidia\u2019s vice president of health care), and an unnamed third female Nvidia employee [2, 3].\n\n:::followups\nWhat led to Jensen Huang's resignation from Nvidia?\nWho replaced Jensen Huang as CEO of Nvidi"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "search": 0.078,
+    "first_after_search": 0.702,
+    "first": 0.78,
+    "chars": 13196,
+    "ok": false,
+    "answer": "Reports indicate that ousted Nvidia CEO Jensen Huang had extramarital relationships with three women: Alice Huang (a tech executive suspected by U.S. officials of being a Chinese spy), Kimberly Powell (Nvidia's vice president of health care), and a third unnamed Nvidia employee [2, 3].\n\n:::followups\nWhat led to Jensen Huang's resignation from Nvidia?\nWho is serving as Nvidia's interim CEO?\nWhat is"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "search": 0.276,
+    "first_after_search": 0.636,
+    "first": 0.912,
+    "chars": 13872,
+    "ok": true,
+    "answer": "Lisa Su was **23 years old** when Nvidia was founded on April 5, 1993 [3, 5]. \n\n*(Note: Because AMD has had multiple chief executives, its founding CEO, Jerry Sanders, was **56 years old** when Nvidia was established [4, 5].)*\n\n:::followups\nWho founded Nvidia?\nWhen did Lisa Su become the CEO of AMD?\nAre Lisa Su and Jensen Huang related?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "search": 0.087,
+    "first_after_search": 0.528,
+    "first": 0.616,
+    "chars": 13872,
+    "ok": true,
+    "answer": "When Nvidia was founded on April 5, 1993 [5], AMD's current CEO, Lisa Su, was **23 years old** [3]. (She was born on November 7, 1969 [3].) \n\nAt the time Nvidia was founded, AMD's CEO was co-founder Jerry Sanders [2, 4], who was **56 years old** [4].\n\n:::followups\nWhat year did Lisa Su become CEO of AMD?\nWho was the CEO of AMD when it was founded?\nHow old was Jensen Huang when he founded Nvidia?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "search": 0.074,
+    "first_after_search": 0.719,
+    "first": 0.792,
+    "chars": 13872,
+    "ok": true,
+    "answer": "AMD's current CEO, Lisa Su, was **23 years old** when Nvidia was founded on April 5, 1993 [3, 5, 6]. \n\n*(Note: If referring to AMD's founding CEO, Jerry Sanders, he was **32 years old** when Nvidia was established [4, 5].)*\n\n:::followups\nWho was the CEO of AMD when Nvidia was founded?\nWhen did Lisa Su become the CEO of AMD?\nHow old was Jensen Huang when he founded Nvidia?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "search": 0.314,
+    "first_after_search": 0.604,
+    "first": 0.918,
+    "chars": 8894,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [1].\n\n![Canberra aerial view](img:1)\n\n:::followups\nWhat is the population of Canberra?\nWhen was Canberra founded as the capital?\nWhich state surrounds the Australian Capital Territory?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "search": 0.075,
+    "first_after_search": 0.646,
+    "first": 0.721,
+    "chars": 8894,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [1].\n\n![Canberra aerial view](img:1)\n\n:::followups\nWhat is the population of Canberra?\nWhen was Canberra founded as the capital?\nWhich state surrounds the Australian Capital Territory?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "search": 0.076,
+    "first_after_search": 0.737,
+    "first": 0.813,
+    "chars": 8894,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [1].\n\n![Canberra aerial view](img:1)\n\n:::followups\nWhat is the population of Canberra?\nWhen was Canberra founded as the capital?\nWhich state surrounds the Australian Capital Territory?"
+   },
+   {
+    "q": "github",
+    "search": 0.308,
+    "first_after_search": 0.756,
+    "first": 1.064,
+    "chars": 21136,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\n![GitHub logo and interface preview](img:1)\n\nGitHub is a web-based platform used for version control and software development, allowing developers to store, manage, and share their code using Git [1, 3]. Operated as a subsidiary of Microsoft, it provides tools for source code management, bug tracking, task management, automated continuous integration (CI/CD), and AI-a"
+   },
+   {
+    "q": "github",
+    "search": 0.072,
+    "first_after_search": 0.601,
+    "first": 0.673,
+    "chars": 21136,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\n![GitHub logo and interface preview](img:1)\n\nGitHub is a cloud-based web hosting and developer platform that uses Git for distributed version control, allowing individuals and teams to build, store, manage, and share their source code [1, 3, 10]. Acquired by Microsoft in 2018, it provides tools for collaboration, project management, bug tracking, automated workflows ("
+   },
+   {
+    "q": "github",
+    "search": 0.074,
+    "first_after_search": 0.736,
+    "first": 0.811,
+    "chars": 21136,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\n![GitHub platform overview](img:2)\n\nGitHub is a cloud-based web hosting and version control platform built around the Git system [1, 3, 10]. It is widely used by developers and organizations to store, review, manage, and share source code [1, 3]. Owned by Microsoft, the platform provides integrated tools for project management, automated CI/CD workflows, bug tracking,"
+   },
+   {
+    "q": "golden gate bridge",
+    "search": 0.076,
+    "first_after_search": 0.735,
+    "first": 0.811,
+    "chars": 21400,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a suspension bridge spanning the one-mile-wide strait connecting San Francisco Bay and the Pacific Ocean, linking San Francisco to Marin County, California [1].\n\n![Golden Gate Bridge view](img:1)\n\n:::followups\nWho was the chief engineer of the Golden Gate Bridge?\nWhen was the Golden Gate Bridge opened?\nWhy is the Golden Gate Bridge painted orange?"
+   },
+   {
+    "q": "golden gate bridge",
+    "search": 0.091,
+    "first_after_search": 0.577,
+    "first": 0.668,
+    "chars": 21400,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a suspension bridge spanning the one-mile-wide Golden Gate strait, connecting San Francisco and Marin County, California [1].\n\n![Golden Gate Bridge view](img:1)\n\n:::followups\nWho was the chief engineer of the Golden Gate Bridge?\nWhen did the Golden Gate Bridge open?\nHow long is the Golden Gate Bridge?"
+   },
+   {
+    "q": "golden gate bridge",
+    "search": 0.075,
+    "first_after_search": 0.848,
+    "first": 0.924,
+    "chars": 21400,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a suspension bridge spanning the one-mile-wide Golden Gate strait, connecting San Francisco and Marin County in California [1].\n\n![Golden Gate Bridge view](img:1)\n\n:::followups\nWho was the chief engineer of the Golden Gate Bridge?\nWhy is the Golden Gate Bridge painted international orange?\nHow long is the Golden Gate Bridge?"
+   },
+   {
+    "q": "who won the 2026 world series",
+    "search": 0.382,
+    "first_after_search": 0.682,
+    "first": 1.063,
+    "chars": 9903,
+    "ok": true,
+    "answer": "The Milwaukee Brewers won the 2026 World Series, defeating the Tampa Bay Rays four games to one to capture the first title in franchise history [1].\n\n![Milwaukee Brewers celebrate winning the 2026 World Series](img:8)\n\n:::followups\nWho won the 2026 World Series MVP?\nHow many games did the Milwaukee Brewers win in the 2026 postseason?\nWhich team did the Tampa Bay Rays defeat to reach the 2026 World"
+   },
+   {
+    "q": "who won the 2026 world series",
+    "search": 0.119,
+    "first_after_search": 0.654,
+    "first": 0.772,
+    "chars": 9903,
+    "ok": true,
+    "answer": "The Milwaukee Brewers won the 2026 World Series, defeating the Tampa Bay Rays four games to one to capture the first championship title in franchise history [1]. \n\n![Milwaukee Brewers celebrate winning the 2026 World Series](img:8)\n\n:::followups\nWho was named the 2026 World Series MVP?\nHow many games did the Milwaukee Brewers win the series by?\nWhich team did the Tampa Bay Rays defeat to reach the"
+   },
+   {
+    "q": "who won the 2026 world series",
+    "search": 0.143,
+    "first_after_search": 0.594,
+    "first": 0.737,
+    "chars": 9903,
+    "ok": true,
+    "answer": "The Milwaukee Brewers won the 2026 World Series, defeating the Tampa Bay Rays four games to one to capture the first championship in franchise history [1]. \n\n![Milwaukee Brewers celebrate winning the World Series](img:8)\n\n:::followups\nWho was named the 2026 World Series MVP?\nHow many games did the Milwaukee Brewers win the series by?\nWhich team did the Tampa Bay Rays defeat to reach the 2026 World"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "search": 0.263,
+    "first_after_search": 0.573,
+    "first": 0.836,
+    "chars": 22227,
+    "ok": true,
+    "answer": "The phrase \"I'm a baby bear and I lost my mommy\" resembles dialogue from children's animated stories and videos featuring lost bear cubs, such as *Mickey & Minnie Help a Lost Baby Polar Bear* [1] and various orphaned bear rescue accounts [2, 4, 6].\n\n:::followups\nWhat are some children's books about lost bear cubs?\nHow do rescue organizations care for orphaned bear cubs?\nWhat sounds do lost bear cu"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "search": 0.071,
+    "first_after_search": 0.715,
+    "first": 0.786,
+    "chars": 22227,
+    "ok": true,
+    "answer": "The text resembles the premise of various children's stories, videos, and real-life rescue accounts about orphaned bear cubs, such as the children's book *Wildlife Wong and the Sun Bear* [3] or animated videos featuring lost polar bear cubs [1]. \n\n:::followups\nWhat are some children's books about orphaned bear cubs?\nHow do wildlife rescue centers rehabilitate baby bears?\nWhere do lost polar bear c"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "search": 0.077,
+    "first_after_search": 0.652,
+    "first": 0.729,
+    "chars": 22227,
+    "ok": true,
+    "answer": "The phrase resembles common scenarios from children's stories and videos about orphaned bear cubs, such as the children's book *Wildlife Wong and the Sun Bear* about a tiny sun bear cub whose mother was killed by poachers [3], or animated shorts featuring lost polar bear cubs like Nanu helped by Mickey and Minnie [1]. \n\n:::followups\nWhat are some children's books about orphaned bear cubs?\nHow do w"
+   }
+  ],
+  "parallel turbo": [
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "search": 1.232,
+    "first_after_search": 0.57,
+    "first": 1.802,
+    "chars": 10118,
+    "ok": false,
+    "answer": "Reports indicate that former Nvidia CEO Jensen Huang had extramarital relationships with Alice Huang (a woman suspected by U.S. intelligence of being a Chinese spy), Nvidia's vice president of healthcare Kimberly Powell, and an unnamed second Nvidia employee [1].\n\n:::followups\nWhat led to Jensen Huang's resignation from Nvidia?\nWho is Kimberly Powell?\nWhat are the details of the Nvidia board inves"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "search": 0.842,
+    "first_after_search": 0.866,
+    "first": 1.709,
+    "chars": 9869,
+    "ok": false,
+    "answer": "Reports indicate that former Nvidia CEO Jensen Huang had extramarital relationships with Alice Huang (a woman suspected by U.S. intelligence of being a Chinese spy), Nvidia's vice president of healthcare Kimberly Powell, and a second unnamed Nvidia employee [1, 3].\n\n:::followups\nWhat led to Jensen Huang's resignation from Nvidia?\nWhat position did Kimberly Powell hold at Nvidia?\nWhen did Nvidia la"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "search": 0.852,
+    "first_after_search": 0.684,
+    "first": 1.537,
+    "chars": 10401,
+    "ok": false,
+    "answer": "Reports indicate that former Nvidia CEO Jensen Huang had relationships with Alice Huang (a woman suspected by U.S. intelligence of being a Chinese spy), Kimberly Powell (Nvidia's vice president of healthcare), and an unnamed second Nvidia employee [1, 3].\n\n:::followups\nWhat led to Jensen Huang's resignation from Nvidia?\nWhen did Jensen Huang step down as CEO?\nWho is Kimberly Powell?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "search": 0.964,
+    "first_after_search": 0.555,
+    "first": 1.518,
+    "chars": 9631,
+    "ok": false,
+    "answer": "![AMD CEO Lisa Su](img:2)\n\nAMD CEO Lisa Su was 23 years old when Nvidia was founded in April 1993 (having been born in November 1969). \n\n*(Note: Nvidia CEO Jensen Huang, who previously worked at AMD before founding Nvidia [1], was 30 years old when Nvidia was established [4].)*\n\n:::followups\nWho is the current CEO of AMD?\nWhen was Lisa Su appointed CEO of AMD?\nWhen was Nvidia founded?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "search": 0.69,
+    "first_after_search": 0.779,
+    "first": 1.469,
+    "chars": 9631,
+    "ok": true,
+    "answer": "AMD CEO Lisa Su was 23 years old when Nvidia was founded in April 1993. \n\n*(Note: Nvidia CEO Jensen Huang, who previously worked at AMD, was 30 years old at the time of Nvidia's founding [1, 4, 7].)*\n\n:::followups\nWhen was Lisa Su born?\nWhen did Lisa Su become CEO of AMD?\nWho is the CEO of Nvidia?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "search": 1.121,
+    "first_after_search": null,
+    "first": null,
+    "chars": 9631,
+    "ok": false,
+    "answer": ""
+   },
+   {
+    "q": "what is the capital of australia",
+    "search": 1.114,
+    "first_after_search": 0.558,
+    "first": 1.672,
+    "chars": 10186,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [4].\n\n![Canberra aerial view](img:1)\n\n:::followups\nWhy was Canberra chosen as the capital instead of Sydney or Melbourne?\nWhen was Canberra founded as the capital?\nWhat territory is Canberra located in?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "search": 1.176,
+    "first_after_search": 0.573,
+    "first": 1.749,
+    "chars": 10186,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [4].\n\n![Canberra aerial view](img:1)\n\n:::followups\nWhy was Canberra chosen as the capital instead of Sydney or Melbourne?\nWhen was Canberra founded as Australia's capital?\nWhat territory is Canberra located in?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "search": 0.745,
+    "first_after_search": 0.509,
+    "first": 1.254,
+    "chars": 10186,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [4].\n\n![Canberra aerial view](img:1)\n\n:::followups\nWhy was Canberra chosen as the capital instead of Sydney or Melbourne?\nWhen was Canberra founded?\nWhat is the population of Canberra?"
+   },
+   {
+    "q": "github",
+    "search": 0.903,
+    "first_after_search": 0.61,
+    "first": 1.513,
+    "chars": 10588,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\n![GitHub Octocat Logo](img:10)\n\nGitHub is a web-based hosting platform for version control and collaboration, built on top of the Git version control system [2, 4]. Owned by Microsoft, it allows developers to store, share, and manage their source code repositories while providing tools for tracking issues, reviewing code, and automating workflows using GitHub Actions "
+   },
+   {
+    "q": "github",
+    "search": 0.653,
+    "first_after_search": 0.514,
+    "first": 1.168,
+    "chars": 10588,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\n![GitHub Octocat Logo](img:10)\n\nGitHub is a web-based platform for version control and collaboration, built on top of the Git version control system [2]. It allows individuals and teams to host, review, and manage source code repositories, track issues, and automate workflows using tools like GitHub Actions [1, 4]. Owned by Microsoft, it is the largest host of source "
+   },
+   {
+    "q": "github",
+    "search": 0.794,
+    "first_after_search": 0.59,
+    "first": 1.383,
+    "chars": 10588,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\n![GitHub Octocat Logo](img:10)\n\nGitHub is a web-based hosting platform for version control and collaboration, built on top of the Git version control system [2, 4]. Owned by Microsoft, it provides developers tools for code management, pull requests, issue tracking, and automated CI/CD workflows via GitHub Actions [1, 4].\n\n:::followups\nHow do I create a repository on G"
+   },
+   {
+    "q": "golden gate bridge",
+    "search": 0.906,
+    "first_after_search": 0.616,
+    "first": 1.522,
+    "chars": 10701,
+    "ok": true,
+    "answer": "[Golden Gate Bridge](https://www.goldengate.org/bridge)\n\n![Golden Gate Bridge](img:2)\n\nThe Golden Gate Bridge is a suspension bridge spanning the Golden Gate, a 1.7-mile-wide strait connecting San Francisco Bay and the Pacific Ocean [3, 8]. It links the city of San Francisco on the northern tip of the San Francisco Peninsula to Marin County, carrying both U.S. Route 101 and pedestrian traffic [5, "
+   },
+   {
+    "q": "golden gate bridge",
+    "search": 0.914,
+    "first_after_search": 0.562,
+    "first": 1.476,
+    "chars": 10701,
+    "ok": true,
+    "answer": "[Golden Gate Bridge](https://www.goldengate.org/bridge)\n\n![Golden Gate Bridge](img:2)\n\nThe Golden Gate Bridge is a suspension bridge spanning the Golden Gate, a one-mile-wide strait connecting San Francisco Bay and the Pacific Ocean [3]. It links San Francisco on the southern end to Marin County on the north [5]. Opened in May 1937, it is renowned worldwide for its distinct International Orange co"
+   },
+   {
+    "q": "golden gate bridge",
+    "search": 0.744,
+    "first_after_search": 0.612,
+    "first": 1.356,
+    "chars": 10811,
+    "ok": true,
+    "answer": "[Golden Gate Bridge](https://www.goldengate.org)\n\n![Golden Gate Bridge](img:10)\n\nThe Golden Gate Bridge is a suspension bridge spanning the Golden Gate, a 1.7-mile-wide strait connecting San Francisco Bay and the Pacific Ocean [3, 8]. It links San Francisco on the southern end to Marin County on the north, carrying both U.S. Route 101 and pedestrian traffic [5, 9, 10]. Opened in May 1937, the stru"
+   },
+   {
+    "q": "who won the 2026 world series",
+    "search": 1.193,
+    "first_after_search": 0.627,
+    "first": 1.82,
+    "chars": 10103,
+    "ok": true,
+    "answer": "The Milwaukee Brewers won the 2026 World Series, defeating the Tampa Bay Rays four games to one to capture the first title in franchise history [1].\n\n![Milwaukee Brewers World Series champions](img:1)\n\n:::followups\nWho was named the 2026 World Series MVP?\nWho did the Milwaukee Brewers defeat in the 2026 NLCS?\nHow many games did the Brewers win in the 2026 regular season?"
+   },
+   {
+    "q": "who won the 2026 world series",
+    "search": 0.903,
+    "first_after_search": 0.773,
+    "first": 1.675,
+    "chars": 10733,
+    "ok": true,
+    "answer": "The Milwaukee Brewers won the 2026 World Series, defeating the Tampa Bay Rays four games to one to capture the first championship in franchise history [1].\n\n![Milwaukee Brewers win the 2026 World Series](img:1)\n\n:::followups\nWho was named the 2026 World Series MVP?\nWho did the Milwaukee Brewers defeat in the 2026 National League Championship Series?\nHow many games did the Milwaukee Brewers win in "
+   },
+   {
+    "q": "who won the 2026 world series",
+    "search": 2.381,
+    "first_after_search": 0.585,
+    "first": 2.966,
+    "chars": 11383,
+    "ok": true,
+    "answer": "The Milwaukee Brewers won the 2026 World Series, defeating the Tampa Bay Rays four games to one to capture the first title in franchise history [1]. \n\n![Milwaukee Brewers win 2026 World Series](img:1)\n\nCatcher William Contreras was named the World Series MVP after hitting .381 with four RBIs [1].\n\n:::followups\nWho did the Milwaukee Brewers defeat in the 2026 World Series?\nWho was named the 2026 Wo"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "search": 0.985,
+    "first_after_search": 0.592,
+    "first": 1.577,
+    "chars": 10235,
+    "ok": true,
+    "answer": "The search results show no clear source or official match for this phrase. \n\n:::followups\nWhat are some children's books about baby bears and their mothers?\nHow do mother bears care for their cubs in the wild?\nWhat are common themes in stories about lost animals?"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "search": 0.915,
+    "first_after_search": 0.541,
+    "first": 1.457,
+    "chars": 10235,
+    "ok": true,
+    "answer": "The results show no clear source for this phrase, but frequently return themes of children's books featuring mother and baby bears, such as *Moonlight Lullaby* [9], or grief support resources related to infant loss and weighted memorial bears [4, 10].\n\n:::followups\nWhat are some popular children's books about mother and baby bears?\nHow do grizzly bear mothers care for their cubs?\nWhat is a Comfort"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "search": 1.036,
+    "first_after_search": 0.694,
+    "first": 1.729,
+    "chars": 9914,
+    "ok": true,
+    "answer": "The query does not match a specific quote, story, or media title, but resembles children's animal stories about lost cubs or fictional roleplay scenarios [1]. \n\n:::followups\nWhat is a children's book about a lost bear cub?\nHow do mother bears find their cubs in the wild?\nWhat should you do if you encounter a bear cub outdoors?"
+   }
+  ],
+  "parallel fast": [
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "search": 1.008,
+    "first_after_search": 0.611,
+    "first": 1.618,
+    "chars": 23500,
+    "ok": true,
+    "answer": "Jensen Huang's latest alleged affair was with an unnamed second Nvidia employee, a report revealed by Reuters shortly after his resignation [10]. Prior to that, he was reported to have had an affair with Nvidia's vice president of health care, Kimberly Powell, and a prior relationship with a businesswoman named Alice Huang [10]. \n\n:::followups\nWhy did Jensen Huang resign from Nvidia?\nWho is Kimber"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "search": 0.936,
+    "first_after_search": 0.605,
+    "first": 1.541,
+    "chars": 23127,
+    "ok": true,
+    "answer": "The latest person reported to have been involved in an extramarital affair with former Nvidia CEO Jensen Huang is an unnamed second Nvidia employee, whose identity has not been publicly disclosed by Reuters [4, 10]. Prior to this report, he was linked to Kimberly Powell, Nvidia's vice-president of healthcare, and Alice Huang, a former executive at Megaspeed [2, 10].\n\n:::followups\nWho is Kimberly P"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "search": 0.874,
+    "first_after_search": 0.595,
+    "first": 1.469,
+    "chars": 23972,
+    "ok": true,
+    "answer": "The identity of the second company employee and third overall person linked to Jensen Huang's affair scandal has not been publicly named by Reuters, which reported the new allegation following his resignation [10]. His previous relationships involved Alice Huang, a Megaspeed executive suspected by U.S. officials of being a Chinese spy, and Kimberly Powell, Nvidia\u2019s vice president of health care [2"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "search": 0.88,
+    "first_after_search": null,
+    "first": null,
+    "chars": 26270,
+    "ok": false,
+    "answer": ""
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "search": 0.78,
+    "first_after_search": 0.717,
+    "first": 1.496,
+    "chars": 26332,
+    "ok": true,
+    "answer": "AMD CEO Lisa Su was 23 years old when Nvidia was founded in April 1993. \n\n:::followups\nWhen was Lisa Su born?\nWho was the CEO of Nvidia when it was founded?\nHow old was Nvidia's CEO when the company was founded?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "search": 0.944,
+    "first_after_search": 0.887,
+    "first": 1.831,
+    "chars": 26332,
+    "ok": true,
+    "answer": "AMD CEO Lisa Su was 23 years old when Nvidia was founded in April 1993 [2, 8].\n\n:::followups\nWho was the CEO of AMD when Nvidia was founded?\nWhen was Lisa Su born?\nWho founded Nvidia?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "search": 1.197,
+    "first_after_search": 0.754,
+    "first": 1.951,
+    "chars": 26378,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [10].\n\n![Canberra, capital of Australia](img:1)\n\n:::followups\nWhat is the population of Canberra?\nWhy was Canberra chosen as Australia's capital?\nIs Sydney the capital of Australia?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "search": 0.83,
+    "first_after_search": 0.564,
+    "first": 1.395,
+    "chars": 26391,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [4].\n\n![Canberra aerial view](img:1)\n\n:::followups\nWhat is the population of Canberra?\nWhen was Canberra founded?\nWhy was Canberra chosen as the capital instead of Sydney or Melbourne?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "search": 0.919,
+    "first_after_search": 0.547,
+    "first": 1.466,
+    "chars": 26391,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [4].\n\n![Canberra aerial view](img:1)\n\n:::followups\nWhat is the population of Canberra?\nWhen was Canberra founded?\nWhy was Canberra chosen as the capital instead of Sydney or Melbourne?"
+   },
+   {
+    "q": "github",
+    "search": 0.853,
+    "first_after_search": 0.596,
+    "first": 1.449,
+    "chars": 26976,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\n![GitHub logo with Octocat](img:7)\n\nGitHub is a web-based developer platform and cloud hosting service for software development and version control using Git [2, 4, 5]. It provides tools for code review, project management, automated CI/CD workflows (GitHub Actions), security vulnerability tracking, and AI-assisted coding via GitHub Copilot [1, 4, 5]. \n\n:::followups\n"
+   },
+   {
+    "q": "github",
+    "search": 0.803,
+    "first_after_search": 0.657,
+    "first": 1.46,
+    "chars": 27063,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\n![GitHub Wordmark and Octocat Symbol](img:4)\n\nGitHub is a web-based platform for version control and software collaboration, built on top of the Git version control system [2, 5]. It allows individuals and teams to store, review, and manage code projects through repositories, while offering integrated tools for automated workflows, issue tracking, and AI-assisted dev"
+   },
+   {
+    "q": "github",
+    "search": 0.814,
+    "first_after_search": 0.59,
+    "first": 1.404,
+    "chars": 27090,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\n![GitHub logo with Octocat](img:7)\n\nGitHub is a web-based developer platform and cloud-based hosting service for software development and version control, built on top of the Git system [2, 5, 6]. It provides tools for code review, pull requests, issue tracking, project management, automated CI/CD workflows (GitHub Actions), and AI-powered coding assistance through G"
+   },
+   {
+    "q": "golden gate bridge",
+    "search": 1.052,
+    "first_after_search": 0.621,
+    "first": 1.674,
+    "chars": 26942,
+    "ok": true,
+    "answer": "[Golden Gate Bridge](https://www.goldengate.org)\n\n![Golden Gate Bridge](img:2)\n\nThe Golden Gate Bridge is an iconic suspension bridge spanning the Golden Gate Strait, connecting San Francisco to Marin County, California [1, 4]. Opened on May 27, 1937, and designed by engineers including Joseph Strauss, it is famous for its Art Deco style and signature \"International Orange\" color [1, 2, 4]. The br"
+   },
+   {
+    "q": "golden gate bridge",
+    "search": 0.921,
+    "first_after_search": 0.639,
+    "first": 1.56,
+    "chars": 26942,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is an internationally recognized suspension bridge spanning the Golden Gate, a 1-mile-wide strait connecting San Francisco Bay and the Pacific Ocean [4].\n\n![The Golden Gate Bridge spans the entrance to San Francisco Bay, with its tall red towers and suspension cables rising above the water and hills in the background.](img:2)\n\n* **Length:** 1.7 miles (8,981 feet) total, with"
+   },
+   {
+    "q": "golden gate bridge",
+    "search": 0.779,
+    "first_after_search": 0.812,
+    "first": 1.591,
+    "chars": 26942,
+    "ok": true,
+    "answer": "[Golden Gate Bridge](https://www.goldengate.org)\n\n![Golden Gate Bridge](img:2)\n\nThe Golden Gate Bridge is an iconic suspension bridge spanning the Golden Gate Strait, connecting San Francisco to Marin County, California [1, 4]. Opened on May 27, 1937, and designed by engineers including Joseph Strauss, it features a distinctive \"International Orange\" color and measures 1.7 miles in total length [1"
+   },
+   {
+    "q": "who won the 2026 world series",
+    "search": 0.837,
+    "first_after_search": 0.596,
+    "first": 1.433,
+    "chars": 27492,
+    "ok": true,
+    "answer": "The Milwaukee Brewers won the 2026 World Series, defeating the Tampa Bay Rays 4\u20131 in Game 5 to capture the first championship in franchise history [1].\n\n![Milwaukee Brewers win 2026 World Series](img:1)\n\n:::followups\nWho was named the World Series MVP in 2026?\nHow many games did the Milwaukee Brewers win in the 2026 regular season?\nWhich teams have never won a World Series?"
+   },
+   {
+    "q": "who won the 2026 world series",
+    "search": 0.867,
+    "first_after_search": 0.716,
+    "first": 1.582,
+    "chars": 27183,
+    "ok": true,
+    "answer": "The Milwaukee Brewers won the 2026 World Series, defeating the Tampa Bay Rays four games to one to capture the first championship in franchise history [1].\n\n![Milwaukee Brewers win 2026 World Series](img:1)\n\n:::followups\nWho was named the 2026 World Series MVP?\nHow many games did the Milwaukee Brewers win in the 2026 postseason?\nWhen was the last time the Milwaukee Brewers went to the World Series"
+   },
+   {
+    "q": "who won the 2026 world series",
+    "search": 0.902,
+    "first_after_search": 0.586,
+    "first": 1.488,
+    "chars": 26614,
+    "ok": true,
+    "answer": "The Milwaukee Brewers won the 2026 World Series, defeating the Tampa Bay Rays four games to one to capture the first title in franchise history [1].\n\n![Milwaukee Brewers celebration](img:1)\n\n:::followups\nWho was named the 2026 World Series MVP?\nHow many games did the Milwaukee Brewers win in the 2026 regular season?\nWhich teams have still never won a World Series?"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "search": 1.381,
+    "first_after_search": 0.598,
+    "first": 1.98,
+    "chars": 26393,
+    "ok": true,
+    "answer": "The search results show no clear source for this phrase, but children's stories about lost bear cubs include books like *Bear Rescue* by Hannah Gold [img:2]. \n\n:::followups\nWhat is the book Bear Rescue about?\nAre there other children's books about a lost bear cub?\nWho is the author of Bear Rescue?"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "search": 0.963,
+    "first_after_search": 0.657,
+    "first": 1.62,
+    "chars": 26493,
+    "ok": true,
+    "answer": "The results show no clear source for that exact phrase, though they include stories and podcasts about bears, such as Mary Graham Bonner's *Baby Bears* [1] and Hannah Gold's *Bear Rescue* [img:2].\n\n:::followups\nWhat is the story Baby Bears by Mary Graham Bonner about?\nWhere can I listen to the podcast episode The Momma Bear I Lost?\nWhat books did Hannah Gold write about bears?"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "search": 1.364,
+    "first_after_search": 0.875,
+    "first": 2.238,
+    "chars": 26405,
+    "ok": true,
+    "answer": "The search results show no clear source for this exact phrase, but stories featuring a baby bear and its mother include the padded board book *Moonlight Lullaby* by Chloe Marie and the children's book *Bear Rescue* by Hannah Gold [10] (img:2). \n\n![Bear Rescue book cover](img:2)\n\n:::followups\nWhat is the story Moonlight Lullaby about?\nWhere can I find books about lost baby bears?\nWho wrote the book"
+   }
+  ],
+  "parallel basic": [
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "search": 1.401,
+    "first_after_search": 0.706,
+    "first": 2.107,
+    "chars": 21595,
+    "ok": false,
+    "answer": "![Jensen Huang](img:1)\n\nThe most recent person reported to have had an affair with Jensen Huang is an unnamed Nvidia employee, whose involvement was revealed in a Reuters report following his resignation [1, 10]. Prior to that, reports emerged regarding relationships with Megaspeed executive Alice Huang and Nvidia's vice president of healthcare, Kimberly Powell [1, 10].\n\n:::followups\nWhat led to J"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "search": 1.145,
+    "first_after_search": 0.55,
+    "first": 1.695,
+    "chars": 22127,
+    "ok": true,
+    "answer": "The latest reported affair involving former Nvidia CEO Jensen Huang was with an unnamed Nvidia employee, according to a report published by Reuters [1]. This followed earlier revelations regarding an affair with Megaspeed executive Alice Huang and a second relationship with Nvidia vice president of healthcare Kimberly Powell [1].\n\n:::followups\nWhat led to Jensen Huang resigning from Nvidia?\nWho is"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "search": 0.828,
+    "first_after_search": 0.828,
+    "first": 1.656,
+    "chars": 21720,
+    "ok": true,
+    "answer": "The identity of the third person Jensen Huang reportedly had an affair with has not been publicly named, as reports only identify her as an unnamed Nvidia employee [1, 10]. Prior to this third disclosure, reports surfaced regarding his relationships with alleged Chinese spy Alice Huang and Nvidia's vice president of healthcare, Kimberly Powell [1, 10].\n\n![Jensen Huang](img:1)\n\n:::followups\nWhat le"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "search": 1.399,
+    "first_after_search": 0.485,
+    "first": 1.884,
+    "chars": 25985,
+    "ok": false,
+    "answer": "AMD CEO Lisa Su was 3 years old when NVIDIA was founded in April 1993. \n\n*(Note: If referring to AMD's founding CEO, Jerry Sanders, in May 1969, he was 32 years old.)*\n\n:::followups\nWho is the current CEO of AMD?\nWhen was Lisa Su appointed CEO of AMD?\nWho founded NVIDIA?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "search": 0.827,
+    "first_after_search": null,
+    "first": null,
+    "chars": 26316,
+    "ok": false,
+    "answer": ""
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "search": 0.795,
+    "first_after_search": 0.626,
+    "first": 1.421,
+    "chars": 26053,
+    "ok": false,
+    "answer": "![AMD CEO Lisa Su](img:1)\n\nWhen NVIDIA was founded in April 1993 [3], AMD's current CEO, Lisa Su, was **23 years old** (born November 1969). \n\n*(Note: If the question refers to AMD's founding CEO, Jerry Sanders, he was **32 years old** when NVIDIA was founded.)*\n\n:::followups\nWho is the current CEO of AMD\nWhen was Lisa Su born\nWhen was Jerry Sanders born"
+   },
+   {
+    "q": "what is the capital of australia",
+    "search": 1.785,
+    "first_after_search": 0.636,
+    "first": 2.421,
+    "chars": 26836,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [2].\n\n![Canberra map](img:1)\n\n:::followups\nHow was Canberra chosen as the capital?\nWho designed the city of Canberra?\nWhat is the population of Canberra?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "search": 0.94,
+    "first_after_search": 0.618,
+    "first": 1.558,
+    "chars": 26802,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [1]. \n\n![Canberra map](img:1)\n\n:::followups\nWhat is the population of Canberra?\nWhen was Canberra founded as the capital?\nWho designed the city of Canberra?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "search": 0.969,
+    "first_after_search": 0.72,
+    "first": 1.689,
+    "chars": 26741,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [1]. \n\n![Canberra map](img:1)\n\n:::followups\nHow was Canberra chosen as the capital?\nWhen was Canberra founded?\nWhat is the population of Canberra?"
+   },
+   {
+    "q": "github",
+    "search": 1.512,
+    "first_after_search": 0.838,
+    "first": 2.35,
+    "chars": 26783,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\n![GitHub Octocat Logo](img:10)\n\nGitHub is a web-based developer platform used for software development, version control, and collaboration, built on top of the Git version control system [1, 2, 4]. It allows individuals and teams to store, review, and manage code repositories, track issues, automate workflows with GitHub Actions, and leverage AI coding assistants lik"
+   },
+   {
+    "q": "github",
+    "search": 1.038,
+    "first_after_search": 0.658,
+    "first": 1.696,
+    "chars": 26945,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\n![GitHub Octocat Logo](img:10)\n\nGitHub is a web-based developer platform and cloud hosting service used for software development and version control [2, 4, 5]. It is built on top of Git, allowing individuals and teams to store, manage, track, and collaborate on code repositories [2, 4, 5].\n\n### Key Features\n* **Version Control & Collaboration:** Track changes, create"
+   },
+   {
+    "q": "github",
+    "search": 0.822,
+    "first_after_search": 0.604,
+    "first": 1.425,
+    "chars": 27040,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\n![GitHub Octocat Logo](img:10)\n\nGitHub is a web-based platform for version control and collaboration, allowing developers to store, manage, and review code using Git [2, 4]. Owned by Microsoft, it provides tools for issue tracking, automated workflows (CI/CD), and AI-assisted development through GitHub Copilot [1, 4, 5].\n\n:::followups\nHow do I create a new repository "
+   },
+   {
+    "q": "golden gate bridge",
+    "search": 2.533,
+    "first_after_search": 0.74,
+    "first": 3.274,
+    "chars": 26914,
+    "ok": true,
+    "answer": "[Golden Gate Bridge](https://goldengate.org/bridge)\n\n![Golden Gate Bridge](img:3)\n\nThe Golden Gate Bridge is a suspension bridge spanning the Golden Gate Strait, a 1-mile-wide channel connecting San Francisco Bay and the Pacific Ocean [5]. Opened on May 27, 1937, it links San Francisco to Marin County and carries U.S. Route 101 and California State Route 1 [1, 5]. Designed by chief engineer Joseph"
+   },
+   {
+    "q": "golden gate bridge",
+    "search": 0.977,
+    "first_after_search": 0.746,
+    "first": 1.723,
+    "chars": 27336,
+    "ok": true,
+    "answer": "[Golden Gate Bridge Official Site](https://www.goldengate.org)\n\n![Golden Gate Bridge](img:2)\n\nThe Golden Gate Bridge is an iconic suspension bridge spanning the Golden Gate Strait, a 1.7-mile-wide channel connecting San Francisco Bay to the Pacific Ocean [1, 5]. \n\n* **Dimensions:** The bridge has a total length of 8,981 feet (1.7 miles), stands 746 feet tall at its highest point, and suspends its "
+   },
+   {
+    "q": "golden gate bridge",
+    "search": 1.066,
+    "first_after_search": 0.865,
+    "first": 1.931,
+    "chars": 27336,
+    "ok": true,
+    "answer": "[Golden Gate Bridge Official Site](https://www.goldengate.org/bridge)\n\n![Golden Gate Bridge](img:2)\n\nThe Golden Gate Bridge is an iconic suspension bridge spanning the Golden Gate Strait, a 1.7-mile channel connecting San Francisco Bay to the Pacific Ocean [1, 5]. \n\n* **Dimensions:** It measures 8,981 feet (1.7 miles) in total length, with towers rising 746 feet above the water and a roadway suspe"
+   },
+   {
+    "q": "who won the 2026 world series",
+    "search": 1.907,
+    "first_after_search": 0.636,
+    "first": 2.543,
+    "chars": 23372,
+    "ok": true,
+    "answer": "The Milwaukee Brewers won the 2026 World Series, defeating the Tampa Bay Rays four games to one to capture the first title in franchise history [1].\n\n![Milwaukee Brewers win the 2026 World Series](img:1)\n\n:::followups\nWho was named the 2026 World Series MVP?\nHow many games did the Milwaukee Brewers win in the 2026 regular season?\nWhen was the last time the Milwaukee Brewers appeared in a World Ser"
+   },
+   {
+    "q": "who won the 2026 world series",
+    "search": 1.043,
+    "first_after_search": 0.778,
+    "first": 1.821,
+    "chars": 21758,
+    "ok": true,
+    "answer": "The Milwaukee Brewers won the 2026 World Series, defeating the Tampa Bay Rays 4\u20131 in the series to capture their first title in franchise history [1]. \n\n![Milwaukee Brewers 2026 World Series Champions](img:1)\n\n:::followups\nWho was named the 2026 World Series MVP?\nHow many games did the Brewers win the World Series in?\nWho did the Brewers defeat in the 2026 World Series?"
+   },
+   {
+    "q": "who won the 2026 world series",
+    "search": 0.902,
+    "first_after_search": 0.731,
+    "first": 1.633,
+    "chars": 22742,
+    "ok": true,
+    "answer": "The Milwaukee Brewers won the 2026 World Series, defeating the Tampa Bay Rays 4\u20131 in the series to capture the first title in franchise history [1].\n\n![Milwaukee Brewers World Series celebration](img:1)\n\n:::followups\nWho was named the 2026 World Series MVP?\nHow many games did the Milwaukee Brewers win in the 2026 regular season?\nWhich teams have still never won a World Series?"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "search": 1.385,
+    "first_after_search": 0.659,
+    "first": 2.044,
+    "chars": 26626,
+    "ok": true,
+    "answer": "Wildlife experts note that if you see a lone baby bear cub, its mother is often nearby foraging for food and will return [2]. If you suspect a cub is truly orphaned or in danger, contact local wildlife authorities or a conservation officer service immediately [1, 5].\n\n:::followups\nWhat should you do if you encounter a bear cub in the wild?\nHow do mother bears care for their cubs?\nWhich wildlife or"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "search": 0.92,
+    "first_after_search": 0.724,
+    "first": 1.645,
+    "chars": 26187,
+    "ok": true,
+    "answer": "The search results show no clear source for the phrase. \n\nIf you are looking for children's books or stories about a lost bear, you might enjoy *Baby Bear* by Kadir Nelson [8], *Little Bear and the Lost Otter Baby* by Frances Margaret Fox [9], or the picture book *Bear Rescue* by Hannah Gold.\n\n:::followups\nWhat is the book Baby Bear by Kadir Nelson about?\nAre there news stories about real lost bea"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "search": 0.932,
+    "first_after_search": 0.702,
+    "first": 1.634,
+    "chars": 26265,
+    "ok": true,
+    "answer": "Wildlife experts note that if you spot a lone bear cub, its mother is often nearby looking for food or leaving the cub temporarily in a safe spot, as mothers frequently return to feed their young [2, 3]. If you suspect a cub is truly orphaned or in immediate danger, you should contact local wildlife authorities or a conservation officer service rather than approaching it.\n\n:::followups\nWhat should"
+   }
+  ]
+ }
+}
