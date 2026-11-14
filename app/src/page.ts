@@ -92,6 +92,7 @@ textarea:focus{border-color:var(--mute)}
 #menu{position:fixed;z-index:5;min-width:220px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:4px;box-shadow:0 8px 24px #0002;display:flex;flex-direction:column}#menu[hidden]{display:none}
 #ak{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:8px;align-items:center;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 14px;font-size:13px;width:max-content;max-width:calc(100% - 24px)}
 #ak button{font:inherit;border:0;border-radius:8px;cursor:pointer;padding:6px 10px;white-space:nowrap}#akb{background:var(--fg);color:var(--bg);font-weight:600}#akx{background:none;color:var(--mute)}
+#tk{position:fixed;right:16px;bottom:92px;z-index:6;font:inherit;font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer;box-shadow:0 2px 8px #0001}#tk[hidden]{display:none}
 #menu .ci{display:flex;flex-wrap:wrap;align-items:center;gap:2px;border-top:1px solid var(--line);margin-top:4px;padding:6px 4px 2px}
 #menu .ci span{width:100%;font-size:12px;color:var(--mute);padding:0 6px 2px}#menu .ci button{padding:6px 8px;font-size:13px}
 #menu button{border:0;background:none;color:var(--fg);font:inherit;font-size:14px;text-align:left;padding:8px 10px;border-radius:6px;cursor:pointer}#menu button:hover:not(:disabled){background:var(--soft)}#menu button:disabled{color:var(--mute);cursor:default}
@@ -154,15 +155,43 @@ const md=(s,im,src)=>{IM=im||[];SRC=src||[];return s.split('\`\`\`').map((p,i)=>
 function add(c,html){const d=document.createElement('div');d.className=c;d.innerHTML=html;log.append(d);return d}
 `;
 
+/**
+ * talk=true (or talk=1) in the URL: read answers aloud with the browser's voice as they stream, a sentence at a time.
+ * Stays on for follow-ups and new searches in this tab. Browsers can block speech without a tap; then the button
+ * offers "Read aloud". Citations, image lines, links and Markdown marks are not read.
+ */
+const TALK_JS = String.raw`
+const TALK=/[?&]talk=(1|true|yes)(&|$)/i.test(location.search);
+const tk={said:0,text:'',started:false,blocked:false};let tkb=null;
+const speakable=s=>s.replace(/^\s*!\[[^\]]*\]\([^)]*\)\s*$/gm,'').replace(/\[([^\]]+)\]\([^)]*\)/g,'$1').replace(/\s*\[\d+(?:,\s*\d+)*\]/g,'')
+ .replace(/https?:\/\/\S+/g,'').replace(/[*_` + "`" + String.raw`#>|~]/g,'').replace(/\s+/g,' ').trim();
+const talking=()=>window.speechSynthesis&&(speechSynthesis.speaking||speechSynthesis.pending);
+function tkShow(){if(!TALK||!window.speechSynthesis)return;if(!tkb){tkb=document.createElement('button');tkb.id='tk';document.body.append(tkb);
+  tkb.onclick=()=>{if(talking()&&!tk.blocked){speechSynthesis.cancel();setTimeout(tkShow,50)}else{tk.blocked=false;say(tk.text)}}}
+ tkb.textContent=talking()&&!tk.blocked?'■ Stop reading':tk.blocked?'▶ Read aloud':'▶ Read again';tkb.hidden=!tk.text}
+function say(part){const t=speakable(part);if(!t)return;const u=new SpeechSynthesisUtterance(t);u.lang=navigator.language||'en-US';
+ u.onstart=()=>{tk.started=true;tk.blocked=false;tkShow()};u.onend=()=>setTimeout(tkShow,50);
+ u.onerror=e=>{if(e.error==='not-allowed'){tk.blocked=true;tkShow()}};speechSynthesis.speak(u);tkShow();
+ if(!tk.started)setTimeout(()=>{if(!tk.started&&!speechSynthesis.speaking){tk.blocked=true;speechSynthesis.cancel();tkShow()}},1500)}
+// New text up to the last finished sentence (or line) is spoken; done speaks the rest. Follow-up suggestions are skipped.
+function talk(buf,done){if(!TALK||!window.speechSynthesis||tk.blocked&&!done)return;let s=buf.split(/\n\s*:::/)[0];
+ if(!done){const m=s.slice(tk.said).match(/^[\s\S]*[.!?;:](?=\s)|^[\s\S]*\n/);if(!m)return;s=s.slice(0,tk.said+m[0].length)}
+ const part=s.slice(tk.said);tk.said=s.length;tk.text+=part;if(!tk.blocked)say(part);else tkShow()}
+function talkReset(){tk.said=0;tk.text='';if(TALK&&window.speechSynthesis)speechSynthesis.cancel()}
+if(TALK)addEventListener('DOMContentLoaded',()=>{const f=document.querySelector('form[action="/"]');if(f&&!f.querySelector('[name=talk]'))
+ f.insertAdjacentHTML('beforeend','<input type="hidden" name="talk" value="true">')});
+`;
+
 const JS = `
 const ta=$('textarea'),side=$('#list');
 let cur=null,raf=0;
-function start(el){if(el){el.classList.add('wait');el.innerHTML='';cur={el,buf:'',imgs:[]}}else cur={el:add('m wait',''),buf:'',imgs:[]}}
+${TALK_JS}
+function start(el){talkReset();if(el){el.classList.add('wait');el.innerHTML='';cur={el,buf:'',imgs:[]}}else cur={el:add('m wait',''),buf:'',imgs:[]}}
 function paint(){raf=0;cur.el.innerHTML=(noSearch(cur.res)?NOSEARCH:'')+md(cutF(cur.buf).replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs,cur.src)}
 const main=$('main');let nearEnd=true;main.addEventListener('scroll',()=>{nearEnd=main.scrollHeight-main.scrollTop-main.clientHeight<80});
 new ResizeObserver(()=>{if(nearEnd)main.scrollTop=main.scrollHeight}).observe(log);
-function T(t){cur.buf+=t;if(!raf)raf=requestAnimationFrame(paint)}
-function D(s){cur.src=s;cur.buf=cutF(cur.buf).trim();paint();cur.el.classList.remove('wait');
+function T(t){cur.buf+=t;talk(cur.buf,false);if(!raf)raf=requestAnimationFrame(paint)}
+function D(s){talk(cur.buf,true);cur.src=s;cur.buf=cutF(cur.buf).trim();paint();cur.el.classList.remove('wait');
  const m={role:'model',followups:cur.fups||[],text:cur.buf,sources:s,images:cur.imgs,results:cur.res||[],model:'lite'},at=cur.at;
  if(at!=null)S.msgs[at]=m;else S.msgs.push(m);note(cur.el,m);acts(cur.el,at!=null?at:S.msgs.length-1);cur=null;busy=false;chips()}
 function R(r){cur.res=r}
