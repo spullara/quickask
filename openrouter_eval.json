@@ -1,0 +1,1695 @@
+{
+ "when": "2026-11-14T00:09:38.683189+00:00",
+ "runs": 3,
+ "questions": [
+  [
+   "who is the latest person jensen huang had an affair with",
+   "latest = third, unnamed employee"
+  ],
+  [
+   "how old was the ceo of amd when nvidia was founded",
+   "leads with 23 (two searched facts)"
+  ],
+  [
+   "what is the capital of australia",
+   "Canberra"
+  ],
+  [
+   "github",
+   "first line is the GitHub link"
+  ],
+  [
+   "golden gate bridge",
+   "shows a picture"
+  ],
+  [
+   "I'm a baby bear and I lost my mommy",
+   "no role-play"
+  ],
+  [
+   "what is 17 times 23",
+   "391, no picture"
+  ]
+ ],
+ "summary": [
+  {
+   "model": "gemini-3.5-flash-lite (production, direct)",
+   "first_p50": 0.79,
+   "first_p90": 0.89,
+   "total_p50": 1.1,
+   "correct": "21/21",
+   "errors": 0,
+   "per_question": {
+    "who is the latest person jensen huang had an affair with": "3/3",
+    "how old was the ceo of amd when nvidia was founded": "3/3",
+    "what is the capital of australia": "3/3",
+    "github": "3/3",
+    "golden gate bridge": "3/3",
+    "I'm a baby bear and I lost my mommy": "3/3",
+    "what is 17 times 23": "3/3"
+   }
+  },
+  {
+   "model": "beam-1.0-501b-a23b @ BaseTen",
+   "first_p50": 0.55,
+   "first_p90": 1.19,
+   "total_p50": 0.87,
+   "correct": "20/21",
+   "errors": 0,
+   "per_question": {
+    "who is the latest person jensen huang had an affair with": "3/3",
+    "how old was the ceo of amd when nvidia was founded": "2/3",
+    "what is the capital of australia": "3/3",
+    "github": "3/3",
+    "golden gate bridge": "3/3",
+    "I'm a baby bear and I lost my mommy": "3/3",
+    "what is 17 times 23": "3/3"
+   }
+  },
+  {
+   "model": "deepseek-v4.1-flash @ Together",
+   "first_p50": 0.25,
+   "first_p90": 0.31,
+   "total_p50": 0.77,
+   "correct": "19/21",
+   "errors": 0,
+   "per_question": {
+    "who is the latest person jensen huang had an affair with": "3/3",
+    "how old was the ceo of amd when nvidia was founded": "3/3",
+    "what is the capital of australia": "3/3",
+    "github": "3/3",
+    "golden gate bridge": "3/3",
+    "I'm a baby bear and I lost my mommy": "3/3",
+    "what is 17 times 23": "1/3"
+   }
+  },
+  {
+   "model": "gpt-oss-120b @ Groq",
+   "first_p50": 0.48,
+   "first_p90": 0.77,
+   "total_p50": 0.62,
+   "correct": "19/21",
+   "errors": 0,
+   "per_question": {
+    "who is the latest person jensen huang had an affair with": "3/3",
+    "how old was the ceo of amd when nvidia was founded": "1/3",
+    "what is the capital of australia": "3/3",
+    "github": "3/3",
+    "golden gate bridge": "3/3",
+    "I'm a baby bear and I lost my mommy": "3/3",
+    "what is 17 times 23": "3/3"
+   }
+  },
+  {
+   "model": "qwen3.8-27b @ Cerebras",
+   "first_p50": 0.36,
+   "first_p90": 0.46,
+   "total_p50": 0.56,
+   "correct": "18/21",
+   "errors": 1,
+   "per_question": {
+    "who is the latest person jensen huang had an affair with": "3/3",
+    "how old was the ceo of amd when nvidia was founded": "1/2",
+    "what is the capital of australia": "3/3",
+    "github": "3/3",
+    "golden gate bridge": "3/3",
+    "I'm a baby bear and I lost my mommy": "3/3",
+    "what is 17 times 23": "2/3"
+   }
+  },
+  {
+   "model": "gpt-oss-120b @ Cerebras",
+   "first_p50": 0.41,
+   "first_p90": 0.48,
+   "total_p50": 0.5,
+   "correct": "18/21",
+   "errors": 0,
+   "per_question": {
+    "who is the latest person jensen huang had an affair with": "3/3",
+    "how old was the ceo of amd when nvidia was founded": "0/3",
+    "what is the capital of australia": "3/3",
+    "github": "3/3",
+    "golden gate bridge": "3/3",
+    "I'm a baby bear and I lost my mommy": "3/3",
+    "what is 17 times 23": "3/3"
+   }
+  },
+  {
+   "model": "gpt-oss-20b @ Groq",
+   "first_p50": 0.84,
+   "first_p90": 1.44,
+   "total_p50": 0.98,
+   "correct": "15/21",
+   "errors": 0,
+   "per_question": {
+    "who is the latest person jensen huang had an affair with": "3/3",
+    "how old was the ceo of amd when nvidia was founded": "0/3",
+    "what is the capital of australia": "3/3",
+    "github": "3/3",
+    "golden gate bridge": "0/3",
+    "I'm a baby bear and I lost my mommy": "3/3",
+    "what is 17 times 23": "3/3"
+   }
+  },
+  {
+   "model": "nemotron-3.5-lightning @ Fireworks",
+   "first_p50": 0.29,
+   "first_p90": 0.46,
+   "total_p50": 0.54,
+   "correct": "13/21",
+   "errors": 0,
+   "per_question": {
+    "who is the latest person jensen huang had an affair with": "3/3",
+    "how old was the ceo of amd when nvidia was founded": "0/3",
+    "what is the capital of australia": "3/3",
+    "github": "0/3",
+    "golden gate bridge": "2/3",
+    "I'm a baby bear and I lost my mommy": "3/3",
+    "what is 17 times 23": "2/3"
+   }
+  },
+  {
+   "model": "llama-3.3-70b @ CoreWeave",
+   "first_p50": 0.19,
+   "first_p90": 0.41,
+   "total_p50": 1.91,
+   "correct": "12/21",
+   "errors": 0,
+   "per_question": {
+    "who is the latest person jensen huang had an affair with": "3/3",
+    "how old was the ceo of amd when nvidia was founded": "0/3",
+    "what is the capital of australia": "3/3",
+    "github": "0/3",
+    "golden gate bridge": "3/3",
+    "I'm a baby bear and I lost my mommy": "3/3",
+    "what is 17 times 23": "0/3"
+   }
+  },
+  {
+   "model": "lfm-2.5-24b-a2b @ Liquid",
+   "first_p50": 3.75,
+   "first_p90": 5.95,
+   "total_p50": 4.01,
+   "correct": "11/21",
+   "errors": 0,
+   "per_question": {
+    "who is the latest person jensen huang had an affair with": "3/3",
+    "how old was the ceo of amd when nvidia was founded": "0/3",
+    "what is the capital of australia": "3/3",
+    "github": "0/3",
+    "golden gate bridge": "0/3",
+    "I'm a baby bear and I lost my mommy": "2/3",
+    "what is 17 times 23": "3/3"
+   }
+  }
+ ],
+ "results": {
+  "gemini-3.5-flash-lite (production, direct)": [
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.944,
+    "total": 1.247,
+    "ok": true,
+    "answer": "The identity of the third woman involved in Jensen Huang's reported affairs has not been publicly named, as news outlets report she is an unnamed Nvidia employee [1]. Prior to this third report, the other women linked to the scandal were Alice Huang, a businesswoman suspected by U.S. intelligence of being a Chinese spy, and Kimberly Powell, Nvidia\u2019s vice president of healthcare [1, 4].\n\n:::followu"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.845,
+    "total": 1.182,
+    "ok": true,
+    "answer": "The identity of the third woman involved in Jensen Huang's reported affairs has not been publicly named, as news outlets like Reuters have withheld her identity while confirming she is an Nvidia employee [1, 3]. His previous two reported relationships were with Alice Huang, a businesswoman suspected by U.S. intelligence of being a Chinese spy, and Kimberly Powell, Nvidia\u2019s vice president of health"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.716,
+    "total": 1.025,
+    "ok": true,
+    "answer": "The identity of the third woman involved in Jensen Huang's reported affairs has not been publicly named, as news outlets like Reuters have withheld her identity while confirming she is an Nvidia employee [1, 3]. His previous two reported affairs involved Alice Huang, a woman suspected by U.S. intelligence of being a Chinese spy, and Kimberly Powell, Nvidia\u2019s vice president of healthcare [1, 4].\n\n:"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.687,
+    "total": 0.977,
+    "ok": true,
+    "answer": "When Nvidia was founded on April 5, 1993 [5], AMD's current CEO, Lisa Su, was **23 years old** [3]. *(Note: AMD's CEO at the time of Nvidia's founding was co-founder Jerry Sanders [4], who was 56 years old.)*\n\n:::followups\nWho was the CEO of AMD when Nvidia was founded?\nWhen did Lisa Su become the CEO of AMD?\nHow old was Jensen Huang when he founded Nvidia?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.841,
+    "total": 1.262,
+    "ok": true,
+    "answer": "When Nvidia was founded on April 5, 1993 [5], AMD's current CEO, Lisa Su, was **23 years old** (born November 7, 1969) [3]. However, she did not become AMD's CEO until October 2014 [1]. \n\nIf referring to AMD's CEO at the exact time Nvidia was founded in 1993, Jerry Sanders was the co-founder and CEO of AMD [4], and he was **56 years old** (born September 12, 1936) [4].\n\n:::followups\nWho was the CE"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.597,
+    "total": 0.906,
+    "ok": true,
+    "answer": "When Nvidia was founded on April 5, 1993 [5], AMD's current CEO, Lisa Su, was **23 years old** [3]. *(Note: AMD's CEO at the time of Nvidia's founding in 1993 was co-founder Jerry Sanders [4], who was **56 years old**.)*\n\n:::followups\nWho was the CEO of AMD when Nvidia was founded?\nWhen did Lisa Su become the CEO of AMD?\nHow old was Jensen Huang when he co-founded Nvidia?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.87,
+    "total": 0.951,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [2].\n\n![Canberra aerial view](img:2)\n\n:::followups\nWhat is the population of Canberra?\nWhen was Canberra founded as the capital?\nWhich state surrounds the Australian Capital Territory?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.513,
+    "total": 0.655,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [2].\n\n![Canberra aerial view](img:1)\n\n:::followups\nWhat is the population of Canberra?\nWhen was Canberra founded as the capital?\nWhich state surrounds the Australian Capital Territory?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.736,
+    "total": 0.871,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [2].\n\n![Canberra aerial view](img:1)\n\n:::followups\nWhat is the population of Canberra?\nWhen was Canberra founded as the capital?\nWhich state surrounds the Australian Capital Territory?"
+   },
+   {
+    "q": "github",
+    "first": 0.79,
+    "total": 1.148,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\nGitHub is a web-based platform for software development and version control that uses Git, allowing developers to store, manage, share, and collaborate on their code [1, 3, 10]. Operated as a subsidiary of Microsoft, it provides tools for bug tracking, task management, continuous integration, and AI-assisted coding via GitHub Copilot [1, 2, 9]. \n\n![GitHub Homepage](im"
+   },
+   {
+    "q": "github",
+    "first": 0.758,
+    "total": 1.138,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\nGitHub is a web-based platform used by developers to create, store, manage, and share their code [1]. Built on top of the Git version control system, it provides tools for project management, bug tracking, automated software testing (CI/CD), and team collaboration [1, 3]. Owned by Microsoft, it is the world's largest host for source code, supporting millions of public"
+   },
+   {
+    "q": "github",
+    "first": 0.89,
+    "total": 1.35,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\nGitHub is a cloud-based developer platform that uses the Git version control system to allow individuals and teams to create, store, manage, and share their source code [1, 3, 10]. Operated as a subsidiary of Microsoft, it provides tools for project management, bug tracking, continuous integration (CI/CD), and AI-assisted development through GitHub Copilot [1, 2, 3].\n"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.848,
+    "total": 1.138,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a suspension bridge spanning the Golden Gate strait, connecting San Francisco to Marin County, California [1]. Opened in May 1937, it is internationally recognized for its signature International Orange color, Art Deco styling, and 746-foot-tall towers [1, 3]. \n\n![Golden Gate Bridge](img:1)\n\n:::followups\nWho was the chief engineer of the Golden Gate Bridge?\nHow much is th"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.96,
+    "total": 1.103,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a suspension bridge spanning the Golden Gate strait, connecting San Francisco and Marin County in California [1].\n\n![Golden Gate Bridge view](img:1)\n\n:::followups\nWho was the chief engineer of the Golden Gate Bridge?\nWhy is the Golden Gate Bridge painted International Orange?\nHow long is the Golden Gate Bridge?"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 1.016,
+    "total": 1.284,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a suspension bridge spanning the Golden Gate strait, connecting San Francisco to Marin County, California [1]. Opened in May 1937, it is internationally recognized for its signature International Orange color, Art Deco styling, and 746-foot-tall towers [1, 3, 7].\n\n![Golden Gate Bridge](img:1)\n\n:::followups\nWho was the chief engineer of the Golden Gate Bridge?\nHow long is "
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.879,
+    "total": 1.191,
+    "ok": true,
+    "answer": "The children's book character and web series premise *Honeybear Stories* features an orphaned bear cub living alone in a forest after her mother mysteriously disappears [10]. \n\n:::followups\nWhat happens to Honeybear in the stories?\nWhere can I read Honeybear Stories?\nAre there other books about orphaned bear cubs?"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.547,
+    "total": 0.853,
+    "ok": true,
+    "answer": "The results show no clear single source, but rather various news reports, videos, and stories about orphaned bear cubs finding rescue [2, 3, 4] or wildlife characters looking for their mothers [1, 10]. \n\n:::followups\nWhat happens to orphaned bear cubs in the wild?\nHow do wildlife sanctuaries care for baby bears?\nAre there children's stories about lost bear cubs?"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.888,
+    "total": 1.258,
+    "ok": true,
+    "answer": "Stories and videos about orphaned or lost baby bears typically feature real-life wildlife rescue accounts, such as the San Diego Humane Society caring for an orphaned black bear cub using costumed handlers [3], or fictional tales like the children's story character Honeybear, an orphaned bear searching for her mother [10].\n\n:::followups\nHow are orphaned bear cubs rehabilitated for the wild?\nWhat w"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.681,
+    "total": 0.79,
+    "ok": true,
+    "answer": "Seventeen times 23 is 391 [3].\n\n:::followups\nWhat is 19 times 23?\nAre 17 and 23 prime numbers?\nHow do you use the distributive property for multiplication?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.772,
+    "total": 0.881,
+    "ok": true,
+    "answer": "Seventeen times 23 is 391 [3].\n\n:::followups\nWhat is 17 times 24?\nAre both 17 and 23 prime numbers?\nHow do you solve 17 times 23 using the distributive property?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.731,
+    "total": 0.839,
+    "ok": true,
+    "answer": "17 times 23 is equal to 391 [3].\n\n:::followups\nWhat is 17 times 24?\nAre 17 and 23 prime numbers?\nWhat is the sum of 17 and 23?"
+   }
+  ],
+  "gpt-oss-120b @ Cerebras": [
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.329,
+    "total": 0.374,
+    "ok": true,
+    "answer": "The most recent report says Jensen\u202fHuang\u2019s latest alleged affair is with a second, still\u2011unnamed Nvidia employee; the employee\u2019s identity has not been disclosed\u30101\u2020L1-L8\u3011.  \n\n:::followups\nWhat were the names of the two previously reported women?\nWhen did Jensen Huang resign from Nvidia?\nWhat investigations are ongoing into the affair scandal?"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.305,
+    "total": 0.36,
+    "ok": true,
+    "answer": "The most recent report says Jensen\u202fHuang\u2019s latest affair involved a third, still\u2011unnamed Nvidia employee; Reuters did not disclose the person\u2019s identity\u30101\u2020L1-L8\u3011.  \n\n:::followups\nWho were the two previously reported women involved with Jensen Huang?\nWhat impact did the affair scandals have on Nvidia\u2019s stock price?\nWhat investigations are ongoing into the alleged spy, Alice Huang?"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.333,
+    "total": 0.445,
+    "ok": true,
+    "answer": "The most recent report says Jensen\u202fHuang\u2019s latest alleged affair is with a third, still\u2011unnamed Nvidia employee, whose identity has not been disclosed\u202f[1][3].\n\n![Unnamed Nvidia employee](img:5)  \n![Unnamed Nvidia employee](img:6)  \n\n:::followups\nWhat were the names of the two previously reported women?\nWhen did Jensen Huang resign from Nvidia?\nWhat investigations are ongoing into the affairs?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.344,
+    "total": 0.383,
+    "ok": false,
+    "answer": "Jerry\u202fSanders, who was AMD\u2019s CEO in 1993, was 56\u202fyears old when Nvidia was founded on\u202fApril\u202f5\u202f1993\u30104\u3011. :::followups\nhow old was Jensen Huang when he founded Nvidia\nwhat year did AMD change its CEO after Jerry Sanders\nwho are the current CEOs of AMD and Nvidia\n\n"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.397,
+    "total": 0.444,
+    "ok": false,
+    "answer": "The AMD CEO was **Jerry\u202fSanders**, who was **56\u202fyears old** when NVIDIA was founded in April\u202f1993\u30104\u3011.  \n\n:::followups\nHow did Jerry Sanders contribute to AMD\u2019s early growth?\nWhen did Jensen\u202fHuang leave AMD to start NVIDIA?\nWhat are the major products launched by AMD under Lisa\u202fSu?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.467,
+    "total": 0.521,
+    "ok": false,
+    "answer": "Lisa Su was not AMD\u2019s CEO in 1993; the company was led by co\u2011founder Jerry\u202fSanders, who was born on September\u202f12\u202f1936, making him\u202f57\u202fyears old when NVIDIA was founded on April\u202f5\u202f1993\u30104\u2020L1-L3\u3011\u30105\u2020L1-L3\u3011\n\n:::followups\nWhat year did Jensen\u202fHuang co\u2011found NVIDIA?\nWho is the current CEO of AMD?\nHow many years has Jerry\u202fSanders been CEO of AMD?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.42,
+    "total": 0.464,
+    "ok": true,
+    "answer": "Canberra is the capital city of Australia\u30101\u3011.\n\n![Canberra cityscape](img:1)  \n![Parliament House in Canberra](img:2)  \n\n:::followups\nWhat is the population of Canberra?  \nWhen was Canberra officially named the capital?  \nWhat are the major attractions in Canberra?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.443,
+    "total": 0.499,
+    "ok": true,
+    "answer": "Canberra is the capital city of Australia\u30101\u3011.  \n\n![Canberra cityscape](img:1)  \n![Parliament House, Canberra](img:2)  \n\n:::followups  \nWhat is the population of Canberra?  \nWhen was Canberra founded as the capital?  \nWhat are the major attractions in Canberra?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.412,
+    "total": 0.471,
+    "ok": true,
+    "answer": "Canberra is the capital city of Australia\u30101\u2020L1-L2\u3011.\n\n![Canberra city view](img:1)  \n![Parliament House in Canberra](img:2)\n\n:::followups\nWhat is the population of Canberra?  \nWhen was Canberra founded as the capital?  \nWhat are the main attractions in Canberra?"
+   },
+   {
+    "q": "github",
+    "first": 0.361,
+    "total": 0.417,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\nGitHub is a proprietary developer platform that hosts Git repositories, providing version control, code review, issue tracking, CI/CD with Actions, AI\u2011assisted coding via Copilot, and many collaboration tools for individuals and organizations\u202f[1][3].  \n\n:::followups\nWhat are the main features of GitHub Copilot?  \nHow do I create a new repository on GitHub?  \nIs GitHub"
+   },
+   {
+    "q": "github",
+    "first": 0.304,
+    "total": 0.389,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\nGitHub is a Microsoft\u2011owned platform for hosting Git repositories, offering tools for code collaboration, issue tracking, CI/CD with Actions, AI assistance via Copilot, and millions of open\u2011source projects\u202f[2][3].  \n\n:::followups\nHow do I create a new repository on GitHub?  \nWhat is GitHub Copilot and how does it work?  \nCan I use GitHub without installing Git?"
+   },
+   {
+    "q": "github",
+    "first": 0.48,
+    "total": 0.602,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\nGitHub is a proprietary developer platform for hosting Git repositories, offering tools for code review, project management, CI/CD, security, and AI assistance such as Copilot\u202f\u30102\u2020L1-L5\u3011.  \n\n:::followups\nWhat is the difference between Git and GitHub?\nHow do I create a new repository on GitHub?\nWhat pricing plans does GitHub offer?"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.367,
+    "total": 0.523,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a 1.7\u2011mile (2.74\u202fkm) suspension bridge linking San\u202fFrancisco to Marin County, notable for its 746\u2011ft (227\u202fm) towers, International\u202fOrange color, and Art\u202fDeco design; it opened to traffic on May\u202f27\u202f1937 and carries six lanes of US\u202f101/CA\u202f1, pedestrian walkways, and a bicycle route\u202f[1].\n\n![Golden Gate Bridge view from Presidio](img:1)  \n\n:::followups\nHow much does the toll "
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.316,
+    "total": 0.527,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a 1.7\u2011mile (2.74\u202fkm) suspension bridge linking San\u202fFrancisco to Marin County across the Golden Gate Strait; it opened on May\u202f27\u202f1937, features iconic International Orange color, 746\u2011ft (227\u202fm) tall towers, and carries six lanes of highway traffic plus pedestrian and bicycle walkways\u30101\u3011.\n\n![Golden Gate Bridge view from the Presidio](img:1)  \n![Aerial view of the span](img:"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.3,
+    "total": 0.716,
+    "ok": true,
+    "answer": "**The Golden Gate Bridge is a 1.7\u2011mile (2.74\u202fkm) suspension bridge linking San\u202fFrancisco to Marin County, California; it opened on May\u202f27\u202f1937 and is famous for its International\u202fOrange color, 746\u2011ft towers, and main span of 4,200\u202fft.**\u202fIt carries six lanes of U.S.\u202f101/State Route\u202f1, pedestrian walkways, and a bicycle path, and attracts over 10\u202fmillion visitors each year\u202f[1].\n\n*Key facts*  \n- **De"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.479,
+    "total": 0.552,
+    "ok": true,
+    "answer": "Mowgli is a real\u2011life sloth\u2011bear cub who was found at just three months old after his mother was electrocuted, and was rescued and cared for at the Wildlife SOS Agra Bear Rescue Facility\u202f[2].  \n\n![Mowgli at the rescue centre](img:2)  \n![Mowgli playing in a tree](img:3)  \n\n:::followups  \nWhat other animals have been rescued by Wildlife SOS?  \nHow can I support bear rescue organizations?  \nWhat is t"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.511,
+    "total": 0.634,
+    "ok": true,
+    "answer": "A baby bear that lost its mother is a common rescue story; recent examples include:\n\n* **Mowgli** \u2013 a three\u2011month\u2011old sloth\u2011bear cub rescued after his mother was electrocuted in Madhya Pradesh, now thriving at the Wildlife SOS Agra Bear Rescue Facility\u30102\u3011.  \n* **Orphaned black\u2011bear cub** \u2013 found in Los\u202fPadres National Forest, cared for by the San Diego Humane Society with costumed caregivers to mi"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.439,
+    "total": 0.513,
+    "ok": true,
+    "answer": "The story you\u2019re thinking of is likely the rescue of **Mowgli**, a baby sloth\u2011bear cub who was found orphaned after his mother was electrocuted by poachers. He was only three months old when officials rescued him in 2017 and brought him to the Agra Bear Rescue Facility, where he received bottle\u2011feeding, medical care and a lot of love\u202f[2].  \n\n![Mowgli at the rescue centre](img:2)  \n![Mowgli playing"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.432,
+    "total": 0.459,
+    "ok": true,
+    "answer": "17\u202f\u00d7\u202f23\u202f=\u202f391\u30103\u3011.\n\n:::followups\nHow can I verify this product using a calculator?\nWhat is the prime factorization of 391?\nCan you show the long multiplication steps for 17\u202f\u00d7\u202f23?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.522,
+    "total": 0.571,
+    "ok": true,
+    "answer": "17\u202f\u00d7\u202f23\u202f=\u202f391\u30103\u3011.\n\n:::followups\nHow do you calculate 17\u202f\u00d7\u202f23 using the distributive property?\nWhat is the least common multiple of 17 and 23?\nCan you show the long multiplication steps for 17\u202f\u00d7\u202f23?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.462,
+    "total": 0.5,
+    "ok": true,
+    "answer": "17\u202f\u00d7\u202f23\u202f=\u202f391\u30103\u3011.\n\n:::followups\nHow can I verify this multiplication using the distributive property?\nWhat is the least common multiple of 17 and 23?\nCan you show the long multiplication steps for 17\u202f\u00d7\u202f23?"
+   }
+  ],
+  "gpt-oss-120b @ Groq": [
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.509,
+    "total": 0.691,
+    "ok": true,
+    "answer": "The most recent report says Jensen\u202fHuang\u2019s latest alleged affair was with a **still\u2011unnamed Nvidia employee**; the woman\u2019s identity has not been disclosed publicly\u30101\u2020L1-L7\u3011\u30103\u2020L4-L7\u3011\n\n:::followups\nWhat were the names of the two previously reported partners?\nWhen did Jensen Huang resign from Nvidia?\nWhat investigations were launched after the affair revelations?"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.484,
+    "total": 0.618,
+    "ok": true,
+    "answer": "The most recent report says Jensen\u202fHuang\u2019s latest alleged affair is with a **still\u2011unidentified Nvidia employee**; Reuters did not name the person and attempts to contact her were unsuccessful\u30101\u2020L9-L13\u3011.\n\n:::followups\nHas Jensen Huang publicly responded to the latest affair allegation?  \nWhat were the consequences for Nvidia after the affair reports?  \nWho were the two previously reported women in"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.674,
+    "total": 0.915,
+    "ok": true,
+    "answer": "The most recent report says Jensen\u202fHuang\u2019s latest alleged affair is with an unnamed Nvidia employee; the woman\u2019s identity has not been disclosed\u30101\u2020L7-L13\u3011.  \n\n:::followups\nWas the unnamed employee identified in any later reports?  \nWhat were the consequences for Nvidia after the affair revelations?  \nWho are the two previously reported women involved with Jensen\u202fHuang?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.331,
+    "total": 0.524,
+    "ok": false,
+    "answer": "The AMD CEO in 1993 was Jerry\u202fSanders, who was born on September\u202f12\u202f1936, making him\u202f57\u202fyears old when Nvidia was founded on April\u202f5\u202f1993\u30104\u2020L1-L4\u3011.  \n\n:::followups\nWhat year did Jensen\u202fHuang co\u2011found Nvidia?  \nWho succeeded Jerry Sanders as AMD\u2019s CEO?  \nHow old is Lisa\u202fSu now?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.641,
+    "total": 0.807,
+    "ok": true,
+    "answer": "Lisa\u202fSu was\u202f23\u202fyears old when NVIDIA was founded in April\u202f1993\u30101\u2020L1-L3\u3011\u30105\u2020L1-L3\u3011\n\n:::followups\nWhat year did Jensen\u202fHuang co\u2011found NVIDIA?  \nHow old was Jensen\u202fHuang when he started NVIDIA?  \nWho was AMD\u2019s CEO before Lisa\u202fSu?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.332,
+    "total": 0.529,
+    "ok": false,
+    "answer": "Jerry\u202fSanders, AMD\u2019s founder\u2011CEO, was 57 years old when NVIDIA was founded on April\u202f5\u202f1993 (born\u202fSeptember\u202f12\u202f1936)\u30104\u2020L1-L3\u3011.  \n\n:::followups\nWhat year did Jensen\u202fHuang co\u2011found NVIDIA?  \nWho succeeded Jerry\u202fSanders as AMD CEO?  \nHow old was Jensen\u202fHuang when he started NVIDIA?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.251,
+    "total": 0.419,
+    "ok": true,
+    "answer": "Canberra is the capital city of Australia\u30101\u2020L1-L3\u3011\u30102\u2020L1-L3\u3011\n\n![Canberra skyline](img:1)  \n![Parliament House, Canberra](img:2)  \n\n:::followups  \nWhat is the population of Canberra?  \nWhen was Canberra founded as the capital?  \nWhat are the main attractions in Canberra?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.238,
+    "total": 0.389,
+    "ok": true,
+    "answer": "Canberra is the capital city of Australia\u30101\u3011.\n\n![Canberra city view](img:1)  \n![Parliament House, Canberra](img:2)\n\n:::followups\nHow many people live in Canberra?  \nWhen was Canberra founded as the capital?  \nWhat are the main attractions in Canberra?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.336,
+    "total": 0.493,
+    "ok": true,
+    "answer": "Canberra is the capital city of Australia\u30101\u2020L1-L2\u3011.\n\n![Canberra skyline](img:1)  \n![Parliament House, Canberra](img:2)\n\n:::followups\nWhat is the population of Canberra?  \nWhen was Canberra founded as the capital?  \nWhat are the major attractions in Canberra?"
+   },
+   {
+    "q": "github",
+    "first": 0.56,
+    "total": 0.79,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\nGitHub is a Microsoft\u2011owned platform for hosting Git repositories, offering code collaboration tools such as issues, pull requests, Actions for CI/CD, and AI features like Copilot\u202f[2][3]. It supports both public and private projects and provides free unlimited repositories for all users. \n\n:::followups\nHow do I create a new repository on GitHub?\nWhat is GitHub Copilot"
+   },
+   {
+    "q": "github",
+    "first": 0.767,
+    "total": 0.988,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\nGitHub is a Microsoft\u2011owned platform for hosting Git repositories, offering tools for code collaboration, issue tracking, CI/CD with Actions, AI assistance via Copilot, and more\u202f[2][3]. It supports both public and private projects and is used by over 225\u202fmillion developers worldwide.  \n\n:::followups\nHow do I create a new repository on GitHub?  \nWhat is GitHub Copilot "
+   },
+   {
+    "q": "github",
+    "first": 0.323,
+    "total": 0.565,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\nGitHub is a Microsoft\u2011owned platform for hosting Git repositories, offering tools for version control, collaboration, issue tracking, CI/CD (GitHub Actions), AI assistance (Copilot), and project management for developers worldwide\u30102\u3011. \n\n:::followups\nHow do I create a new repository on GitHub?  \nWhat is GitHub Copilot and how can I use it?  \nHow can I set up GitHub Act"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.278,
+    "total": 0.572,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a 1.7\u2011mile (2.74\u202fkm) suspension bridge linking San Francisco to Marin County, opened on May\u202f27\u202f1937; its towers rise 746\u202fft (227\u202fm) above the water and the main span is 4,200\u202fft (1.28\u202fmi) long\u30101\u2020L22-L30\u3011\u30101\u2020L41-L48\u3011.  \n\n![Golden Gate Bridge view from the Presidio](img:1)  \n\n:::followups\nWhat are the toll rates for crossing the bridge?\nHow long did construction of the Golde"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.833,
+    "total": 1.121,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a 1.7\u202fmile (2.74\u202fkm) long suspension bridge that spans the Golden Gate Strait, linking San\u202fFrancisco to Marin County; it opened on May\u202f27\u202f1937 and is famous for its International\u202fOrange color, 746\u2011ft tall towers, and over 80,000\u202fmiles of cable\u202f\u30101\u3011.\n\n![Golden Gate Bridge view from the Presidio](img:1)  \n![Aerial view of the bridge](img:2)  \n\n:::followups  \nWhat are the tol"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.284,
+    "total": 0.541,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a 1.7\u2011mile (2.74\u202fkm) suspension bridge spanning the Golden Gate Strait, connecting San\u202fFrancisco to Marin County, California; it opened on May\u202f27\u202f1937 and features iconic International Orange towers 746\u202fft high\u30101\u3011.\n\n![Golden Gate Bridge view from the Presidio](img:1)  \n\n:::followups\nHow long did it take to build the Golden Gate Bridge?  \nWhat is the current toll cost for "
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 1.347,
+    "total": 1.853,
+    "ok": true,
+    "answer": "The story you\u2019re thinking of is likely **Mowgli**, the orphaned sloth\u2011bear cub rescued by Wildlife SOS in India. He was found at about three months old after his mother was electrocuted, and was taken to the Agra Bear Rescue Facility where caregivers nursed him back to health and gave him a new \u201cfamily\u201d\u30102\u3011.\n\n![Mowgli at the rescue centre](img:2)  \n![Mowgli being fed](img:3)\n\n:::followups\nWhat othe"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 1.038,
+    "total": 1.283,
+    "ok": true,
+    "answer": "[Mickey & Minnie Help a Lost Baby Polar Bear](https://www.youtube.com/watch?v=Twsn7-SKl0U)  \n\nThe video is a 3\u2011minute 3D cartoon where Mickey and Minnie find a baby polar bear who has lost its mother and help reunite them in a snowy adventure\u202f[1].  \n\n:::followups\nWhere can I watch the full episode?\nAre there other bear rescue stories on YouTube?\nWhat is the name of the baby bear in the video?"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.703,
+    "total": 1.185,
+    "ok": true,
+    "answer": "A baby bear that has lost its mother is a common rescue story; for example, the sloth\u2011bear cub \u201cMowgli\u201d was found orphaned after his mother was electrocuted and was rescued by Wildlife\u202fSOS in 2017\u202f[2].  \n\n![Mowgli the rescued cub](img:2)  \n\nOther similar tales include a black\u2011bear cub rescued in Southern California and cared for by the San Diego Humane Society\u202f[3] and a baby bear featured in a 201"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.255,
+    "total": 0.357,
+    "ok": true,
+    "answer": "17\u202f\u00d7\u202f23\u202f=\u202f391\u30103\u3011.\n\n:::followups\nHow do I multiply two numbers using the distributive property?\nWhat is the least common multiple of 17 and 23?\nCan you show the long\u2011multiplication steps for 17\u202f\u00d7\u202f23?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.256,
+    "total": 0.392,
+    "ok": true,
+    "answer": "17\u202f\u00d7\u202f23\u202f=\u202f391\u30103\u3011  \n\n:::followups\nHow can I quickly estimate the product of two numbers in my head?\nWhat is the least common multiple of 17 and 23?\nCan you show the step\u2011by\u2011step long multiplication for 17\u202f\u00d7\u202f23?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.624,
+    "total": 1.247,
+    "ok": true,
+    "answer": "17\u202f\u00d7\u202f23\u202f=\u202f391\u30103\u3011\u30105\u3011  \n\n:::followups  \nHow can I verify this multiplication using mental math?  \nWhat is the sum of 17 and 23?  \nWhat is the least common multiple of 17 and 23?"
+   }
+  ],
+  "gpt-oss-20b @ Groq": [
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 1.441,
+    "total": 1.544,
+    "ok": true,
+    "answer": "The most recent allegation is that Jensen\u202fHuang had a third extramarital affair with an unnamed Nvidia employee\u202f[1][3].  \n\n:::followups  \nWhat is the name of the second employee involved in the scandal?  \nHas Nvidia launched an independent investigation into these affairs?  \nWhat was the reaction from the U.S. government regarding the alleged spy?"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.676,
+    "total": 0.726,
+    "ok": true,
+    "answer": "The most recent allegation is that Jensen\u202fHuang was involved in a third affair with an unnamed Nvidia employee who was not previously reported. The employee\u2019s name has not been disclosed by the sources.  \n\n:::followups  \nWho is the second employee Jensen\u202fHuang was reported to have had an affair with?  \nWhat were the consequences of the third affair for Nvidia?  \nHas Jensen\u202fHuang made any public st"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 1.575,
+    "total": 1.657,
+    "ok": true,
+    "answer": "The most recent claim is that Jensen\u202fHuang had an affair with a third, unnamed Nvidia employee\u202f[1][3][4].  \n:::followups  \nHow many affairs have been reported?  \nWhat details are known about the unnamed employee?  \nWhat legal or regulatory actions are underway?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.739,
+    "total": 0.917,
+    "ok": false,
+    "answer": "AMD\u2019s CEO in 1993 was Jerry\u202fSanders, who was born on September\u202f12\u202f1936, making him **57\u202fyears old** when NVIDIA was founded.  \n\n:::followups  \nHow old was Jensen Huang when he founded NVIDIA?  \nWho succeeded Jerry Sanders as AMD CEO?  \nWhat was NVIDIA\u2019s first product after its founding?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 1.358,
+    "total": 1.428,
+    "ok": false,
+    "answer": "Jerry\u202fSanders, the founding CEO of AMD, was 57 years old when NVIDIA was founded in 1993.  \n\n:::followups  \nWhat year did NVIDIA start?  \nWho succeeded Jerry\u202fSanders as AMD CEO?  \nWhat were NVIDIA\u2019s first products?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.908,
+    "total": 1.045,
+    "ok": false,
+    "answer": "The AMD CEO at the time NVIDIA was founded in 1993 was **Jerry Sanders**, who was **57\u202fyears old** then (born September\u202f12, 1936)[4].\n:::followups\nWhat year did NVIDIA actually launch its first product?  \nWho succeeded Jerry Sanders as AMD CEO?  \nHow old was Jensen Huang when he co\u2011founded NVIDIA?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.893,
+    "total": 0.955,
+    "ok": true,
+    "answer": "The capital of Australia is **Canberra**\u30101\u3011\u30102\u3011.  \n\n:::followups  \nWhat is the population of Canberra?  \nWhy was Canberra chosen over Sydney or Melbourne?  \nWhere can I visit the Parliament House in Canberra?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.681,
+    "total": 0.766,
+    "ok": true,
+    "answer": "The capital of Australia is **Canberra**\u202f[1][2]"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.858,
+    "total": 0.936,
+    "ok": true,
+    "answer": "The capital of Australia is **Canberra**. [1][2]  \n\n:::followups  \nWhat is the population of Canberra?  \nWhy was Canberra chosen over Sydney or Melbourne?  \nWhere can I visit the Parliament House in Canberra?"
+   },
+   {
+    "q": "github",
+    "first": 0.83,
+    "total": 0.981,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\nGitHub is a cloud\u2011based platform that hosts Git repositories and provides tools for version control, code review, issue tracking, CI/CD (GitHub Actions), AI coding assistance (GitHub Copilot), security scanning, and more. It is the largest source\u2011code host worldwide, with over 150\u202fmillion users and millions of repositories as of 2025, and is owned by Microsoft since "
+   },
+   {
+    "q": "github",
+    "first": 1.938,
+    "total": 2.008,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\nGitHub is a cloud\u2011based platform that hosts Git repositories and provides tools for planning, coding, reviewing, testing, deploying, and securing software projects. It supports public and private repositories, issue tracking, pull requests, Actions (CI/CD), Copilot AI assistance, and a wide ecosystem of apps and actions. As of 2026 it serves over 150\u202fmillion develope"
+   },
+   {
+    "q": "github",
+    "first": 0.793,
+    "total": 1.025,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\nGitHub is a cloud\u2011based platform that lets developers host Git repositories, collaborate on code with issues, pull requests, and projects, and automate workflows with Actions, Codespaces, and Copilot. It also offers security features like Dependabot, secret scanning, and code scanning, and supports both free and paid plans for individuals, teams, and enterprises. The"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 1.677,
+    "total": 1.867,
+    "ok": false,
+    "answer": "The Golden Gate Bridge is a suspension bridge that spans the Golden\u202fGate Strait, linking San\u202fFrancisco (south) to Marin County (north). It is 1.7\u202fmi (2.74\u202fkm) long, 746\u202fft (227\u202fm) tall, and was opened on May\u202f27\u202f1937\u202f\u2014\u202fthe world\u2019s longest suspension span at the time. The bridge carries U.S.\u202fRoute\u202f101 and California State Route\u202f1, as well as pedestrian and bicycle traffic. It is a celebrated landmar"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.748,
+    "total": 1.044,
+    "ok": false,
+    "answer": "The Golden Gate Bridge is a suspension bridge spanning the Golden Gate Strait between San\u202fFrancisco and Marin County in California. It opened on May\u202f27, 1937, and is 1.7\u202fmi (2.74\u202fkm) long with towers 746\u202fft (227\u202fm) tall and a main span of 4,200\u202fft (1.28\u202fkm). The bridge is famously painted International\u202fOrange, carries US\u202fRoute\u202f101, and is a major tourist attraction with pedestrian and bicycle walk"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.745,
+    "total": 0.946,
+    "ok": false,
+    "answer": "**Golden\u202fGate\u202fBridge** \u2013 a suspension bridge that spans the Golden Gate strait between San\u202fFrancisco and Marin County, California. It opened on May\u202f27,\u202f1937, has 6 traffic lanes, pedestrian and bicycle walkways, and is known for its International\u202fOrange color and 746\u2011ft\u2011tall towers. The main span is 4,200\u202fft (1,280\u202fm), and the bridge is one of the Seven Wonders of the Modern World. [1]  \n\n:::follo"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.662,
+    "total": 0.84,
+    "ok": true,
+    "answer": "The phrase \u201cI\u2019m a baby bear and I lost my mommy\u201d is most often used in children\u2019s media that follows an orphaned bear cub on its quest to find a new family or return to the wild.  A popular example is the 2017 Disney short **\u201cBaby Bears Find New Mom\u201d**, in which a young bear who has lost its mother is taken in by a human mother\u2011figure and learns to survive and thrive with her help\u202f[9].  \n\n::follow"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 1.032,
+    "total": 1.225,
+    "ok": true,
+    "answer": "The phrase \u201cI\u2019m a baby bear and I lost my mommy\u201d refers to a short animated clip released by Disney in which a lonely bear cub is adopted by a human mother. The clip, titled **\u201cBaby Bears Find New Mom,\u201d** shows the cub\u2019s journey from isolation to being cared for by a woman who becomes its new family [9].  \n\nIf you\u2019d like to watch the clip, you can find it on Disney\u2019s video platform:  \n[Baby Bears "
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.84,
+    "total": 1.001,
+    "ok": true,
+    "answer": "The line \u201cI\u2019m a baby bear and I lost my mommy\u201d comes from the Disney short **\u201cBaby Bears Find New Mom.\u201d** It\u2019s a fun animated video where orphaned bear cubs are adopted by a human mother.  \n[Baby Bears Find New Mom](https://video.disney.com/watch/baby-bears-find-new-mom-4bbb29ac6a9a3df379d72caa)  \n\n:::followups  \nWhat\u2019s the plot of \u201cBaby Bears Find New Mom\u201d?  \nCan I watch the video on another plat"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.859,
+    "total": 0.979,
+    "ok": true,
+    "answer": "391[3]  \n\n:::followups  \nWhat is the product of 18 and 24?  \nHow do I use the distributive property to multiply two numbers?  \nWhat is the least common multiple of 17 and 23?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.818,
+    "total": 0.88,
+    "ok": true,
+    "answer": "The product of 17 and 23 is **391**.  \n\n:::followups  \nWhat is the product of 18 and 24?  \nHow can I verify a multiplication using a calculator?  \nWhat is the least common multiple of 17 and 23?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.476,
+    "total": 0.543,
+    "ok": true,
+    "answer": "The product of\u202f17\u202f\u00d7\u202f23\u202fis **391**. [1] [3] [6]  \n\n:::followups  \nWhat is 18 times 23?  \nHow do I do long multiplication by hand?  \nWhat is the LCM of 17 and 23?"
+   }
+  ],
+  "qwen3.8-27b @ Cerebras": [
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.324,
+    "total": 0.523,
+    "ok": true,
+    "answer": "According to the most recent reports from November 12-13, 2026, the latest person Jensen Huang was reported to have had an affair with is an **unnamed Nvidia employee**. [1, 3, 4]\n\nThis revelation brought the total number of reported extramarital relationships to three. The identity of this third woman has not been made public by Reuters or other news outlets citing the reports. [1, 4]\n\nThe other "
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.362,
+    "total": 0.552,
+    "ok": true,
+    "answer": "The most recent reported person Jensen Huang had an affair with is an unnamed Nvidia employee, according to a Reuters report published on November 12, 2026 [1, 3, 4]. This third reported extramarital relationship was revealed after Huang had already been linked to:\n\n1. **Alice Huang**: A Chinese businesswoman suspected by U.S. intelligence of being a Chinese spy [1, 2, 8].\n2. **Kimberly Powell**: "
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.362,
+    "total": 0.608,
+    "ok": true,
+    "answer": "The most recent person reported to be in an affair with Jensen Huang is an **unnamed Nvidia employee**. Reuters reported on November 12, 2026, that Huang had an intimate relationship with a second Nvidia employee, bringing the total number of reported extramarital relationships to three [1, 3, 4].\n\nThis unnamed employee is the latest revelation in the scandal. The other two reported relationships "
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.304,
+    "total": 0.503,
+    "ok": false,
+    "answer": "The CEO of AMD was 26 years old when Nvidia was founded.\n\nAMD's current CEO, Lisa Su, was born on November 7, 1969 [3]. Nvidia was founded on April 5, 1993 [5]. Therefore, she was 23 years old in 1993. However, if the question refers to the CEO who was leading AMD *at the time* Nvidia was founded, that was Jerry Sanders. Sanders was born on September 12, 1936 [4]. In April 1993, he was 56 years ol"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.461,
+    "total": 0.598,
+    "ok": true,
+    "answer": "Lisa Su, the current CEO of AMD, was **23 years old** when Nvidia was founded.\n\nShe was born on November 7, 1969 [3], and Nvidia was founded on April 5, 1993 [5].\n\nNote: If you are referring to the CEO of AMD *at the time* Nvidia was founded (1993), that was **Jerry Sanders**, who was **56 years old** (born September 12, 1936) [4, 10].\n\n![Lisa Su](img:4)\n![Jerry Sanders era context](img:5)\n\n:::fol"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "error": "429 {\"error\":{\"message\":\"Provider returned error\",\"code\":429,\"metadata\":{\"raw\":\"qwen/qwen3.8-27b is temporarily rate-limited upstream. Please retry shortly, or add your own provider key to use your own li"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.338,
+    "total": 0.567,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [1, 2].\n\nCanberra is a planned city located in the Australian Capital Territory (ACT), roughly halfway between Sydney and Melbourne [2, 8]. It was chosen in 1908 as the seat of government to compromise between the two largest cities, Sydney and Melbourne, and became the official capital when the Parliament moved there in 1927 [6, 10].\n\n![Canberra, the capital o"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.363,
+    "total": 0.486,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra. It was officially named on March 12, 1913 [7]. Canberra is located in the Australian Capital Territory (ACT) and serves as the seat of government, housing Parliament House and other major federal institutions [6, 9].\n\n![Canberra, the capital city of Australia](img:1)\n\n:::followups\nWhy was Canberra chosen instead of Sydney or Melbourne?\nWhat is the population o"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.301,
+    "total": 0.466,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra. [1] It is located in the Australian Capital Territory and serves as the political and administrative center of the nation, housing Parliament House and government offices. [3, 9]\n\n![Parliament House in Canberra](img:10)\n![Canberra cityscape](img:2)\n\nWhile Sydney is often mistaken for the capital due to its size and prominence, Canberra was purpose-built as the"
+   },
+   {
+    "q": "github",
+    "first": 0.332,
+    "total": 0.444,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\nGitHub is a proprietary developer platform owned by Microsoft that allows developers to create, store, manage, and share code using Git for version control [1]. It is the world's largest source code host, serving over 150 million developers and hosting more than 800 million repositories [1, 4]. The platform provides tools for the entire software development life cycl"
+   },
+   {
+    "q": "github",
+    "first": 1.36,
+    "total": 1.566,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\nGitHub is a web-based platform for distributed version control of code using Git. It allows developers to host repositories, review code, automate workflows, and collaborate on software projects [1].\n\nKey details:\n*   **Ownership:** It is a subsidiary of Microsoft, which acquired it in 2018 [1].\n*   **Scale:** It hosts over 800 million repositories and serves 225 mill"
+   },
+   {
+    "q": "github",
+    "first": 0.373,
+    "total": 0.572,
+    "ok": true,
+    "answer": "[GitHub](https://github.com)\n\nGitHub is a proprietary developer platform, owned by Microsoft, that allows users to create, store, manage, and share code using Git for distributed version control [1, 5]. It serves as the world's largest source code host, supporting over 150 million developers and hosting more than 420 million repositories [1, 10].\n\n![GitHub logo](img:1)\n\nKey features include:\n*   *"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.293,
+    "total": 0.815,
+    "ok": true,
+    "answer": "[Golden Gate Bridge](https://www.goldengate.org/bridge)\n\nThe Golden Gate Bridge is a famous suspension bridge spanning the Golden Gate strait, connecting San Francisco to Marin County in California. Opened in 1937, it is one of the most recognizable symbols of San Francisco and is designated as one of the \"Wonders of the Modern World\" by the American Society of Civil Engineers [1, 7].\n\n**Key Facts"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 1.512,
+    "total": 1.552,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is an iconic suspension bridge in San Francisco, California, spanning the Golden Gate strait between the city and Marin County. It is one of the most recognizable symbols of the United States, known for its \"International Orange\" color and Art Deco design.\n\n**Key Facts:**\n*   **Opened:** May 27, 1937 [1].\n*   **Length:** Approximately 1.7 miles (2.74 km) [1].\n*   **Height:**"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.303,
+    "total": 0.662,
+    "ok": true,
+    "answer": "[Golden Gate Bridge, Highway and Transportation District](https://www.goldengate.org/bridge)\n\nThe Golden Gate Bridge is a 1.7-mile (2.74 km) suspension bridge spanning the Golden Gate strait, connecting San Francisco to Marin County in California. Opened on May 27, 1937, it features two 746-foot (227.4 m) towers and is famous for its \"International Orange\" color and Art Deco styling [1, 7].\n\n### K"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.269,
+    "total": 0.505,
+    "ok": true,
+    "answer": "The search results show no single source for that exact phrase, but it strongly resembles the themes and dialogue found in children's cartoons and stories about orphaned bears, such as the recent 3D cartoon featuring Mickey Mouse helping a lost baby polar bear named Nanu [1].\n\nHere are a few other stories and real-life events involving baby bears who lost their mothers:\n*   **Mowgli:** A real slot"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.436,
+    "total": 0.65,
+    "ok": true,
+    "answer": "That phrase doesn't match a specific famous quote or song title in the search results, but it appears to be a common trope in children's stories and cartoons about orphaned animal cubs.\n\nThe results show several media pieces featuring lost baby bears:\n*   **\"Mickey & Minnie Help a Lost Baby Polar Bear\"** is a 2025 3D cartoon where a baby polar bear named Nanu says, \"I'm lost. I can't find my mama."
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.349,
+    "total": 0.644,
+    "ok": true,
+    "answer": "That sounds like a scary and lonely place to be. In stories like \"Mickey & Minnie Help a Lost Baby Polar Bear,\" kind characters often appear to help lost cubs find their way home by following their mother's scent [1].\n\nIn real life, if a wild bear cub is truly separated from its mother and cannot find her, it is at great risk. Wildlife experts generally advise against intervening unless the cub is"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.419,
+    "total": 0.484,
+    "ok": true,
+    "answer": "17 times 23 is **391** [3, 4].\n\n:::followups\n17 times 24\n17 times 22\nWhat is 17 times 23 in binary"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.398,
+    "total": 0.529,
+    "ok": false,
+    "answer": "17 times 23 is 391 [1, 3].\n\nYou can calculate this using long multiplication, where you multiply 17 by the ones digit (3) to get 51, and by the tens digit (20) to get 340, then add them together: 51 + 340 = 391 [4, 5].\n\n![Calculation of 17 times 23](img:1)\n\n:::followups\nWhat is 23 times 17?\nWhat is the LCM of 17 and 23?\nHow to use the distributive property to multiply 17 and 23"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.336,
+    "total": 0.387,
+    "ok": true,
+    "answer": "17 times 23 is 391 [3, 7].\n\n:::followups\nhow to multiply 17 by 23 step by step\nwhat is the distributive property trick for 17x23\nwhat is the LCM of 17 and 23"
+   }
+  ],
+  "beam-1.0-501b-a23b @ BaseTen": [
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.669,
+    "total": 1.019,
+    "ok": true,
+    "answer": "The latest reported affair is with an unnamed Nvidia employee: Reuters and other outlets say Jensen Huang had an intimate relationship with a second (third overall) Nvidia employee, but have not identified her by name, and attempts to contact her were unsuccessful [1, 3, 4].\n\nThe two previously named women linked to him are Alice Huang, a businesswoman U.S. intelligence suspects of being a Chinese"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.553,
+    "total": 0.907,
+    "ok": true,
+    "answer": "The latest reported affair involves an **unnamed Nvidia employee** \u2014 Reuters has not identified her, and attempts to contact her were unsuccessful [1][3][4].\n\nPreviously named figures in the scandal are **Alice Huang** (a Chinese businesswoman U.S. intelligence suspects of being a spy) and **Kimberly Powell** (Nvidia\u2019s VP of healthcare) [2][6]. The most recent (third) allegation, reported November"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.541,
+    "total": 0.82,
+    "ok": true,
+    "answer": "The latest reported affair involves an unnamed Nvidia employee\u2014Reuters withheld her identity and could not reach her for comment [1][3][4].\n\nThis is the third reported relationship; the others were Alice Huang (the woman U.S. officials suspect of being a Chinese spy) and Nvidia VP of healthcare Kimberly Powell [1][4][6].\n\n:::followups\nWhat led to Jensen Huang's resignation as Nvidia CEO?\nWho is Al"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 2.267,
+    "total": 2.458,
+    "ok": false,
+    "answer": "Nvidia was founded on April 5, 1993. If you mean AMD\u2019s current CEO, Lisa Su (born November 7, 1969), she was 23 at the time; if you mean AMD\u2019s CEO at that time, Jerry Sanders (born September 12, 1936), he was 56. [3][4][5]\n\n:::followups\nHow old was Jensen Huang when he founded Nvidia?\nWhen did Lisa Su become CEO of AMD?\nWho were the founders of Nvidia?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 1.212,
+    "total": 1.393,
+    "ok": true,
+    "answer": "The current AMD CEO, Lisa Su, was **23 years old** when Nvidia was founded on April 5, 1993 (she was born November 7, 1969) [1][3][5]. If you mean AMD\u2019s CEO at that time, Jerry Sanders, he was **56** (born September 12, 1936) [4][5].\n\n:::followups\nWas Jerry Sanders still AMD's CEO when Nvidia was founded?\nHow old was Jensen Huang when he founded Nvidia?\nWhen did Lisa Su become AMD's CEO?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 1.19,
+    "total": 1.391,
+    "ok": true,
+    "answer": "If you mean AMD\u2019s current CEO, Lisa Su was 23 when Nvidia was founded on April 5, 1993; AMD\u2019s CEO at that time was Jerry Sanders, who was 56 [1][4][5][6].\n\n:::followups\nWhen was Nvidia founded?\nWho is the current CEO of AMD?\nHow old was Jensen Huang when he founded Nvidia?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.357,
+    "total": 0.589,
+    "ok": true,
+    "answer": "The capital of Australia is **Canberra** [1][2].\n\nIt is the political and administrative capital, located in the Australian Capital Territory (ACT), and houses Parliament House and government offices [3][6]. It was chosen as the site in 1908 and officially named in 1913 [6][7].\n\n:::followups\nWhat is the population of Canberra?\nWhy isn't Sydney or Melbourne the capital?\nWhich government buildings a"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.342,
+    "total": 0.581,
+    "ok": true,
+    "answer": "The capital of Australia is **Canberra**, located in the Australian Capital Territory (ACT) in southeastern Australia. It became the seat of government in 1927, chosen as a compromise between Sydney and Melbourne, and today is the country's eighth-largest city by population (about 485,000 as of 2025) and its largest inland city [1][2][6].\n\n![Canberra](img:2)\n\n:::followups\nWhat is the population of"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.403,
+    "total": 0.645,
+    "ok": true,
+    "answer": "The capital of Australia is **Canberra**, located in the Australian Capital Territory (ACT) [1][2][3].\n\nCanberra was chosen as the capital site in 1908 and officially named on 12 March 1913; Parliament moved there from Melbourne in 1927 [6][7]. With an estimated population of about 484,630 as of 2025, it's Australia's largest inland city [2].\n\n![Canberra, Australia's capital](img:1)\n\n:::followups\n"
+   },
+   {
+    "q": "github",
+    "first": 0.462,
+    "total": 0.712,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\nGitHub is a proprietary developer platform (owned by Microsoft since 2018) that hosts Git repositories and provides tools for code review, collaboration, issue tracking, CI/CD, and AI-assisted development (GitHub Copilot). It is the world's largest source code host, with over 220 million developers and 800 million+ repositories [1][6].\n\n![GitHub logo](img:1)\n\n:::foll"
+   },
+   {
+    "q": "github",
+    "first": 0.618,
+    "total": 0.845,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\nGitHub is the world's largest developer platform and source code host, owned by Microsoft since 2018. It's built on Git and lets developers store, version, review, and collaborate on code, with tools like Copilot (AI coding), Actions (CI/CD), Issues/Projects (planning), Dependabot (security), and Pages (hosting). It's free for public and private repositories, with pa"
+   },
+   {
+    "q": "github",
+    "first": 0.348,
+    "total": 0.612,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\nGitHub is a proprietary developer platform that uses Git for distributed version control, letting developers create, store, manage, and share code. Operated by GitHub, Inc., a subsidiary of Microsoft since 2018, it's headquartered in San Francisco and has over 200 million developers and 800 million repositories. It provides access control, bug tracking, CI/CD, wikis,"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.618,
+    "total": 0.96,
+    "ok": true,
+    "answer": "[Golden Gate Bridge](https://www.goldengate.org/)\n\nThe Golden Gate Bridge is a suspension bridge spanning the Golden Gate strait in San Francisco, California, linking San Francisco to Marin County. It opened on May 27, 1937, is 1.7 miles long with a 4,200-foot main span, and its towers rise 746 feet above the water. Its signature color is \"International Orange,\" and it carries U.S. Route 101 and C"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.482,
+    "total": 0.871,
+    "ok": true,
+    "answer": "[Golden Gate Bridge](https://www.goldengate.org/)\n\nThe Golden Gate Bridge is a suspension bridge spanning the Golden Gate strait, connecting San Francisco to Marin County, California. It opened on May 27, 1937, after construction began January 5, 1933. It is about 1.7 miles (2.7 km) long, with 746-foot (227 m) towers and a 4,200-foot (1,280 m) main span that was the world's longest when built. Its"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.712,
+    "total": 1.166,
+    "ok": true,
+    "answer": "[Golden Gate Bridge](https://www.goldengate.org/)\n\nThe Golden Gate Bridge is a suspension bridge spanning the Golden Gate strait between San Francisco and Marin County, California. It opened to the public on May 27, 1937, and was the world's longest suspension bridge main span at the time (4,200 ft / 1,280 m). The towers rise 746 ft (227 m) above the water, the total length is about 1.7 miles (2.7"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 1.405,
+    "total": 1.962,
+    "ok": true,
+    "answer": "The results don't point to one clear source for that exact phrase, but they're full of lost-baby-bear stories and videos:\n\n- A **Disney 3D cartoon** where Mickey and Minnie help a lost polar bear cub named Nanu find his mama by following her tracks through glowing ice caves [1].\n- Real-life rescue stories, including a sloth bear cub named **Mowgli** (Wildlife SOS) whose mother was electrocuted by "
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 1.155,
+    "total": 1.718,
+    "ok": true,
+    "answer": "The phrase \"I'm a baby bear and I lost my mommy\" is spoken by the lost cub Nanu in a 2025 Mickey & Minnie 3D cartoon, *Mickey & Minnie Help a Lost Baby Polar Bear*, where Mickey and Minnie follow paw prints and Nanu's sense of smell to reunite him with his mother in a glowing ice cave [1]. The same sentiment shows up in real-world rescue stories too: an orphaned black bear cub found in California'"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 1.029,
+    "total": 1.561,
+    "ok": true,
+    "answer": "The phrase \"I'm a baby bear and I lost my mommy\" is most closely associated with a viral YouTube video titled **\"Lost Bear Cub - Calling for Mom\"** (2009) [6], along with similar clips like **\"Bear Cubs Lost Their Mothers But Found A Family\"** [5] and **\"Lost Bear cub crying for mom\"** [8]. It's also echoed in real rescue stories of orphaned cubs, such as a 12-pound black bear cub cared for by the"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.429,
+    "total": 0.569,
+    "ok": true,
+    "answer": "17 times 23 is **391** [3].\n\nYou can verify it by breaking it down: 17 \u00d7 23 = 17 \u00d7 (20 + 3) = 340 + 51 = 391 [5].\n\n:::followups\nWhat is 17 plus 23?\nWhat is the LCM of 17 and 23?\nWhat is 23 times 17?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.351,
+    "total": 0.494,
+    "ok": true,
+    "answer": "17 times 23 is **391**.\n\nYou can verify it a few ways: 17 \u00d7 20 = 340 and 17 \u00d7 3 = 51, so 340 + 51 = 391 [1][5].\n\n:::followups\nWhat is 17 times 24?\nWhat is 23 times 17?\nHow do you multiply 17 by 23 using the distributive property?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.44,
+    "total": 0.514,
+    "ok": true,
+    "answer": "17 times 23 is **391**.\n\n:::followups\nWhat is 23 times 17?\nWhat is 17 plus 23?\nWhat is the LCM of 17 and 23?"
+   }
+  ],
+  "deepseek-v4.1-flash @ Together": [
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.264,
+    "total": 1.237,
+    "ok": true,
+    "answer": "The latest reported relationship is with a second, unnamed Nvidia employee, bringing the total to three reported extramarital affairs [1][3][4]. Reuters chose not to identify this employee [1][3][4].\n\nThe two named women are:\n- **Alice Huang**, a Chinese businesswoman whom US intelligence suspects of being a spy; Huang admitted to an affair with her on November 8 [1][2][10].\n- **Kimberly Powell**,"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.248,
+    "total": 0.678,
+    "ok": true,
+    "answer": "The latest reported person is an unnamed Nvidia employee; Reuters withheld her name [1][3][4].\n\nThe three reported relationships are Alice Huang (suspected by US intelligence of being a Chinese asset), Nvidia VP of healthcare Kimberly Powell, and the unnamed Nvidia employee revealed on Nov 12, 2026 [1][3][4]. Jensen Huang resigned as Nvidia CEO on Nov 12; CFO Colette Kress is interim CEO [1][3][10"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.306,
+    "total": 3.603,
+    "ok": true,
+    "answer": "The most recent reported relationship is with an unnamed Nvidia employee; Reuters withheld her name, and this third report is what preceded Jensen Huang's resignation as Nvidia CEO [1][3][4].\n\nThe two named women in the scandal are Alice Huang, a businesswoman US intelligence suspects of being a Chinese spy, and Kimberly Powell, Nvidia's vice president of healthcare [2][6][10]. Huang acknowledged "
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.248,
+    "total": 0.721,
+    "ok": true,
+    "answer": "Lisa Su, the current AMD CEO, was about 23 when Nvidia was founded \u2014 she was born November 7, 1969 [3], and Nvidia was founded on April 5, 1993 [5].\n\nIf you meant the AMD CEO *at that time*, that was Jerry Sanders (CEO from 1969 to 2002) [2], who was born September 12, 1936 [4] and would have been 56.\n\n![Lisa Su, AMD CEO](img:1)\n![Jerry Sanders, AMD co-founder](img:3)\n\n:::followups\nWho was AMD's C"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.244,
+    "total": 0.54,
+    "ok": true,
+    "answer": "Lisa Su, AMD's current CEO, was about 23 when Nvidia was founded on April 5, 1993 [5] \u2014 she was born November 7, 1969 [3], making her 23 at the time. The AMD CEO in 1993 was actually Jerry Sanders (CEO from 1969 to 2002) [2, 4], who was 56 then; he was born September 12, 1936 [4].\n\n:::followups\nWhen did Lisa Su become CEO of AMD?\nWho founded Nvidia and when?\nAre Lisa Su and Jensen Huang related?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.248,
+    "total": 0.765,
+    "ok": true,
+    "answer": "Lisa Su, AMD's current CEO, was 23 when Nvidia was founded. She was born November 7, 1969 [3], and Nvidia was founded on April 5, 1993 [5], making her 23 at the time.\n\nNote that she wasn't AMD's CEO then \u2014 she took that role in October 2014 [1][2]. Before her, AMD's CEOs included Rory Read (2011\u20132014), Dirk Meyer (2008\u20132011), Hector Ruiz (2002\u20132008) and founder Jerry Sanders (1969\u20132002) [2]. Jerry"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.229,
+    "total": 0.541,
+    "ok": true,
+    "answer": "Canberra is the capital of Australia [1][2][3]. It's in the Australian Capital Territory, about 240 km southwest of Sydney, and was chosen as the site in 1908, officially named in 1913 [6][8][10].\n\nCanberra is Australia's largest inland city, with a population of about 484,630 (2025) [2].\n\n![Canberra](img:1)\n![Parliament House area](img:2)\n\n:::followups\nWhat is the population of Canberra?\nWhy is C"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.219,
+    "total": 0.492,
+    "ok": true,
+    "answer": "The capital of Australia is **Canberra** [1][2][3]. It's in the Australian Capital Territory, located in southeastern Australia between Sydney and Melbourne [2][4].\n\n![Canberra, Australia's capital city](img:1)\n\nCanberra was chosen as the site in 1908 and officially named on 12 March 1913; Parliament moved there in 1927 [6][7][10].\n\n:::followups\nWhat is the population of Canberra?\nWhy is Canberra "
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.213,
+    "total": 0.551,
+    "ok": true,
+    "answer": "The capital of Australia is **Canberra** [1][2][3].\n\nIt's located in the Australian Capital Territory (ACT), about 240 km southwest of Sydney, and is home to Parliament House and Australia's main national institutions [3][8][9]. Canberra was chosen as the site in 1908 and officially named in 1913, though Parliament didn't move there from Melbourne until 1927 [6][10].\n\n![Canberra, Australia's capit"
+   },
+   {
+    "q": "github",
+    "first": 2.408,
+    "total": 3.054,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\nGitHub is a proprietary developer platform owned by Microsoft that lets developers create, store, manage, and share code using Git for version control, plus tools for bug tracking, task management, CI/CD, and wikis [1][3]. It's the world's largest source code host, with over 225 million developers and 800 million repositories as of 2026 [4][6].\n\nKey facts:\n- **Founde"
+   },
+   {
+    "q": "github",
+    "first": 0.242,
+    "total": 1.182,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\nGitHub is a proprietary developer platform owned by Microsoft that hosts Git repositories and adds collaboration, automation, and AI tools on top of version control [1][3]. It launched in April 2008 and now reports roughly 225 million developers and over 800 million repositories [4].\n\n**What it's used for**\n- Storing and managing code with version control [3]\n- Code "
+   },
+   {
+    "q": "github",
+    "first": 0.222,
+    "total": 0.685,
+    "ok": true,
+    "answer": "[GitHub](https://github.com/)\n\nGitHub is a proprietary developer platform for hosting, managing, and sharing code using Git version control, along with collaboration tools like pull requests, issues, and Actions [1][3]. It's owned by Microsoft (acquired in 2018) and reports over 225 million developers and 800 million repositories [4][5].\n\n![GitHub logo](img:1)\n![GitHub platform overview](img:2)\n\nC"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.231,
+    "total": 0.855,
+    "ok": true,
+    "answer": "[Golden Gate Bridge, Highway and Transportation District](https://www.goldengate.org/)\n\nThe Golden Gate Bridge is a 1.7-mile-long suspension bridge in San Francisco, California, opened on May 27, 1937 [1, 8]. It is the iconic orange-red (International Orange) span across the Golden Gate strait, connecting San Francisco to Marin County and carrying US 101 and SR 1 [1].\n\nKey facts:\n- Longest span: 4"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.288,
+    "total": 1.074,
+    "ok": true,
+    "answer": "[Golden Gate Bridge, Highway and Transportation District](https://www.goldengate.org/)\n\nThe Golden Gate Bridge is a suspension bridge spanning the Golden Gate strait, connecting San Francisco to Marin County, California, and carrying US 101 and SR 1 [1]. It opened to pedestrians on May 27, 1937, with vehicles following the next day [1][2].\n\n![Golden Gate Bridge](img:1)\n\n**Key facts:**\n- **Total le"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.239,
+    "total": 0.964,
+    "ok": true,
+    "answer": "[Golden Gate Bridge](https://www.goldengate.org/)\n\nThe Golden Gate Bridge is a suspension bridge in California linking San Francisco to Marin County across the Golden Gate strait, carrying US 101 and SR 1 [1]. It opened May 27, 1937, after construction began in 1933 [1][2].\n\n- **Length:** about 1.7 mi (2.7 km) total; longest span 4,200 ft (1,280 m) [1][8]\n- **Towers:** 746 ft (227 m) above water ["
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.236,
+    "total": 1.421,
+    "ok": true,
+    "answer": "\"I'm a baby bear and I lost my mommy\" isn't a quote from a known book, movie, or song \u2014 the search results don't point to one clear source. It reads like a line a child would say while pretending, or a caption from a kids' video about an orphaned bear cub finding its mother again.\n\nWhat the results do show is a cluster of real and animated stories with that same premise:\n\n- **Animated kids' story:"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.262,
+    "total": 1.085,
+    "ok": true,
+    "answer": "No single famous quote or story goes with that exact line \u2014 the search results show no clear source, just several bear-themed videos and stories. The closest match is a 2025 kids' cartoon, *Mickey & Minnie Help a Lost Baby Polar Bear*, where a lost polar bear cub named Nanu says \"I'm lost. I can't find my mama\" and is reunited with her [1].\n\nOther results are real-life rescue stories rather than a"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.329,
+    "total": 0.943,
+    "ok": true,
+    "answer": "The phrase isn't from a single famous book or film \u2014 search results show no clear source for it as an exact quote. It matches a kids' snow-adventure story in which a lost baby polar bear named Nanu says \"I'm lost. I can't find my mama\" before Mickey and Minnie help him find her [1]. It also describes several real rescue cases: an orphaned sloth bear cub named Mowgli found trying to feed from his d"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.285,
+    "total": 0.5,
+    "ok": false,
+    "answer": "17 \u00d7 23 = **391**. [3][7]\n\nYou can verify it a few ways:\n- Distributive property: 17 \u00d7 (20 + 3) = 340 + 51 = 391 [5]\n- Long multiplication: 51 + 340 = 391 [4]\n\n![Long multiplication of 17 and 23](img:1)\n\n:::followups\nWhat is 17 times 24?\nWhat is 391 divided by 17?\nIs 391 a prime number?\n:::"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.403,
+    "total": 0.512,
+    "ok": true,
+    "answer": "17 \u00d7 23 = **391** [1][3][5]\n\nOne quick way to see it: 17 \u00d7 23 = 17 \u00d7 (20 + 3) = 340 + 51 = 391 [5].\n\n:::followups\nWhat is 391 divided by 17?\nWhat is 17 times 24?\nIs 391 a prime number?\n:::"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.236,
+    "total": 0.4,
+    "ok": false,
+    "answer": "17 \u00d7 23 = **391**.\n\nOne way to check it: (20 \u2212 3)(20 + 3) = 400 \u2212 9 = 391 [1][5].\n\n![Handwritten multiplication of 17 times 23 equal to 391](img:1)\n\n:::followups\nWhat is 17 squared?\nWhat is 391 divided by 23?\nIs 391 a prime number?"
+   }
+  ],
+  "lfm-2.5-24b-a2b @ Liquid": [
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 8.777,
+    "total": 8.838,
+    "ok": true,
+    "answer": "The latest person Jensen Huang had an affair with is an unnamed Nvidia employee (the second employee in the chain of affairs). Reuters reported on November 12, 2026, that Huang had an intimate relationship with another Nvidia employee, but the company was not naming her, and attempts to contact her were unsuccessful [1][3][4]. This third reported affair followed his earlier relationships with Alic"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 3.645,
+    "total": 3.779,
+    "ok": true,
+    "answer": "The latest person Jensen Huang had an affair with is an unnamed Nvidia employee \u2014 the second employee in the third reported affair, whose identity has not been disclosed [1][3]. Reports say the new allegation involves a woman who is an Nvidia employee, but her name has not been released and attempts to contact her were unsuccessful [1][4].\n\n:::followups\nWas the identity of the latest employee ever"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 4.166,
+    "total": 4.282,
+    "ok": true,
+    "answer": "The latest reported affair is with an unnamed Nvidia employee (the second employee), according to Reuters and other news reports [1][3][4][6].\n:::followups\nDo you want details about the other reported affairs?\nWhen did Jensen Huang publicly admit to the affair?\nWhat is the current status of the investigation?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 11.555,
+    "total": 11.675,
+    "ok": false,
+    "answer": "When Nvidia was founded in 1993, AMD's CEO was Jerry Sanders, who was 56 years old [4][5]. Lisa Su, the current CEO of AMD, was 23 years old at that time (she was born in 1969) [3].\n\n:::followups\nHow old was Jensen Huang when he founded Nvidia?\nWhen did Lisa Su become CEO of AMD?\nWho was the first CEO of AMD?"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 2.927,
+    "total": 3.16,
+    "ok": false,
+    "answer": "Jerry Sanders, AMD's CEO when Nvidia was founded in April 1993, was 56 years old [4][5][2].\n\n### Related facts\n- Nvidia was founded on April 5, 1993 by Jensen Huang, Chris Malachowsky, and Curtis Priem [5].\n- Jerry Sanders served as AMD's president and CEO from 1969 to 2002 [2].\n\n:::\nWho was Nvidia's CEO at the time of its founding?\nWhen did Jerry Sanders step down as AMD's CEO?\nWhat was Lisa Su's"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 5.954,
+    "total": 6.135,
+    "ok": false,
+    "answer": "Jerry Sanders, who was AMD's CEO when Nvidia was founded on April 5, 1993, was 56 years old [4][5].\n\nHe was born on September 12, 1936, so he had not yet turned 57 by the time Nvidia was founded [4].\n\n::::followups\nWould you like to know more about Jerry Sanders' tenure at AMD?\nHow old was Nvidia's founder Jensen Huang when he founded the company?\nAre you interested in Lisa Su's age at the time Nv"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 1.714,
+    "total": 2.111,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra, the political and administrative center of the country located in the Australian Capital Territory [2][5]. Canberra was chosen as the national capital in 1908 and officially named in 1913 [6][7].\n\n:::\nWhere is Canberra located?\nWhat is the population of Canberra?\nHow did Canberra become the capital of Australia?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 1.953,
+    "total": 1.967,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra. Canberra is the capital city of the Australian Capital Territory and serves as the nation's political and administrative center [2][5].\n\n::followups\nWhen did Canberra become the capital of Australia?\nWhat is the population of Canberra?\nWhat is the Australian Capital Territory?"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 2.165,
+    "total": 2.252,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [2][5]. Canberra, situated in the Australian Capital Territory, has served as the nation's political and administrative capital since 1913 [2][6].  \n::followups  \nWhen was Canberra chosen as Australia's capital?  \nWhat is the population of Canberra?  \nWhat role did the Seat of Government Act 1908 play?"
+   },
+   {
+    "q": "github",
+    "first": 2.451,
+    "total": 2.542,
+    "ok": false,
+    "answer": "GitHub is a proprietary developer platform that lets developers create, store, manage, and share code using Git for distributed version control, with built-in tools for access control, bug tracking, and CI/CD [1][3]. It is operated by Microsoft (a subsidiary) and has over 150 million users as of 2025 [1][6]. Key features include repositories, pull requests, issues, GitHub Actions for automation, C"
+   },
+   {
+    "q": "github",
+    "first": 2.723,
+    "total": 2.889,
+    "ok": false,
+    "answer": "GitHub is a proprietary developer platform that lets developers create, store, manage, and share code using Git, with features like access control, bug tracking, code review, CI/CD, and AI tools such as Copilot, and is operated by Microsoft as a subsidiary [1].\n\nFounded in 2008, it has over 150 million users (as of May 2025) and hosts more than 800 million repositories, including hundreds of milli"
+   },
+   {
+    "q": "github",
+    "first": 3.753,
+    "total": 4.01,
+    "ok": false,
+    "answer": "GitHub is a proprietary developer platform for version control and collaboration, built on Git and now a Microsoft subsidiary that hosts code, manages projects, and offers AI tools like Copilot [1][3]. It provides repositories, code review, issue tracking, CI/CD, and security features, and is the world's largest source code host with over 100 million developers and 420 million repositories [1][3]."
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 3.858,
+    "total": 4.213,
+    "ok": false,
+    "answer": "The Golden Gate Bridge is a suspension bridge that spans the Golden Gate strait between San Francisco, California, and Marin County, carrying U.S. Route 101 and California State Route 1 [1]. It is 8,980 feet (about 1.70 miles) long, with towers rising 746 feet above the water, and was opened to the public on May 27, 1937 [1][8]. The bridge is painted International Orange, is part of U.S. Bicycle R"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 5.807,
+    "total": 5.917,
+    "ok": false,
+    "answer": "The Golden Gate Bridge is a suspension bridge in San Francisco, California, spanning the Golden Gate strait between San Francisco and Marin County, opening to traffic on May 27, 1937 [1]. It is 1.7 miles (2.74\u202fkm) long, with 746\u2011foot towers, a 90\u2011foot width, and its signature International Orange color, and it is recognized as one of the Wonders of the Modern World [7][8]. The bridge is maintained"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 7.756,
+    "total": 7.972,
+    "ok": false,
+    "answer": "The Golden Gate Bridge is a suspension bridge in San Francisco, California, spanning the Golden Gate strait and connecting San Francisco to Marin County [1]. It opened to the public on May 27, 1937, and is 1.7 miles (8980 ft) long with towers rising 746 ft above the water [1][8]. The bridge is painted International Orange, carries six lanes of US 101/SR 1, and has dedicated walkways for pedestrian"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 5.193,
+    "total": 5.721,
+    "ok": false,
+    "answer": "You're not alone\u2014many baby bears have lost their moms and found new families, like in the Disney short \"Baby Bears Find New Mom\" [9] and the Mickey & Minnie cartoon about a lost baby polar bear who gets help [1]. The AP News also covered an orphaned black bear cub who was cared for by the San Diego Humane Society [3], and the Wildlife SOS story of Mowgli shows how a rescued cub was nurtured back t"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 3.941,
+    "total": 4.124,
+    "ok": true,
+    "answer": "The closest match is the 3D cartoon short \"Mickey & Minnie Help a Lost Baby Polar Bear\" on YouTube, in which a lost baby polar bear cries out that he's lost and can't find his mama, and Mickey and Minnie help him find his mother and reunite with her [1]. Other real-life stories of orphaned cubs finding new families include the 2017 Dodo piece \"Baby Bear Who Lost His Mom Gets A Second Chance\" and W"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 4.71,
+    "total": 4.787,
+    "ok": true,
+    "answer": "You're not alone \u2014 there's a comforting 3D cartoon story called \"Mickey & Minnie Help a Lost Baby Polar Bear\" about a lost baby polar bear being found and comforted by Mickey and Minnie [1]. Real-life rescues of orphaned bear cubs include a black bear cub cared for by the San Diego Humane Society [3] and a baby bear who lost its mother and was rescued in Southern California [4]. A famous bear resc"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 1.883,
+    "total": 1.96,
+    "ok": true,
+    "answer": "17 times 23 equals 391. This result is confirmed by multiple sources using the distributive property, long multiplication, and calculators [1][3][5].\n\n:::\nHow do you multiply 17 and 23 using the distributive property?\nWhat is the LCM of 17 and 23?\nCan you show the long multiplication steps for 17 \u00d7 23?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 3.345,
+    "total": 3.452,
+    "ok": true,
+    "answer": "17 times 23 equals 391 [1]. The distributive property method shows 17 \u00d7 23 = (20 - 3)(20 + 3) = 400 - 9 = 391 [1]. This result is also confirmed by online calculators and number references [3][7].  \n::followups  \nWhat is 17 times 24?  \nHow do you multiply two-digit numbers using the distributive property?  \nWhat is the LCM of 17 and 23?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 3.215,
+    "total": 3.318,
+    "ok": true,
+    "answer": "17 times 23 equals 391 [1]. This is confirmed by standard multiplication and by the distributive property method [1], as well as by online calculators [3] and [5]. Because 17 and 23 are coprime, their least common multiple is also 391 [9].\n\n:::followups\nWhat is 17 times 24?\nCan you show the distributive property method for 17 \u00d7 23 again?\nWhat is the LCM of 17 and 23?"
+   }
+  ],
+  "nemotron-3.5-lightning @ Fireworks": [
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.46,
+    "total": 0.674,
+    "ok": true,
+    "answer": "Jensen Huang had extramarital affairs with two Nvidia employees (Kimberly Powell and a second unnamed employee), in addition to his relationship with Alice Huang. His admission on November 8 acknowledged an affair without naming the person, leading to his resignation. Reuters reported a third affair with another Nvidia employee on November 13, bringing the total to three reported relationships. [1"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.413,
+    "total": 0.541,
+    "ok": true,
+    "answer": "The latest reported person Jensen Huang had an affair with is a second, unnamed Nvidia employee, bringing the total of reported extramarital relationships to three (alongside Alice Huang and Kimberly Powell) [1][2][4]. Reuters is withholding the employee's name and could not reach her for comment. No official source identifies her by name in the available results."
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.234,
+    "total": 0.318,
+    "ok": true,
+    "answer": "Reuters reported that Nvidia CEO Jensen Huang had a third reported affair with another Nvidia employee, bringing the total to three [1]. The employee's identity has not been named in the reports [1, 4, 3]."
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.463,
+    "total": 0.591,
+    "ok": false,
+    "answer": "Jensen Huang was 30 years old when he founded Nvidia on April 5, 1993. Lisa Su was born in 1969 and became AMD's CEO in October 2014, so she was 45 at the time of Nvidia's founding. [1][5][6]"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.478,
+    "total": 0.525,
+    "ok": false,
+    "answer": "Lisa Su was 45 years old when Nvidia was founded in 1993. [5] She was born in 1969, and Nvidia was founded by Jensen Huang on April 5, 1993. [5][6]"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.333,
+    "total": 0.413,
+    "ok": false,
+    "answer": "The CEO of AMD (Lisa Su) was born in 1969, and Nvidia was founded in 1993, so she was 24 years old when Nvidia was founded [1, 5, 7]."
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.297,
+    "total": 0.322,
+    "ok": true,
+    "answer": "Canberra is the capital of Australia [2, 5, 7]."
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.292,
+    "total": 0.411,
+    "ok": true,
+    "answer": "Canberra is the capital city of Australia. It is the political and administrative capital, home to Parliament House and key government offices. The city is located inland within the Australian Capital Territory (ACT), situated between Sydney and Melbourne. [2][3][5][8]"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.234,
+    "total": 0.567,
+    "ok": true,
+    "answer": "Canberra is the capital of Australia [1][2][5]. It is a planned city located in the Australian Capital Territory, about 150 miles southwest of Sydney, and was officially named in 1913 [3][7]. It houses the Parliament House and federal government offices.\n\n![Aerial view of Canberra's layout and landmarks](img:1)\n\n![The Australian War Memorial in Canberra](img:2)\n\n![Parliament House, Canberra](img:3"
+   },
+   {
+    "q": "github",
+    "first": 0.247,
+    "total": 0.613,
+    "ok": false,
+    "answer": "GitHub is a cloud-based developer platform for hosting, reviewing, and collaborating on software projects using Git for version control [1]. It is owned by Microsoft and hosts over 150 million users and 420 million repositories [1].![GitHub logo](img:1)\n\n:::followups\nHow do I create a free account?\nWhat are GitHub Copilot's main features?\nHow do I contribute to open source projects on GitHub?"
+   },
+   {
+    "q": "github",
+    "first": 0.536,
+    "total": 0.951,
+    "ok": false,
+    "answer": "GitHub is a proprietary developer platform owned by Microsoft that allows developers to create, store, manage, and share code using Git's distributed version control [1]. Founded in 2008 and headquartered in San Francisco, it hosts over 150 million users and 420+ million repositories, making it the world's largest source code host [1, 12]. GitHub provides collaborative tools like pull requests and"
+   },
+   {
+    "q": "github",
+    "first": 0.281,
+    "total": 0.49,
+    "ok": false,
+    "answer": "GitHub is a developer platform for hosting, reviewing, and collaborating on code [1]. It is commonly used to host open source software development projects and is the world's largest source code host [11][13]. As a subsidiary of Microsoft, it serves over 150 million users and hosts more than 420 million repositories [1][6].\n\n:::followups\nWhat is GitHub used for?\nHow do I create a GitHub account?\nW"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.37,
+    "total": 0.777,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a suspension bridge spanning the Golden Gate strait, connecting San Francisco to Marin County, California, and is one of the most photographed and internationally recognized symbols of the region [1]. Opened in 1937, it features Art Deco styling, \"International Orange\" paint, and towers rising 746 feet above the water. Recognized by the American Society of Civil Engineers"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.269,
+    "total": 0.804,
+    "ok": false,
+    "answer": "The Golden Gate Bridge is a suspension bridge spanning the Golden Gate strait between San Francisco and Marin County, California, United States. It opened to traffic on May 27, 1937, and is one of the most photographed and internationally recognized symbols of the region. [1][2] It is 8,980 ft (1.7 mi / 2.74 km) long, 746 ft tall, and its distinctive International Orange color was chosen to comple"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.286,
+    "total": 0.722,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a suspension bridge spanning the Golden Gate strait, connecting San Francisco Bay to the Pacific Ocean in California [1]. It was completed in 1937 and is internationally recognized as one of the most photographed and iconic bridges in the world [1]. It carries U.S. Route 101 and California State Route 1, plus pedestrian and bicycle traffic, and is designated as part of U."
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.232,
+    "total": 0.628,
+    "ok": true,
+    "answer": "The phrase \"I'm a baby bear and I lost my mommy\" is most commonly associated with a popular YouTube cartoon video titled \"Mickey & Minnie Help a Lost Baby Polar Bear | Kids Snow Adventure Story | 3D Cartoon\" (2025), where Mickey Mouse helps a crying polar bear cub find its mother [1]. The video depicts the cub following footprints, entering a glowing cave, and being reunited with its mother to a h"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.249,
+    "total": 0.379,
+    "ok": true,
+    "answer": "This is the opening of a Disney animated short \"Baby Bears Find New Mom\" featuring orphaned bears adopted by a human mother [9]. The phrase mirrors the cub's plaintive cry in the story."
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.259,
+    "total": 0.604,
+    "ok": true,
+    "answer": "This is a lyric from the children's song \"The Bear Went Over the Mountain\" (also known as \"Do You Know the Muffin Man?\" variant), where the bear cub calls out for its mother. The query appears to be a playful roleplay phrase rather than a request for a specific factual answer. The search results show many real-life and animated stories of lost bear cubs, including a YouTube short \"Mickey & Minnie "
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.28,
+    "total": 0.336,
+    "ok": true,
+    "answer": "17 times 23 is 391. [1][3][5][6]\n\n:::followups\nWhat is 18 times 22?\nWhat is the square root of 391?\nWhat other math facts involve the number 17?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.231,
+    "total": 0.38,
+    "ok": false,
+    "answer": "17 times 23 is 391. [1][2][3][5][6][7][9]\n\n![grid](img:1)\n\n![grid](img:2)\n\n![illustration](img:3)\n\n:::followups\nwhat is 16 times 24\nwhat is 18 times 22\nwhat is 15 times 25"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.291,
+    "total": 0.416,
+    "ok": true,
+    "answer": "17 times 23 is 391. [1, 3, 5]\n\n:::followups\nWhat is 15 times 24?\nWhat is 19 times 22?\nWhat is the product of 17 and 23 in Roman numerals?"
+   }
+  ],
+  "llama-3.3-70b @ CoreWeave": [
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.293,
+    "total": 2.964,
+    "ok": true,
+    "answer": "The latest person Jensen Huang had an affair with is an unnamed Nvidia employee, according to Reuters [1]. \n![Jensen Huang](img:1)\nThis is the third reported affair, in addition to his relationships with Alice Huang, suspected of being a Chinese spy, and Nvidia vice president of healthcare Kimberly Powell [2, 3, 4]. \n![Nvidia logo](img:2)\nThe revelations led to Huang's resignation as CEO and board"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.157,
+    "total": 1.978,
+    "ok": true,
+    "answer": "The latest person Jensen Huang had an affair with is an unnamed Nvidia employee, according to Reuters [1]. \n![Jensen Huang](img:1)\nThe employee's name has not been disclosed, and attempts to contact her were unsuccessful [1, 3, 4]. \nThis is the third reported affair involving Jensen Huang, in addition to his relationships with Alice Huang, a suspected Chinese spy, and Kimberly Powell, an Nvidia vi"
+   },
+   {
+    "q": "who is the latest person jensen huang had an affair with",
+    "first": 0.166,
+    "total": 2.72,
+    "ok": true,
+    "answer": "The latest person Jensen Huang had an affair with is an unnamed Nvidia employee, according to Reuters [1]. \n![Jensen Huang](img:1)\nThis is the third reported affair, in addition to his relationships with Alice Huang, suspected of being a Chinese spy, and Nvidia vice president of healthcare Kimberly Powell [2, 3, 4, 5, 6]. \n![Nvidia headquarters](img:2)\nThe revelation led to Huang's resignation as "
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.166,
+    "total": 1.914,
+    "ok": false,
+    "answer": "The CEO of AMD when Nvidia was founded was Jerry Sanders, and he was 56 years old [4]. \n![Jerry Sanders](img:5)\nAt the time, Lisa Su, the current CEO of AMD, was 24 years old [1, 3, 6].\n![Lisa Su](img:1)\nNvidia was founded on April 5, 1993, by Jensen Huang, Chris Malachowsky, and Curtis Priem [5].\n![Jensen Huang](img:6)\n:::followups\nWhat is the current market share of AMD and Nvidia in the graphic"
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.169,
+    "total": 1.241,
+    "ok": false,
+    "answer": "Lisa Su, the current CEO of AMD, was 24 years old when Nvidia was founded in 1993 [5]. \n![Lisa Su](img:1)\n![Jensen Huang](img:5)\n:::followups\nWhat is the current market share of AMD and Nvidia in the graphics processing unit market?\nHow has the relationship between Lisa Su and Jensen Huang impacted the competition between AMD and Nvidia?\nWhat are the key strategies that Lisa Su has implemented to "
+   },
+   {
+    "q": "how old was the ceo of amd when nvidia was founded",
+    "first": 0.171,
+    "total": 1.999,
+    "ok": false,
+    "answer": "The CEO of AMD when Nvidia was founded was Jerry Sanders, and he was 56 years old [4]. \n![Jerry Sanders](img:5)\nAt the time, Lisa Su, the current CEO of AMD, was 24 years old, but she was not the CEO of AMD then [1, 3, 6].\n![Lisa Su](img:1)\nNvidia was founded on April 5, 1993, by Jensen Huang, Chris Malachowsky, and Curtis Priem [5].\n![Jensen Huang](img:6)\n:::followups\nWhat is the current market s"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.412,
+    "total": 1.381,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [1]. \n![Canberra](img:1)\nCanberra is the political and administrative capital, with the Parliament House and government offices [3]. \nIt is located in the Australian Capital Territory (ACT) and has a population of over 484,000 people [2].\n:::followups\nWhat are the major cities in Australia\nHow did Canberra become the capital of Australia\nWhat are the states and"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.238,
+    "total": 1.297,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [1]. \nCanberra is the country's political and administrative capital, with the Parliament House and government offices [3]. \nIt is located in the Australian Capital Territory (ACT) and has a population of over 484,000 people [2].\n![Map of Canberra](img:1)\n![Parliament House in Canberra](img:2)\n:::followups\nWhat is the population of Canberra\nHow did Canberra bec"
+   },
+   {
+    "q": "what is the capital of australia",
+    "first": 0.48,
+    "total": 1.443,
+    "ok": true,
+    "answer": "The capital of Australia is Canberra [1]. \n![Canberra](img:1)\nCanberra is the political and administrative capital, with the Parliament House and government offices [3]. \nIt is located in the Australian Capital Territory (ACT) and has a population of over 484,000 people [2].\n:::followups\nWhat are the major cities in Australia\nHow did Canberra become the capital of Australia\nWhat are the states and"
+   },
+   {
+    "q": "github",
+    "first": 0.149,
+    "total": 4.157,
+    "ok": false,
+    "answer": "https://github.com\nGitHub is a proprietary developer platform that allows developers to create, store, manage, and share their code, using Git for distributed version control and providing access control, bug tracking, software feature requests, task management, continuous integration, and wikis for every project [1].\n![GitHub logo](img:1)\nGitHub is commonly used to host open source software devel"
+   },
+   {
+    "q": "github",
+    "first": 0.177,
+    "total": 3.242,
+    "ok": false,
+    "answer": "https://github.com\nGitHub is a proprietary developer platform that allows developers to create, store, manage, and share their code, using Git to provide distributed version control [1]. \n![GitHub logo](img:1)\nIt provides access control, bug tracking, software feature requests, task management, continuous integration, and wikis for every project [1]. GitHub is commonly used to host open source sof"
+   },
+   {
+    "q": "github",
+    "first": 0.211,
+    "total": 2.123,
+    "ok": false,
+    "answer": "https://github.com\nGitHub is a proprietary developer platform that allows developers to create, store, manage, and share their code, using Git for distributed version control and providing access control, bug tracking, software feature requests, task management, continuous integration, and wikis for every project [1].\n![GitHub logo](img:1)\nIt is commonly used to host open source software developme"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.188,
+    "total": 2.236,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a suspension bridge spanning the Golden Gate, the one-mile-wide strait connecting San Francisco Bay and the Pacific Ocean in California, United States [1]. \n![Golden Gate Bridge](img:1)\nIt is one of the most internationally recognized symbols of San Francisco and California, and is described as \"possibly the most beautiful, certainly the most photographed, bridge in the w"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 2.217,
+    "total": 4.539,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a suspension bridge spanning the Golden Gate, the one-mile-wide strait connecting San Francisco Bay and the Pacific Ocean in California, United States [1]. \n![Golden Gate Bridge](img:1)\nIt is one of the most internationally recognized symbols of San Francisco and California, and is described as \"possibly the most beautiful, certainly the most photographed, bridge in the w"
+   },
+   {
+    "q": "golden gate bridge",
+    "first": 0.142,
+    "total": 2.696,
+    "ok": true,
+    "answer": "The Golden Gate Bridge is a suspension bridge spanning the Golden Gate, the one-mile-wide strait connecting San Francisco Bay and the Pacific Ocean in California, United States [1]. \n![Golden Gate Bridge](img:1)\nIt is one of the most internationally recognized symbols of San Francisco and California, and is described as \"possibly the most beautiful, certainly the most photographed, bridge in the w"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.164,
+    "total": 1.687,
+    "ok": true,
+    "answer": "The search results show no clear source for the phrase \"I'm a baby bear and I lost my mommy\", but they do show several stories and videos about baby bears who have lost their mothers [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].\n![baby bear](img:1)\n![Mowgli the bear](img:2)\n![rescued bear cub](img:4)\n:::followups\nWhat happens to baby bears who lose their mothers in the wild?\nHow are orphaned bear cubs typicall"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.25,
+    "total": 1.712,
+    "ok": true,
+    "answer": "The search results show no clear source for the phrase \"I'm a baby bear and I lost my mommy\", but they do show several stories and videos about baby bears who have lost their mothers [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].\n![baby bear](img:1)\n![Mowgli the bear](img:2)\n![Mowgli in a tree](img:3)\n:::followups\nWhat do baby bears eat when they are orphaned?\nHow do wildlife rescuers care for orphaned bear cub"
+   },
+   {
+    "q": "I'm a baby bear and I lost my mommy",
+    "first": 0.414,
+    "total": 1.826,
+    "ok": true,
+    "answer": "The search results show no clear source for the phrase \"I'm a baby bear and I lost my mommy\", but they do show several stories and videos about baby bears who have lost their mothers [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].\n![baby bear](img:1)\n![Mowgli the bear](img:2)\n![bear cub](img:4)\n:::followups\nWhat do baby bears eat when they are orphaned?\nHow do rescue teams care for lost baby bears?\nCan baby bear"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.253,
+    "total": 1.562,
+    "ok": false,
+    "answer": "The result of 17 times 23 is 391 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].\n![Long multiplication](img:1)\n![Product of 17 and 23](img:2)\n![Numbers 17 and 23](img:3)\n:::followups\nWhat is the distributive property used for in multiplication?\nHow do you multiply two numbers using the partial-products method?\nWhat is the least common multiple of 17 and 23?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.264,
+    "total": 1.432,
+    "ok": false,
+    "answer": "The result of 17 times 23 is 391 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].\n![Long multiplication](img:1)\n![Product of 17 and 23](img:2)\n![Numbers 17 and 23](img:3)\n:::followups\nWhat is the distributive property used for in multiplication?\nHow do you calculate the least common multiple of two numbers?\nWhat are some real-world applications of multiplication and least common multiples?"
+   },
+   {
+    "q": "what is 17 times 23",
+    "first": 0.144,
+    "total": 1.312,
+    "ok": false,
+    "answer": "The result of 17 times 23 is 391 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].\n![Long multiplication](img:1)\n![Numbers 17 and 23](img:2)\n![LCM of 17 and 23](img:3)\n:::followups\nWhat is the distributive property used for in multiplication?\nHow do you calculate the least common multiple of two numbers?\nWhat are some real-world applications of long multiplication?"
+   }
+  ]
+ }
+}
