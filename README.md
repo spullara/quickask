@@ -22,7 +22,8 @@ with sources and, when they help, pictures.
 - Read-only share links that anyone can open, with no account. Links show a rich preview card on X, iMessage and Slack.
 - Press ⌘K (Ctrl K) for a new search.
 - Add `&talk=true` to a search URL (for example `https://quisk.ai/?q=%s&talk=true`) to hear answers read aloud as they
-  stream. It stays on for follow-ups in that tab. If the browser blocks speech that a tap did not start, tap "Read aloud".
+  stream. It stays on for follow-ups in that tab. Speech is Gemini TTS audio, so it plays on iPhone in silent mode. If the browser blocks audio that a tap did not start,
+  tap "Read aloud".
 - Answers know your approximate city and local time (from Cloudflare), so local questions like the weather work.
 - Follow-up questions keep the previous answer's search results in context. The model searches again (as a tool)
   only when it needs new facts, and new results are numbered after the earlier ones.

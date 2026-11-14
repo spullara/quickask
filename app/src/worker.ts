@@ -700,6 +700,21 @@ export default {
       return Response.json(q ? await chats.search(q, before) : await chats.list(before));
     }
 
+    // Text to speech for talk mode (signed-in users only). Gemini TTS returns a WAV file.
+    if (path === "/api/tts" && req.method === "POST") {
+      const text = String(((await req.json().catch(() => ({}))) as { text?: string }).text ?? "").trim().slice(0, 1200);
+      if (!text) return new Response("No text", { status: 400 });
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-lite-tts:generateContent", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+        body: JSON.stringify({ contents: [{ parts: [{ text }] }], generationConfig: { responseModalities: ["AUDIO"] } }),
+      });
+      const audio = r.ok ? ((await r.json()) as { candidates?: { content?: { parts?: { inlineData?: { mimeType: string; data: string } }[] } }[] })
+        .candidates?.[0]?.content?.parts?.find((x) => x.inlineData)?.inlineData : undefined;
+      if (!audio) return new Response("Speech failed", { status: 502 });
+      return new Response(Uint8Array.from(atob(audio.data), (c) => c.charCodeAt(0)), { headers: { "content-type": audio.mimeType || "audio/wav", "cache-control": "no-store" } });
+    }
+
     if (path === "/api/live") {
       if (req.headers.get("Upgrade") !== "websocket") return new Response("Expected a WebSocket", { status: 426 });
       return chats.fetch(req);

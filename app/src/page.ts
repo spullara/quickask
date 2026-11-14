@@ -156,28 +156,38 @@ function add(c,html){const d=document.createElement('div');d.className=c;d.inner
 `;
 
 /**
- * talk=true (or talk=1) in the URL: read answers aloud with the browser's voice as they stream, a sentence at a time.
- * Stays on for follow-ups and new searches in this tab. Browsers can block speech without a tap; then the button
- * offers "Read aloud". Citations, image lines, links and Markdown marks are not read.
+ * talk=true (or talk=1) in the URL: read answers aloud as they stream. Finished sentences go to /api/tts (Gemini TTS) and
+ * play in order through one audio element, so one tap unlocks it on iPhone and it plays even in silent mode. The first
+ * sentence is sent alone so audio starts sooner; later text goes in larger chunks. Stays on for follow-ups and new
+ * searches in this tab. Citations, image lines, links and Markdown marks are not read.
  */
 const TALK_JS = String.raw`
 const TALK=/[?&]talk=(1|true|yes)(&|$)/i.test(location.search);
-const tk={said:0,text:'',started:false,blocked:false};let tkb=null;
+const tk={said:0,text:'',pend:'',sent:0,q:[],busy:false,blocked:false};let tkb=null;const au=new Audio();
+const SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 const speakable=s=>s.replace(/^\s*!\[[^\]]*\]\([^)]*\)\s*$/gm,'').replace(/\[([^\]]+)\]\([^)]*\)/g,'$1').replace(/\s*\[\d+(?:,\s*\d+)*\]/g,'')
  .replace(/https?:\/\/\S+/g,'').replace(/[*_` + "`" + String.raw`#>|~]/g,'').replace(/\s+/g,' ').trim();
-const talking=()=>window.speechSynthesis&&(speechSynthesis.speaking||speechSynthesis.pending);
-function tkShow(){if(!TALK||!window.speechSynthesis)return;if(!tkb){tkb=document.createElement('button');tkb.id='tk';document.body.append(tkb);
-  tkb.onclick=()=>{if(talking()&&!tk.blocked){speechSynthesis.cancel();setTimeout(tkShow,50)}else{tk.blocked=false;say(tk.text)}}}
- tkb.textContent=talking()&&!tk.blocked?'■ Stop reading':tk.blocked?'▶ Read aloud':'▶ Read again';tkb.hidden=!tk.text}
-function say(part){const t=speakable(part);if(!t)return;const u=new SpeechSynthesisUtterance(t);u.lang=navigator.language||'en-US';
- u.onstart=()=>{tk.started=true;tk.blocked=false;tkShow()};u.onend=()=>setTimeout(tkShow,50);
- u.onerror=e=>{if(e.error==='not-allowed'){tk.blocked=true;tkShow()}};speechSynthesis.speak(u);tkShow();
- if(!tk.started)setTimeout(()=>{if(!tk.started&&!speechSynthesis.speaking){tk.blocked=true;speechSynthesis.cancel();tkShow()}},1500)}
-// New text up to the last finished sentence (or line) is spoken; done speaks the rest. Follow-up suggestions are skipped.
-function talk(buf,done){if(!TALK||!window.speechSynthesis||tk.blocked&&!done)return;let s=buf.split(/\n\s*:::/)[0];
+const playing=()=>tk.busy&&!au.paused;
+function tkShow(){if(!TALK)return;if(!tkb){tkb=document.createElement('button');tkb.id='tk';document.body.append(tkb);tkb.onclick=tkTap}
+ tkb.textContent=playing()||tk.q.length&&!tk.blocked?'■ Stop reading':tk.blocked?'▶ Read aloud':'▶ Read again';tkb.hidden=!tk.text}
+function tts(t){const it={u:null};it.p=fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:t})})
+ .then(r=>r.ok?r.blob():Promise.reject(new Error('tts '+r.status))).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
+function enqueue(t){t=speakable(t);if(!t)return;tk.q.push(tts(t));pump()}
+function next(){const it=tk.q.shift();if(it&&it.u)URL.revokeObjectURL(it.u);tk.busy=false;tkShow();pump()}
+function pump(){if(tk.busy||tk.blocked||!tk.q.length)return;tk.busy=true;const it=tk.q[0];
+ it.p.then(u=>{au.src=u;return au.play()}).then(tkShow,e=>{if(e&&e.name==='NotAllowedError'){tk.busy=false;tk.blocked=true;tkShow()}else next()})}
+au.onended=next;au.onerror=()=>{if(tk.busy)next()};
+// The tap: stop, or play. Playing starts inside the tap (iPhone), with the first chunk if it is ready, else a silent unlock.
+function tkTap(){if(playing()||tk.q.length&&!tk.blocked){au.pause();tk.q=[];tk.busy=false;tkShow();return}
+ if(!tk.blocked){tk.q=chunks(tk.text).map(c=>tts(speakable(c)))}tk.blocked=false;const it=tk.q[0];
+ if(!it)return;tk.busy=true;au.src=it.u||SILENT;au.play().then(()=>{if(it.u)tkShow();else{tk.busy=false;pump()}},()=>{tk.busy=false;tk.blocked=true;tkShow()})}
+const chunks=t=>(t.match(/[^.!?\n]+[.!?]*\s*|\n+/g)||[t]).reduce((a,x)=>{if(a.length&&a[a.length-1].length+x.length<300)a[a.length-1]+=x;else a.push(x);return a},[]).filter(x=>x.trim());
+// New text up to the last finished sentence (or line). The first sentence goes alone; then chunks of about 300 characters.
+function talk(buf,done){if(!TALK)return;let s=buf.split(/\n\s*:::/)[0];
  if(!done){const m=s.slice(tk.said).match(/^[\s\S]*[.!?;:](?=\s)|^[\s\S]*\n/);if(!m)return;s=s.slice(0,tk.said+m[0].length)}
- const part=s.slice(tk.said);tk.said=s.length;tk.text+=part;if(!tk.blocked)say(part);else tkShow()}
-function talkReset(){tk.said=0;tk.text='';if(TALK&&window.speechSynthesis)speechSynthesis.cancel()}
+ const part=s.slice(tk.said);tk.said=s.length;tk.text+=part;tk.pend+=part;
+ if(!tk.sent||tk.pend.length>=300||done){if(speakable(tk.pend)){enqueue(tk.pend);tk.sent++}tk.pend=''}tkShow()}
+function talkReset(){au.pause();tk.q=[];tk.busy=false;Object.assign(tk,{said:0,text:'',pend:'',sent:0})}
 if(TALK)addEventListener('DOMContentLoaded',()=>{const f=document.querySelector('form[action="/"]');if(f&&!f.querySelector('[name=talk]'))
  f.insertAdjacentHTML('beforeend','<input type="hidden" name="talk" value="true">')});
 `;
