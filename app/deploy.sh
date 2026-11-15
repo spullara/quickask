@@ -52,6 +52,8 @@ if [ -n "$QUICK_DOMAIN" ] && [ "$WAITLIST" != off ] && [ -z "${QUICK_ZONE_ID:-}"
 fi
 
 bun install --frozen-lockfile >/dev/null
+# The phonemizer container installs dizione from a local wheel (with its data); build it once.
+ls phonemes/wheels/dizione-*.whl >/dev/null 2>&1 || phonemes/build_wheel.sh >/dev/null
 if [ "${1:-}" = destroy ]; then exec bunx alchemy destroy --yes; fi
 log="$(mktemp)"
 bunx alchemy deploy --yes | tee "$log"

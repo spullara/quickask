@@ -4,7 +4,7 @@ import * as State from "alchemy/State";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import type { Auth } from "./src/auth-store.ts";
-import type { Chats, Shares } from "./src/worker.ts";
+import type { Chats, Phonemes, Shares } from "./src/worker.ts";
 import type { Usage } from "./src/usage.ts";
 
 /** Share-card renderer. No public URL: only the main Worker reaches it, through the CARD binding. */
@@ -49,6 +49,8 @@ export const Worker = Cloudflare.Worker("Quick", {
   ...(DOMAIN ? { domain: OLD.length ? { name: DOMAIN, aliases: OLD } : DOMAIN } : {}),
   env: {
     CARD: CardWorker,
+    // Text to phonemes for tiny-voca, the on-device voice: dizione in a small always-warm Python container.
+    PHONEMES: Cloudflare.Container<Phonemes>("Phonemes", { className: "Phonemes", context: "./phonemes", instanceType: "basic", maxInstances: 2 }),
     CHATS: Cloudflare.DurableObject<Chats>("Chats", { className: "Chats" }),
     AUTH: Cloudflare.DurableObject<Auth>("Auth", { className: "Auth" }),
     SHARES: Cloudflare.DurableObject<Shares>("Shares", { className: "Shares" }),

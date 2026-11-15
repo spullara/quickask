@@ -1,4 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
+import { Container, getContainer } from "@cloudflare/containers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 import { cookie, session, sign } from "./session.ts";
 import { PAGE_VERSION, adminPage, call, keyPage, moveSignIn, opensearch, sharePage, shell, signIn, type Msg, type Result, type Source } from "./page.ts";
@@ -201,6 +202,12 @@ weather, time, events or places nearby; do not mention it otherwise.` : "");
 
 /** Questions that need the user's place in the search itself. */
 const LOCAL = /\b(near me|nearby|around here|weather|forecast|temperature|rain|snow|local|open now|tonight|restaurants?|cafes?|bars?|delivery|takeout|traffic|things to do|showtimes|movie times|events? (?:today|tonight|this week(?:end)?))\b/i;
+
+/** The phonemizer container (dizione). It sleeps after two quiet hours; the first request after that waits for it. */
+export class Phonemes extends Container {
+  override defaultPort = 8080;
+  override sleepAfter = "2h";
+}
 
 /** Read-only chat snapshots behind share links. One global instance. */
 export class Shares extends DurableObject<WorkerEnv> {
@@ -736,6 +743,14 @@ export default {
     if (path === "/api/chats" && req.method === "GET") {
       const q = url.searchParams.get("q")?.trim() ?? "", before = Number(url.searchParams.get("before")) || undefined;
       return Response.json(q ? await chats.search(q, before) : await chats.list(before));
+    }
+
+    // Phonemes for tiny-voca, the on-device voice: sentences in, phoneme ids out (the device makes the audio).
+    if (path === "/api/phonemes" && req.method === "POST") {
+      const sentences = ((await req.json().catch(() => ({}))) as { sentences?: unknown[] }).sentences;
+      if (!Array.isArray(sentences)) return Response.json({ error: "sentences" }, { status: 400 });
+      const r = await getContainer(env.PHONEMES, "main").fetch("https://phonemes/", { method: "POST", body: JSON.stringify({ sentences: sentences.slice(0, 60).map(String) }) });
+      return new Response(r.body, { status: r.status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
     }
 
     // Text to speech for talk mode (signed-in users only). Gemini TTS returns a WAV file.

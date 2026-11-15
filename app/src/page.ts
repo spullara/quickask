@@ -71,9 +71,10 @@ main{flex:1;height:100vh;height:100dvh;overflow-y:auto;display:flex;flex-directi
 .m sup a{position:relative;text-decoration:none;padding:0 1px}
 .m sup a:hover::after{content:attr(data-t);position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);white-space:nowrap;background:var(--fg);color:var(--bg);font-size:12px;font-weight:500;line-height:1;padding:5px 8px;border-radius:6px;pointer-events:none;z-index:2}
 form{width:100%;max-width:760px;margin:0 auto;padding:8px 24px 20px;position:sticky;bottom:0;background:var(--bg)}
-textarea{width:100%;resize:none;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;background:var(--bg);color:var(--fg);outline:none;max-height:300px;overflow-y:hidden;display:block}
+#go{position:absolute;right:31px;bottom:27px;width:32px;height:32px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--fg);color:var(--bg);cursor:pointer;opacity:.25;transition:opacity .15s;padding:0}#go.on{opacity:1}
+textarea{width:100%;resize:none;border:1px solid var(--line);border-radius:14px;padding:12px 48px 12px 14px;font:inherit;background:var(--bg);color:var(--fg);outline:none;max-height:300px;overflow-y:hidden;display:block}
 textarea:focus{border-color:var(--mute)}
-.home{display:flex;flex-direction:column;justify-content:center}.home #log{flex:none;padding:0}.home form{position:static}
+.home{display:flex;flex-direction:column;justify-content:center}.home #log{flex:none;padding:0}.home form{position:relative}
 #tg{display:none}
 #zm{position:fixed;top:10px;left:272px;z-index:3;display:flex;gap:2px}#zm button{border:0;background:var(--soft);color:var(--fg);border-radius:8px;height:30px;padding:0 9px;font:600 13px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;cursor:pointer}#zm button:hover{background:var(--line)}
 .brand{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 0 24px}.brand span{font-size:28px;font-weight:700;letter-spacing:-.02em}
@@ -167,20 +168,52 @@ function add(c,html){const d=document.createElement('div');d.className=c;d.inner
 const TALK_JS = String.raw`
 const TALK=/[?&]talk=(1|true|yes)(&|$)/i.test(location.search);
 // Voice: the URL's voice=, else the one picked in this browser, else the server's default.
-let VOICE=(location.search.match(/[?&]voice=([a-z]+)/i)||[])[1]||'';try{VOICE=VOICE||localStorage.voice||''}catch{}
+let VOICE=(location.search.match(/[?&]voice=([a-z0-9]+)/i)||[])[1]||'';try{VOICE=VOICE||localStorage.voice2||''}catch{}
 const tk={said:0,text:'',pend:'',sent:0,q:[],busy:false,blocked:false};let tkb=null;const au=new Audio();
 const SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 const speakable=s=>s.replace(/^\s*!\[[^\]]*\]\([^)]*\)\s*$/gm,'').replace(/\[([^\]]+)\]\([^)]*\)/g,'$1').replace(/\s*\[\d+(?:,\s*\d+)*\]/g,'')
  .replace(/https?:\/\/\S+/g,'').replace(/[*_` + "`" + String.raw`#>|~]/g,'').replace(/\s+/g,' ').trim();
 const playing=()=>tk.busy&&!au.paused;
 function tkShow(){if(!TALK)return;if(!tkb){const w=document.createElement('div');w.id='tkw';
-  w.innerHTML='<select id="tkv" aria-label="Voice">'+Object.keys(VOICES).map(k=>'<option value="'+k+'">'+k[0].toUpperCase()+k.slice(1)+' · '+VOICES[k]+'</option>').join('')+'</select><button id="tk"></button>';
+  const label=k=>k in LOCAL?k.toUpperCase()+' · '+VOICES[k]:k[0].toUpperCase()+k.slice(1)+' · '+VOICES[k]+' · cloud';
+  w.innerHTML='<select id="tkv" aria-label="Voice">'+Object.keys(VOICES).map(k=>'<option value="'+k+'">'+label(k)+'</option>').join('')+'</select><button id="tk"></button>';
   document.body.append(w);tkb=w.querySelector('#tk');tkb.onclick=tkTap;const sel=w.querySelector('#tkv');sel.value=(VOICE||VDEF).toLowerCase();
   // A new voice applies at once: the answer being read starts again in it.
-  sel.onchange=()=>{VOICE=sel.value;try{localStorage.voice=VOICE}catch{}if(playing()||tk.q.length){au.pause();tk.q=[];tk.busy=false;tkTap()}}}
+  sel.onchange=()=>{VOICE=sel.value;try{localStorage.voice2=VOICE}catch{}if(playing()||tk.q.length){au.pause();tk.q=[];tk.busy=false;tkTap()}}}
  tkb.textContent=playing()||tk.q.length&&!tk.blocked?'■ Stop reading':tk.blocked?'▶ Read aloud':'▶ Read again';tkb.parentNode.hidden=!tk.text}
-function tts(t){const it={u:null};it.p=fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:t,voice:VOICE})})
- .then(r=>r.ok?r.blob():Promise.reject(new Error('tts '+r.status))).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
+// Audio for a chunk: tiny-voca on this device for F2/M2 (phonemes from the server), else Gemini TTS. If the device
+// voice fails, the chunk falls back to the cloud voice so reading never stops.
+const cloud=(t,v)=>fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:t,voice:v})})
+ .then(r=>r.ok?r.blob():Promise.reject(new Error('tts '+r.status)));
+function tts(t){const it={u:null},v=(VOICE||VDEF).toLowerCase();
+ it.p=(v in LOCAL?localTTS(t,LOCAL[v]).catch(()=>cloud(t,'')):cloud(t,v)).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
+// tiny-voca (4.5M parameters, 24 kHz): ONNX Runtime Web from the CDN, the model cached in Cache Storage. Loaded once
+// per page; started early (preload) so it is ready before the first answer finishes.
+const LOCAL={f2:0,m2:1},MODEL='https://huggingface.co/n4ze3m/tiny-voca/resolve/main/onnx/model.onnx',ORT='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.1/dist/';
+let sessP=null;
+function voiceModel(){if(sessP)return sessP;sessP=(async()=>{
+ if(!window.ort)await new Promise((ok,no)=>{const s=document.createElement('script');s.src=ORT+'ort.wasm.min.js';s.onload=ok;s.onerror=no;document.head.append(s)});
+ ort.env.wasm.numThreads=1;ort.env.wasm.wasmPaths=ORT;
+ let res;try{const c=await caches.open('quisk-voice-1');res=await c.match(MODEL);if(!res){res=await fetch(MODEL);if(res.ok)await c.put(MODEL,res.clone())}}catch{res=await fetch(MODEL)}
+ if(!res.ok)throw new Error('model '+res.status);
+ return ort.InferenceSession.create(new Uint8Array(await res.arrayBuffer()),{executionProviders:['wasm']})})();
+ sessP.catch(()=>{sessP=null});return sessP}
+const i64=a=>new ort.Tensor('int64',BigInt64Array.from(a.map(x=>BigInt(x))),[1,a.length]),f32=x=>new ort.Tensor('float32',Float32Array.of(x),[1]);
+async function localTTS(text,voice){const sents=(text.match(/[^.!?]+[.!?]*\s*/g)||[text]).map(s=>s.trim()).filter(Boolean);
+ const [sess,ph]=await Promise.all([voiceModel(),fetch('/api/phonemes',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sentences:sents})}).then(r=>r.ok?r.json():Promise.reject(new Error('phonemes')))]);
+ const parts=[];for(const p of ph){if(!p||!p.ids.length)continue;const ids=p.ids.slice(0,512),st=p.stress.slice(0,512);
+  const out=await sess.run({tokens:i64(ids),stress:i64(st),voice:new ort.Tensor('int64',BigInt64Array.of(BigInt(voice)),[1]),speed:f32(1),pitch_shift:f32(0),pitch_range:f32(1)});
+  parts.push(out.audio.data,new Float32Array(6000))}
+ if(!parts.length)throw new Error('no audio');return wav(parts,24000)}
+function wav(parts,rate){const n=parts.reduce((a,p)=>a+p.length,0),b=new DataView(new ArrayBuffer(44+n*2));let o=0;
+ const s=t=>{for(const c of t)b.setUint8(o++,c.charCodeAt(0))},u32=v=>{b.setUint32(o,v,true);o+=4},u16=v=>{b.setUint16(o,v,true);o+=2};
+ s('RIFF');u32(36+n*2);s('WAVE');s('fmt ');u32(16);u16(1);u16(1);u32(rate);u32(rate*2);u16(2);u16(16);s('data');u32(n*2);
+ for(const p of parts)for(let i=0;i<p.length;i++){const v=Math.max(-1,Math.min(1,p[i]));b.setInt16(o,v<0?v*32768:v*32767,true);o+=2}
+ return new Blob([b],{type:'audio/wav'})}
+// Preload in talk mode and in the phone apps: the model, and a warm phonemizer, before the first answer.
+const APP=/QuiskApp/.test(navigator.userAgent);
+if((TALK||APP)&&(VOICE||VDEF).toLowerCase() in LOCAL)addEventListener('load',()=>setTimeout(()=>{voiceModel();
+ fetch('/api/phonemes',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sentences:['Ready.']})}).catch(()=>{})},300));
 function enqueue(t){t=speakable(t);if(!t)return;tk.q.push(tts(t));pump()}
 function next(){const it=tk.q.shift();if(it&&it.u)URL.revokeObjectURL(it.u);tk.busy=false;tkShow();pump()}
 function pump(){if(tk.busy||tk.blocked||!tk.q.length)return;tk.busy=true;const it=tk.q[0];
@@ -208,7 +241,7 @@ if(TALK)addEventListener('DOMContentLoaded',()=>{const f=document.querySelector(
 const JS = `
 const ta=$('textarea'),side=$('#list');
 let cur=null,raf=0;
-const VOICES=${JSON.stringify(VOICES)},VDEF=${JSON.stringify(DEFAULT_VOICE)};
+const VOICES=${JSON.stringify({ f2: "Female, on device", m2: "Male, on device", ...VOICES })},VDEF="f2";
 ${TALK_JS}
 function start(el){talkReset();if(el){el.classList.add('wait');el.innerHTML='';cur={el,buf:'',imgs:[]}}else cur={el:add('m wait',''),buf:'',imgs:[]}}
 function paint(){raf=0;cur.el.innerHTML=(noSearch(cur.res)?NOSEARCH:'')+md(cutF(cur.buf).replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs,cur.src)}
@@ -295,6 +328,7 @@ async function run(o={}){start(o.el);cur.at=o.at;if(!o.el)main.scrollTop=main.sc
   if(cur)E('Connection closed.')}catch(e){E(String(e.message||e))}}
 $('form').addEventListener('submit',e=>{const q=ta.value.trim();if(!S.id)return;e.preventDefault();if(!q||busy)return;ta.value='';fit();if(matchMedia('(hover:none)').matches)ta.blur();ask(q)});
 ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('form').requestSubmit()}});
+const go=$('#go'),goOn=()=>{if(go)go.classList.toggle('on',!!ta.value.trim())};ta.addEventListener('input',goOn);$('form').addEventListener('submit',()=>setTimeout(goOn,0));goOn();
 const fit=()=>{ta.style.height='auto';const h=ta.scrollHeight+ta.offsetHeight-ta.clientHeight;ta.style.height=h+'px';ta.style.overflowY=h>300?'auto':'hidden'};
 ta.addEventListener('input',fit);
 $('#tg').onclick=()=>document.body.classList.toggle('open');main.addEventListener('click',()=>document.body.classList.remove('open'));
@@ -409,7 +443,7 @@ export function shell(o: { id: string | null; title: string; msgs: Msg[]; stream
 </div><footer id="foot"><a id="usage" href="/admin" hidden></a>
 <div class="me"><span>${esc(o.user.n)}</span><a href="/auth/logout">Sign out</a></div></footer></nav>
 <main class="${o.id ? "" : "home"}"><div id="brand" class="brand">${mark(44)}<span>Quisk</span></div><div id="log"></div>
-<form action="/" method="get"><textarea name="q" rows="1" placeholder="${o.id ? "Ask a follow-up" : "Ask anything"}" autocomplete="off"></textarea></form><p id="tag">I feel the need, the need for speed!</p></main>
+<form action="/" method="get"><textarea name="q" rows="1" placeholder="${o.id ? "Ask a follow-up" : "Ask anything"}" autocomplete="off"></textarea><button id="go" type="submit" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form><p id="tag">I feel the need, the need for speed!</p></main>
 ${o.id ? '<div id="shx"><button id="sl" hidden></button><button id="sh">Share</button><div id="sp" hidden></div></div>' : ""}
 <script>const S=${json(state)};${RENDER}${JS}</script>
 ${o.addKey ? `<div id="ak"><span>Add a passkey for this site so you can sign in here next time.</span><button id="akb">Add passkey</button><button id="akx" aria-label="Not now">×</button></div><script>${ADDKEY_JS}</script>` : ""}
