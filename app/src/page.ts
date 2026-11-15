@@ -11,6 +11,7 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 export const call = (fn: string, arg: unknown) => `<script>${fn}(${json(arg)})</script>\n`;
 
 import { LOGO_SVG } from "./icons.ts";
+import { DEFAULT_VOICE, VOICES } from "./voices.ts";
 
 const ICON_LINKS = `<link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png">`;
 const mark = (px: number) => LOGO_SVG.replace("<svg ", `<svg width="${px}" height="${px}" aria-hidden="true" `);
@@ -92,7 +93,9 @@ textarea:focus{border-color:var(--mute)}
 #menu{position:fixed;z-index:5;min-width:220px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:4px;box-shadow:0 8px 24px #0002;display:flex;flex-direction:column}#menu[hidden]{display:none}
 #ak{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:8px;align-items:center;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 14px;font-size:13px;width:max-content;max-width:calc(100% - 24px)}
 #ak button{font:inherit;border:0;border-radius:8px;cursor:pointer;padding:6px 10px;white-space:nowrap}#akb{background:var(--fg);color:var(--bg);font-weight:600}#akx{background:none;color:var(--mute)}
-#tk{position:fixed;right:16px;bottom:92px;z-index:6;font:inherit;font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer;box-shadow:0 2px 8px #0001}#tk[hidden]{display:none}
+#tkw{position:fixed;right:16px;bottom:92px;z-index:6;display:flex;gap:6px;align-items:center}#tkw[hidden]{display:none}
+#tk,#tkv{font:inherit;font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer;box-shadow:0 2px 8px #0001}
+#tkv{appearance:none;-webkit-appearance:none;color:var(--mute);padding-right:24px;max-width:44vw;text-overflow:ellipsis;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 13px) 52%,calc(100% - 9px) 52%;background-size:4px 4px;background-repeat:no-repeat}
 #menu .ci{display:flex;flex-wrap:wrap;align-items:center;gap:2px;border-top:1px solid var(--line);margin-top:4px;padding:6px 4px 2px}
 #menu .ci span{width:100%;font-size:12px;color:var(--mute);padding:0 6px 2px}#menu .ci button{padding:6px 8px;font-size:13px}
 #menu button{border:0;background:none;color:var(--fg);font:inherit;font-size:14px;text-align:left;padding:8px 10px;border-radius:6px;cursor:pointer}#menu button:hover:not(:disabled){background:var(--soft)}#menu button:disabled{color:var(--mute);cursor:default}
@@ -162,14 +165,20 @@ function add(c,html){const d=document.createElement('div');d.className=c;d.inner
  * searches in this tab. Citations, image lines, links and Markdown marks are not read.
  */
 const TALK_JS = String.raw`
-const TALK=/[?&]talk=(1|true|yes)(&|$)/i.test(location.search),VOICE=(location.search.match(/[?&]voice=([a-z]+)/i)||[])[1]||'';
+const TALK=/[?&]talk=(1|true|yes)(&|$)/i.test(location.search);
+// Voice: the URL's voice=, else the one picked in this browser, else the server's default.
+let VOICE=(location.search.match(/[?&]voice=([a-z]+)/i)||[])[1]||'';try{VOICE=VOICE||localStorage.voice||''}catch{}
 const tk={said:0,text:'',pend:'',sent:0,q:[],busy:false,blocked:false};let tkb=null;const au=new Audio();
 const SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 const speakable=s=>s.replace(/^\s*!\[[^\]]*\]\([^)]*\)\s*$/gm,'').replace(/\[([^\]]+)\]\([^)]*\)/g,'$1').replace(/\s*\[\d+(?:,\s*\d+)*\]/g,'')
  .replace(/https?:\/\/\S+/g,'').replace(/[*_` + "`" + String.raw`#>|~]/g,'').replace(/\s+/g,' ').trim();
 const playing=()=>tk.busy&&!au.paused;
-function tkShow(){if(!TALK)return;if(!tkb){tkb=document.createElement('button');tkb.id='tk';document.body.append(tkb);tkb.onclick=tkTap}
- tkb.textContent=playing()||tk.q.length&&!tk.blocked?'■ Stop reading':tk.blocked?'▶ Read aloud':'▶ Read again';tkb.hidden=!tk.text}
+function tkShow(){if(!TALK)return;if(!tkb){const w=document.createElement('div');w.id='tkw';
+  w.innerHTML='<select id="tkv" aria-label="Voice">'+Object.keys(VOICES).map(k=>'<option value="'+k+'">'+k[0].toUpperCase()+k.slice(1)+' · '+VOICES[k]+'</option>').join('')+'</select><button id="tk"></button>';
+  document.body.append(w);tkb=w.querySelector('#tk');tkb.onclick=tkTap;const sel=w.querySelector('#tkv');sel.value=(VOICE||VDEF).toLowerCase();
+  // A new voice applies at once: the answer being read starts again in it.
+  sel.onchange=()=>{VOICE=sel.value;try{localStorage.voice=VOICE}catch{}if(playing()||tk.q.length){au.pause();tk.q=[];tk.busy=false;tkTap()}}}
+ tkb.textContent=playing()||tk.q.length&&!tk.blocked?'■ Stop reading':tk.blocked?'▶ Read aloud':'▶ Read again';tkb.parentNode.hidden=!tk.text}
 function tts(t){const it={u:null};it.p=fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:t,voice:VOICE})})
  .then(r=>r.ok?r.blob():Promise.reject(new Error('tts '+r.status))).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
 function enqueue(t){t=speakable(t);if(!t)return;tk.q.push(tts(t));pump()}
@@ -199,6 +208,7 @@ if(TALK)addEventListener('DOMContentLoaded',()=>{const f=document.querySelector(
 const JS = `
 const ta=$('textarea'),side=$('#list');
 let cur=null,raf=0;
+const VOICES=${JSON.stringify(VOICES)},VDEF=${JSON.stringify(DEFAULT_VOICE)};
 ${TALK_JS}
 function start(el){talkReset();if(el){el.classList.add('wait');el.innerHTML='';cur={el,buf:'',imgs:[]}}else cur={el:add('m wait',''),buf:'',imgs:[]}}
 function paint(){raf=0;cur.el.innerHTML=(noSearch(cur.res)?NOSEARCH:'')+md(cutF(cur.buf).replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs,cur.src)}

@@ -2,6 +2,7 @@ import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 import { cookie, session } from "./session.ts";
 import { PAGE_VERSION, adminPage, call, keyPage, moveSignIn, opensearch, sharePage, shell, signIn, type Msg, type Result, type Source } from "./page.ts";
+import { DEFAULT_VOICE } from "./voices.ts";
 import { MODELS, TTS, VOICES, modelKey, type Meter, type ModelKey } from "./usage.ts";
 
 import { APPLE_ICON_PNG, FAVICON_PNG, LOGO_SVG } from "./icons.ts";
@@ -704,7 +705,7 @@ export default {
     if (path === "/api/tts" && req.method === "POST") {
       const body = (await req.json().catch(() => ({}))) as { text?: string; voice?: string };
       const text = String(body.text ?? "").trim().slice(0, 1200);
-      const v = String(body.voice ?? "").toLowerCase(), voice = v in VOICES ? v[0]!.toUpperCase() + v.slice(1) : TTS.voice;
+      const v = String(body.voice ?? "").toLowerCase(), pick = v in VOICES ? v : DEFAULT_VOICE, voice = pick[0]!.toUpperCase() + pick.slice(1);
       if (!text) return new Response("No text", { status: 400 });
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${TTS.id}:generateContent`, {
         method: "POST",

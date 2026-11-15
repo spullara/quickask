@@ -1,18 +1,11 @@
 import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
+export { VOICES } from "./voices.ts";
 
 /** The answer model, with list prices in USD per token (thinking tokens bill as output). */
 /** Gemini 3.8 Flash-Lite TTS: text in, audio out (25 audio tokens a second). $12/M audio tokens from Jan 1, 2027. */
-export const TTS = { id: "gemini-3.8-flash-lite-tts", in: 0.5 / 1e6, out: 6 / 1e6, voice: "Leda" } as const;
+export const TTS = { id: "gemini-3.8-flash-lite-tts", in: 0.5 / 1e6, out: 6 / 1e6 } as const;
 
-/** Gemini's 30 prebuilt voices (name: style). Without one, each request gets a random voice. */
-export const VOICES: Record<string, string> = {
-  zephyr: "Bright", puck: "Upbeat", charon: "Informative", kore: "Firm", fenrir: "Excitable", leda: "Youthful", orus: "Firm",
-  aoede: "Breezy", callirrhoe: "Easy-going", autonoe: "Bright", enceladus: "Breathy", iapetus: "Clear", umbriel: "Easy-going",
-  algieba: "Smooth", despina: "Smooth", erinome: "Clear", algenib: "Gravelly", rasalgethi: "Informative", laomedeia: "Upbeat",
-  achernar: "Soft", alnilam: "Firm", schedar: "Even", gacrux: "Mature", pulcherrima: "Forward", achird: "Friendly",
-  zubenelgenubi: "Casual", vindemiatrix: "Gentle", sadachbia: "Lively", sadaltager: "Knowledgeable", sulafat: "Warm",
-};
 
 export const MODELS = {
   lite: { id: "gemini-3.5-flash-lite", thinking: "minimal", name: "Gemini 3.5 Flash Lite", in: 0.3 / 1e6, out: 2.5 / 1e6 },
