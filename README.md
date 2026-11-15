@@ -194,6 +194,9 @@ cd ios && xcodegen generate && open Quisk.xcodeproj   # set your team in project
 
 - **Action button:** Settings → Action Button → Shortcut → Quisk → **Ask Quisk Aloud**. Pressing it opens Quisk
   listening; say your question and the answer appears in a chat and is read aloud.
+- **TestFlight:** `ios/release.sh` archives and uploads (build number = git commit count). Put `ASC_KEY_ID` and
+  `ASC_ISSUER_ID` in `~/.env` (App Store Connect API key; the `.p8` file in `~/.appstoreconnect/private_keys/` or
+  `~/Downloads/`). `--no-upload` only exports `ios/build/Quisk.ipa`.
 - **Siri / Shortcuts:** "Ask Quisk" asks "What do you want to know?" and Siri speaks the answer.
 
 **Android** (JDK 17+, Android SDK):
