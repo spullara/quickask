@@ -82,6 +82,16 @@ def gemini():
     return call
 
 
+def gemma_api(model):
+    """Gemma on Google's API: the system prompt goes in the user turn (Gemma has no system role there)."""
+    def call(user):
+        body = {"contents": [{"role": "user", "parts": [{"text": f"{SYSTEM}\n\n{user}"}]}]}
+        r = post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?alt=sse",
+                 {"x-goog-api-key": os.environ["GEMINI_API_KEY"]}, body)
+        return stream(r, lambda c: "".join(p.get("text", "") for p in c["candidates"][0]["content"]["parts"] if not p.get("thought")))
+    return call
+
+
 def openrouter(model, provider, extra=None):
     def call(user):
         body = {"model": model, "stream": True, "provider": {"order": [provider], "allow_fallbacks": False},
@@ -104,6 +114,11 @@ MODELS = {
     "lfm-2.5-24b-a2b @ Liquid": openrouter("liquid/lfm-2.5-24b-a2b", "Liquid"),
     "nemotron-3.5-lightning @ Fireworks": openrouter("nvidia/nemotron-3.5-lightning", "Fireworks", OFF),
     "llama-3.3-70b @ CoreWeave": openrouter("meta-llama/llama-3.3-70b-instruct", "CoreWeave"),
+    # Gemma 4 (open weights): 26B-A4B is a mixture of experts with 4B active parameters, the size that is fast on one H100.
+    "gemma-4-26b-a4b @ Makora": openrouter("google/gemma-4-26b-a4b-it", "Makora", OFF),
+    "gemma-4-31b @ Friendli": openrouter("google/gemma-4-31b-it", "Friendli", OFF),
+    "gemma-4-26b-a4b @ Google API": gemma_api("gemma-4-26b-a4b-it"),
+    "gemma-4-31b @ Google API": gemma_api("gemma-4-31b-it"),
 }
 
 if os.environ.get("ONLY"):  # comma-separated name prefixes, to rerun some models
