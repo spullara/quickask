@@ -92,9 +92,9 @@ final class VoiceBridge: NSObject, WKScriptMessageHandlerWithReply {
                 #if DEBUG
                 NSLog("quiskVoice: %d sentences (phonemes from %@), %.1f s audio in %.0f ms", sentences.count, (body["src"] as? String) ?? "?", Double(wav.count - 44) / 48000, Date().timeIntervalSince(started) * 1000)
                 #endif
-                await replyHandler(wav.base64EncodedString(), nil)
+                replyHandler(wav.base64EncodedString(), nil)
             } catch {
-                await replyHandler(nil, "voice failed")
+                replyHandler(nil, "voice failed")
             }
         }
     }
