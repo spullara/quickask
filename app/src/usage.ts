@@ -3,7 +3,7 @@ import type { WorkerEnv } from "../alchemy.run.ts";
 
 /** The answer model, with list prices in USD per token (thinking tokens bill as output). */
 /** Gemini 3.8 Flash-Lite TTS: text in, audio out (25 audio tokens a second). $12/M audio tokens from Jan 1, 2027. */
-export const TTS = { id: "gemini-3.8-flash-lite-tts", in: 0.5 / 1e6, out: 6 / 1e6, voice: "Charon" } as const;
+export const TTS = { id: "gemini-3.8-flash-lite-tts", in: 0.5 / 1e6, out: 6 / 1e6, voice: "Leda" } as const;
 
 /** Gemini's 30 prebuilt voices (name: style). Without one, each request gets a random voice. */
 export const VOICES: Record<string, string> = {
