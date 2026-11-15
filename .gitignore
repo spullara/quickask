@@ -36,3 +36,5 @@ android/.gradle/
 android/build/
 android/app/build/
 android/local.properties
+ios/Quisk/Voice/tiny-voca.onnx
+android/app/src/main/assets/tiny-voca.onnx

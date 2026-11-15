@@ -6,20 +6,24 @@ struct WebScreen: View {
     @EnvironmentObject var model: AppModel
 
     var body: some View {
-        QuiskWebView(onSignOut: model.signOut)
+        QuiskWebView(model: model)
             .ignoresSafeArea(.container, edges: .bottom)
     }
 }
 
 struct QuiskWebView: UIViewRepresentable {
-    let onSignOut: () -> Void
+    let model: AppModel
 
-    func makeCoordinator() -> Coordinator { Coordinator(onSignOut: onSignOut) }
+    func makeCoordinator() -> Coordinator { Coordinator(model: model) }
 
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
+        // The page sees "QuiskApp" and preloads the on-device voice in the background.
+        config.applicationNameForUserAgent = "QuiskApp/1.0"
+        // The page reads answers with the voice built into the app (no model download in the web view).
+        config.userContentController.addScriptMessageHandler(VoiceBridge(), contentWorld: .page, name: "quiskVoice")
         let web = WKWebView(frame: .zero, configuration: config)
         web.navigationDelegate = context.coordinator
         web.uiDelegate = context.coordinator
@@ -28,7 +32,9 @@ struct QuiskWebView: UIViewRepresentable {
         let token = Token.value ?? ""
         let cookie = HTTPCookie(properties: [.domain: "quisk.ai", .path: "/", .name: "s", .value: token, .secure: "TRUE",
                                              .expires: Date().addingTimeInterval(365 * 86400)])
-        let load: @MainActor @Sendable () -> Void = { _ = web.load(URLRequest(url: API.base)) }
+        model.web = web
+        let first = model.firstURL()
+        let load: @MainActor @Sendable () -> Void = { _ = web.load(URLRequest(url: first)) }
         if let cookie { config.websiteDataStore.httpCookieStore.setCookie(cookie, completionHandler: load) } else { load() }
         return web
     }
@@ -36,15 +42,23 @@ struct QuiskWebView: UIViewRepresentable {
     func updateUIView(_ web: WKWebView, context: Context) {}
 
     final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
-        let onSignOut: () -> Void
-        init(onSignOut: @escaping () -> Void) { self.onSignOut = onSignOut }
+        let model: AppModel
+        init(model: AppModel) { self.model = model }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            Task { @MainActor in model.loaded = true }
+        }
+
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            Task { @MainActor in model.loaded = true }
+        }
 
         func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
             guard let url = action.request.url else { return decisionHandler(.allow) }
             // Signing out on the web signs out the app (the web page cannot sign back in with a passkey inside the app).
             if url.host == "quisk.ai" && url.path == "/auth/logout" {
                 decisionHandler(.cancel)
-                Task { @MainActor in onSignOut() }
+                Task { @MainActor in model.signOut() }
                 return
             }
             // Links to other sites open in Safari.

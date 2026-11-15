@@ -1,5 +1,6 @@
 import AuthenticationServices
 import SwiftUI
+import WebKit
 
 @main
 struct QuiskApp: App {
@@ -7,9 +8,12 @@ struct QuiskApp: App {
 
     var body: some Scene {
         WindowGroup {
-            Group {
+            ZStack {
                 if model.signedIn { WebScreen() } else { SignInScreen() }
+                // Splash until the first page has loaded (the voice model starts loading with it).
+                if model.signedIn && !model.loaded { Splash().transition(.opacity) }
             }
+            .animation(.easeOut(duration: 0.3), value: model.loaded)
             .environmentObject(model)
             .fullScreenCover(isPresented: $model.listening) { VoiceScreen().environmentObject(model) }
         }
@@ -27,10 +31,33 @@ final class AppModel: ObservableObject {
         if let token = ProcessInfo.processInfo.environment["QUISK_TOKEN"], !token.isEmpty { Token.save(token) }
         #endif
         signedIn = Token.value != nil
+        NativeVoice.shared.preload()
+        #if DEBUG
+        // Simulator testing of the Action-button path without a microphone: QUISK_ASK=<question>.
+        if let question = ProcessInfo.processInfo.environment["QUISK_ASK"], !question.isEmpty { ask(question) }
+        #endif
     }
     /// Set by the "Ask Quisk Aloud" action (Action button): opens the listening screen.
     @Published var listening = false
     @Published var signInError: String?
+    /// The web view has finished its first load (ends the splash screen).
+    @Published var loaded = false
+    weak var web: WKWebView?
+    private var pending: URL?
+
+    /// Ask in the chat page with talk mode on: the answer streams and is read aloud.
+    func ask(_ question: String) {
+        var parts = URLComponents(url: API.base, resolvingAgainstBaseURL: false)!
+        parts.queryItems = [URLQueryItem(name: "q", value: question), URLQueryItem(name: "talk", value: "true")]
+        guard let url = parts.url else { return }
+        if let web { web.load(URLRequest(url: url)) } else { pending = url }
+    }
+
+    /// The URL to load first: a question asked before the web view existed, or the home page.
+    func firstURL() -> URL {
+        defer { pending = nil }
+        return pending ?? API.base
+    }
 
     func signOut() {
         Token.save(nil)
@@ -60,6 +87,18 @@ final class Presenter: NSObject, ASWebAuthenticationPresentationContextProviding
     static let shared = Presenter()
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
         UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.first ?? ASPresentationAnchor()
+    }
+}
+
+struct Splash: View {
+    var body: some View {
+        ZStack {
+            Color(.systemBackground).ignoresSafeArea()
+            VStack(spacing: 14) {
+                Image("Logo").resizable().frame(width: 84, height: 84).clipShape(RoundedRectangle(cornerRadius: 19))
+                Text("Quisk").font(.title.weight(.semibold))
+            }
+        }
     }
 }
 

@@ -199,8 +199,14 @@ function voiceModel(){if(sessP)return sessP;sessP=(async()=>{
  return ort.InferenceSession.create(new Uint8Array(await res.arrayBuffer()),{executionProviders:['wasm']})})();
  sessP.catch(()=>{sessP=null});return sessP}
 const i64=a=>new ort.Tensor('int64',BigInt64Array.from(a.map(x=>BigInt(x))),[1,a.length]),f32=x=>new ort.Tensor('float32',Float32Array.of(x),[1]);
+// In the iOS and Android apps the voice is built in: the page sends phoneme ids, the app returns WAV audio.
+const NATIVE=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.quiskVoice?b=>window.webkit.messageHandlers.quiskVoice.postMessage(b)
+ :window.QuiskAndroid?b=>Promise.resolve(QuiskAndroid.speak(JSON.stringify(b))):null;
+const phonemes=sents=>fetch('/api/phonemes',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sentences:sents})}).then(r=>r.ok?r.json():Promise.reject(new Error('phonemes')));
 async function localTTS(text,voice){const sents=(text.match(/[^.!?]+[.!?]*\s*/g)||[text]).map(s=>s.trim()).filter(Boolean);
- const [sess,ph]=await Promise.all([voiceModel(),fetch('/api/phonemes',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sentences:sents})}).then(r=>r.ok?r.json():Promise.reject(new Error('phonemes')))]);
+ if(NATIVE){const b64=await NATIVE({ph:(await phonemes(sents)).filter(Boolean),voice});if(!b64)throw new Error('no audio');
+  return new Blob([Uint8Array.from(atob(b64),c=>c.charCodeAt(0))],{type:'audio/wav'})}
+ const [sess,ph]=await Promise.all([voiceModel(),phonemes(sents)]);
  const parts=[];for(const p of ph){if(!p||!p.ids.length)continue;const ids=p.ids.slice(0,512),st=p.stress.slice(0,512);
   const out=await sess.run({tokens:i64(ids),stress:i64(st),voice:new ort.Tensor('int64',BigInt64Array.of(BigInt(voice)),[1]),speed:f32(1),pitch_shift:f32(0),pitch_range:f32(1)});
   parts.push(out.audio.data,new Float32Array(6000))}
@@ -212,7 +218,7 @@ function wav(parts,rate){const n=parts.reduce((a,p)=>a+p.length,0),b=new DataVie
  return new Blob([b],{type:'audio/wav'})}
 // Preload in talk mode and in the phone apps: the model, and a warm phonemizer, before the first answer.
 const APP=/QuiskApp/.test(navigator.userAgent);
-if((TALK||APP)&&(VOICE||VDEF).toLowerCase() in LOCAL)addEventListener('load',()=>setTimeout(()=>{voiceModel();
+if((TALK||APP)&&(VOICE||VDEF).toLowerCase() in LOCAL)addEventListener('load',()=>setTimeout(()=>{if(!NATIVE)voiceModel();
  fetch('/api/phonemes',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sentences:['Ready.']})}).catch(()=>{})},300));
 function enqueue(t){t=speakable(t);if(!t)return;tk.q.push(tts(t));pump()}
 function next(){const it=tk.q.shift();if(it&&it.u)URL.revokeObjectURL(it.u);tk.busy=false;tkShow();pump()}
@@ -244,7 +250,7 @@ let cur=null,raf=0;
 const VOICES=${JSON.stringify({ f2: "Female, on device", m2: "Male, on device", ...VOICES })},VDEF="f2";
 ${TALK_JS}
 function start(el){talkReset();if(el){el.classList.add('wait');el.innerHTML='';cur={el,buf:'',imgs:[]}}else cur={el:add('m wait',''),buf:'',imgs:[]}}
-function paint(){raf=0;cur.el.innerHTML=(noSearch(cur.res)?NOSEARCH:'')+md(cutF(cur.buf).replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs,cur.src)}
+function paint(){raf=0;if(!cur)return;cur.el.innerHTML=(noSearch(cur.res)?NOSEARCH:'')+md(cutF(cur.buf).replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs,cur.src)}
 const main=$('main');let nearEnd=true;main.addEventListener('scroll',()=>{nearEnd=main.scrollHeight-main.scrollTop-main.clientHeight<80});
 new ResizeObserver(()=>{if(nearEnd)main.scrollTop=main.scrollHeight}).observe(log);
 function T(t){cur.buf+=t;talk(cur.buf,false);if(!raf)raf=requestAnimationFrame(paint)}

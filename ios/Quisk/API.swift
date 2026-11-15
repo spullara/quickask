@@ -63,13 +63,4 @@ enum API {
         if let text = String(data: data.prefix(15), encoding: .utf8), text.hasPrefix("<!doctype") { throw Problem.signedOut }
         return try JSONDecoder().decode(Answer.self, from: data)
     }
-
-    /// The answer read aloud by Gemini TTS (WAV), in the voice picked on the web (default Leda).
-    static func speech(_ text: String, voice: String?) async throws -> Data {
-        var body = ["text": text]
-        if let voice { body["voice"] = voice }
-        let (data, response) = try await URLSession.shared.data(for: try request("api/tts", body))
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw Problem.server("No audio.") }
-        return data
-    }
 }

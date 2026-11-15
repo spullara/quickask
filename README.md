@@ -180,6 +180,11 @@ from more than one machine.
 Both sign in once through the system browser with your existing quisk.ai passkey (`/auth/app` hands the app a token).
 They call `POST /api/ask` (answer plus a version written for speaking) and `POST /api/tts` (the Quisk voice).
 
+Both apps ship tiny-voca (a 4.5M-parameter English voice) and read answers on the phone with ONNX Runtime:
+the server turns text into phonemes (`/api/phonemes`, the dizione phonemizer in a small Python container), the app
+turns phonemes into audio. Voices F2 (default) and M2 run on the device; the Gemini voices stay available in the menu.
+Fetch the model once before building: `scripts/fetch-voice-model.sh`.
+
 **iOS** (Xcode 16 or later, XcodeGen):
 
 ```sh
@@ -187,7 +192,7 @@ cd ios && xcodegen generate && open Quisk.xcodeproj   # set your team in project
 ```
 
 - **Action button:** Settings → Action Button → Shortcut → Quisk → **Ask Quisk Aloud**. Pressing it opens Quisk
-  listening; say your question and it reads the answer in the Quisk voice.
+  listening; say your question and the answer appears in a chat and is read aloud.
 - **Siri / Shortcuts:** "Ask Quisk" asks "What do you want to know?" and Siri speaks the answer.
 
 **Android** (JDK 17+, Android SDK):
@@ -196,7 +201,7 @@ cd ios && xcodegen generate && open Quisk.xcodeproj   # set your team in project
 cd android && ./gradlew assembleDebug && adb install app/build/outputs/apk/debug/app-debug.apk
 ```
 
-- The **Ask Quisk** icon opens speech input and reads the answer aloud. Point the side key (Samsung: Settings →
+- The **Ask Quisk** icon starts speech input at once; the answer appears in a chat and is read aloud. Point the side key (Samsung: Settings →
   Advanced features → Side button → Double press → Open app) or Quick Tap (Pixel: Settings → System → Gestures →
   Quick Tap → Open app) at **Ask Quisk**, or make Quisk the default assistant (Settings → Apps → Default apps →
   Digital assistant app) so the assist gesture opens it.

@@ -12,6 +12,7 @@ import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -20,10 +21,12 @@ import android.widget.TextView
 /** quisk.ai in a web view, signed in with the app's token as the session cookie. */
 class MainActivity : Activity() {
     private var web: WebView? = null
+    private var splash: LinearLayout? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         actionBar?.hide()
+        NativeVoice.preload(this)
         take(intent)
         show()
     }
@@ -57,22 +60,39 @@ class MainActivity : Activity() {
                 settings.domStorageEnabled = true
                 // Talk mode can play answers without a tap.
                 settings.mediaPlaybackRequiresUserGesture = false
+                // The page sees "QuiskApp" and preloads the on-device voice in the background.
+                settings.userAgentString = settings.userAgentString + " QuiskApp/1.0"
+                // The page reads answers with the voice built into the app (no model download in the web view).
+                addJavascriptInterface(NativeVoice.Bridge(applicationContext), "QuiskAndroid")
                 webViewClient = Client()
                 loadUrl(page(intent) ?: Api.BASE)
             }
-            setContentView(web)
+            // Splash until the first page has loaded.
+            splash = brand(false)
+            setContentView(FrameLayout(this).apply {
+                addView(web, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+                addView(splash, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+            })
         }
     }
 
-    private fun signIn(): LinearLayout {
+    /** Logo and name; with the tagline on the sign-in screen. */
+    private fun brand(tagline: Boolean): LinearLayout {
         val pad = (28 * resources.displayMetrics.density).toInt()
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
             setPadding(pad, pad, pad, pad)
+            setBackgroundColor(if (tagline) Color.TRANSPARENT else Color.WHITE)
             addView(ImageView(context).apply { setImageResource(R.drawable.logo) }, LinearLayout.LayoutParams(pad * 3, pad * 3))
-            addView(TextView(context).apply { text = "Quisk"; textSize = 32f; gravity = Gravity.CENTER; setPadding(0, pad / 2, 0, 0) })
-            addView(TextView(context).apply { text = "Fast answers from the web."; textSize = 16f; gravity = Gravity.CENTER; setTextColor(Color.GRAY) })
+            addView(TextView(context).apply { text = "Quisk"; textSize = 32f; gravity = Gravity.CENTER; setTextColor(Color.BLACK); setPadding(0, pad / 2, 0, 0) })
+            if (tagline) addView(TextView(context).apply { text = "Fast answers from the web."; textSize = 16f; gravity = Gravity.CENTER; setTextColor(Color.GRAY) })
+        }
+    }
+
+    private fun signIn(): LinearLayout {
+        val pad = (28 * resources.displayMetrics.density).toInt()
+        return brand(true).apply {
             addView(Button(context).apply {
                 text = "Sign in"
                 setOnClickListener { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("${Api.BASE}/auth/app"))) }
@@ -85,6 +105,10 @@ class MainActivity : Activity() {
     }
 
     private inner class Client : WebViewClient() {
+        override fun onPageFinished(view: WebView, url: String) {
+            splash?.animate()?.alpha(0f)?.setDuration(250)?.withEndAction { splash?.visibility = android.view.View.GONE }
+        }
+
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
             val url = request.url
             // Signing out on the web signs out the app (the web view cannot sign back in with a passkey).
