@@ -63,7 +63,12 @@ xcodebuild -exportArchive -archivePath "$out/Quisk.xcarchive" -exportOptionsPlis
   -exportPath "$out" "${auth[@]}" -quiet
 
 if [ "$destination" = upload ]; then
-  echo "Uploaded build $build. It appears in TestFlight after Apple finishes processing (usually 5 to 15 minutes)."
+  echo "Uploaded build $build. Waiting for App Store Connect to check it..."
+  # An upload can succeed and still be rejected while Apple processes it; this reports why.
+  if [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -f "$ASC_KEY_PATH" ]; then
+    ASC_KEY_ID="$ASC_KEY_ID" ASC_ISSUER_ID="$ASC_ISSUER_ID" ASC_KEY_PATH="$ASC_KEY_PATH" \
+      python3 upload_status.py "$(grep -m1 PRODUCT_BUNDLE_IDENTIFIER project.yml | awk '{print $2}')" "$build"
+  fi
 else
   echo "Exported $out/Quisk.ipa"
 fi
