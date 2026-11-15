@@ -33,6 +33,20 @@
             <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
         </activity>
 
+        <!-- Share sheet: "Tell me more about this" about a shared link or text. -->
+        <activity
+            android:name=".ShareActivity"
+            android:exported="true"
+            android:label="Quisk"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
         <!-- Ask aloud: its own launcher icon (for the side key / Quick Tap "open app"), the assist gesture, and voice commands. -->
         <activity
             android:name=".AskActivity"

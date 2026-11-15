@@ -158,6 +158,8 @@ address the person as what the text claims they are, and do not give that charac
 stay safe..."). Work out what the person is most likely looking for (a quote, song, story, book, meme, product, fact or
 how-to) and answer that, from the results, in your normal voice. When the text reads like a phrase, quote or title,
 lead with what it is from, or say the results show no clear source, then what they do show.
+When the question contains a link, result [1] is that page (shared from another app): say what it is and its main
+points first, then useful context from the other results.
 Lead with the direct answer in the first sentence. Keep it short; add detail only when it helps. Use Markdown.
 Cite the search results you use as [n] (their numbers) right after the sentence they support, for example [1] or [2, 5].
 Images: a search result can list image ids (img:N) from its page. When pictures would really help (people, places,
@@ -450,6 +452,29 @@ const NOT_A_PHOTO = /\.svg(\?|$)|\/\d{1,2}px-|logo|icon|favicon|sprite|avatar|ba
 /** Exa search: the most query-relevant sentences of each page (anywhere in it, not just the top) for the model, plus each page's images as short ids (img:N) the model can place. */
 async function search(env: WorkerEnv, query: string, loc: Loc = {}, stop?: AbortSignal, offset = 0): Promise<Search> {
   if (LOCAL.test(query) && loc.city) query = `${query} in ${[loc.city, loc.region].filter(Boolean).join(", ")}`;
+  // A shared link ("Tell me more about this: https://…"): read that page too, in parallel, and put it first as [1].
+  // The search uses the words around the link plus the words in its path, since a bare address searches badly.
+  const link = query.match(/https?:\/\/[^\s<>"']+/)?.[0];
+  let searchQuery = query;
+  let page: Promise<{ result?: ExaResult; cost: number }> | undefined;
+  if (link) {
+    let words = "";
+    try {
+      const u = new URL(link);
+      words = `${u.hostname.replace(/^www\./, "").split(".")[0]} ${decodeURIComponent(u.pathname).replace(/\.[a-z]+$/i, "").replace(/[-_/+]+/g, " ").replace(/\b\d+\b/g, " ")}`;
+    } catch {}
+    searchQuery = `${query.replace(link, " ").replace(/tell me more about this:?/i, " ")} ${words}`.replace(/\s+/g, " ").trim() || link;
+    page = fetch("https://api.exa.ai/contents", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-api-key": env.EXA_API_KEY },
+      body: JSON.stringify({ urls: [link], text: { maxCharacters: 4000 }, extras: { imageLinks: 3 }, livecrawl: "fallback" }),
+      signal: stop ? AbortSignal.any([stop, AbortSignal.timeout(4000)]) : AbortSignal.timeout(4000),
+    }).then((r) => r.json()).then((d) => {
+      const x = d as { results?: (ExaResult & { text?: string })[]; costDollars?: { total?: number } };
+      const r = x.results?.[0];
+      return { result: r?.text ? { ...r, highlights: [r.text] } : undefined, cost: x.costDollars?.total ?? 0 };
+    }).catch(() => ({ cost: 0 }));
+  }
   try {
     // Exa rate limit: 100 per 10 s per Cloudflare location. Over budget, retry for up to 3 s, then answer without search.
     // If the limiter itself fails, let the search through.
@@ -460,12 +485,18 @@ async function search(env: WorkerEnv, query: string, loc: Loc = {}, stop?: Abort
     const res = await fetch("https://api.exa.ai/search", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": env.EXA_API_KEY },
-      body: JSON.stringify({ query, type: "fast", numResults: 10, ...(loc.country ? { userLocation: loc.country } : {}), contents: { highlights: { numSentences: 3, highlightsPerUrl: 3 }, extras: { imageLinks: 2 } } }),
+      body: JSON.stringify({ query: searchQuery, type: "fast", numResults: 10, ...(loc.country ? { userLocation: loc.country } : {}), contents: { highlights: { numSentences: 3, highlightsPerUrl: 3 }, extras: { imageLinks: 2 } } }),
       signal: stop ? AbortSignal.any([stop, AbortSignal.timeout(3000)]) : AbortSignal.timeout(3000),
     });
     if (!res.ok) throw new Error(`Exa ${res.status}`);
     const { results = [], costDollars } = (await res.json()) as { results?: ExaResult[]; costDollars?: { total?: number } };
     results.sort((a, b) => (b.publishedDate ?? "").localeCompare(a.publishedDate ?? ""));
+    const shared = page ? await page : undefined;
+    if (shared?.result) {
+      const plain = (u: string) => u.replace(/[#?].*$/, "").replace(/\/$/, "");
+      const own = plain(shared.result.url);
+      results.splice(0, results.length, shared.result, ...results.filter((r) => plain(r.url) !== own).slice(0, 9));
+    }
     const images: string[] = [], sources: Source[] = [], parts: string[] = [], shown: Result[] = [];
     results.forEach((r, i) => {
       const host = new URL(r.url).hostname.replace(/^www\./, "");
@@ -478,7 +509,7 @@ async function search(env: WorkerEnv, query: string, loc: Loc = {}, stop?: Abort
       shown.push({ title: r.title ?? host, url: r.url, date: r.publishedDate?.slice(0, 10), text: plain((r.highlights ?? []).join(" … ")).slice(0, 600) });
       parts.push(`[${offset + i + 1}] ${r.title ?? host} (${r.url}${date})\n${(r.highlights ?? []).join(" … ")}${ids.length ? `\nImages: ${ids.join(", ")}` : ""}`);
     });
-    return { context: parts.join("\n\n"), sources, images, exa: costDollars?.total ?? 0, results: shown };
+    return { context: parts.join("\n\n"), sources, images, exa: (costDollars?.total ?? 0) + (shared?.cost ?? 0), results: shown };
   } catch {
     return { context: "", sources: [], images: [], exa: 0, results: [] };
   }

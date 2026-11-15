@@ -19,8 +19,13 @@ targets:
   Quisk:
     type: application
     platform: iOS
-    sources: [Quisk]
+    sources: [Quisk, Shared]
+    entitlements:
+      path: Quisk/Quisk.entitlements
+      properties:
+        keychain-access-groups: [$(AppIdentifierPrefix)ai.quisk.shared]
     dependencies:
+      - target: QuiskShare
       - package: onnxruntime
         product: onnxruntime
     postBuildScripts:
@@ -61,3 +66,28 @@ targets:
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Quisk listens to your question when you ask aloud.
         INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: Quisk turns your spoken question into text.
         INFOPLIST_KEY_NSSiriUsageDescription: Ask Quisk questions with Siri and hear the answers.
+  QuiskShare:
+    type: app-extension
+    platform: iOS
+    sources: [Share, Shared]
+    entitlements:
+      path: Share/Share.entitlements
+      properties:
+        keychain-access-groups: [$(AppIdentifierPrefix)ai.quisk.shared]
+    info:
+      path: Share/Info.plist
+      properties:
+        CFBundleDisplayName: Quisk
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsText: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.quisk.app.share
+        PRODUCT_NAME: QuiskShare
+        INFOPLIST_KEY_CFBundleDisplayName: Quisk
+        SKIP_INSTALL: YES
