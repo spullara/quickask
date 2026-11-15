@@ -27,11 +27,22 @@ targets:
       # Microsoft ships onnxruntime.framework prebuilt, stripped and without a dSYM, so App Store uploads warn that its
       # dSYM is missing. On archive, make one from the binary: it carries the matching UUIDs (no function names exist
       # to add), which is what the upload checks.
-      - name: dSYM for onnxruntime.framework
+      - name: Fix onnxruntime.framework for App Store Connect
         basedOnDependencyAnalysis: false
         script: |
-          bin="$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/onnxruntime.framework/onnxruntime"
-          if [ "$ACTION" = "install" ] && [ -f "$bin" ]; then
+          fw="$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/onnxruntime.framework"
+          bin="$fw/onnxruntime"
+          [ -f "$bin" ] || exit 0
+          # Its Info.plist says MinimumOSVersion 15.1 but the binary is built for iOS 17.0, and App Store Connect
+          # rejects the mismatch (ITMS-90208). Use the binary's real minimum, then sign the framework again.
+          minos="$(vtool -show-build "$bin" | awk '/minos/ {print $2; exit}')"
+          if [ -n "$minos" ] && [ "$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$fw/Info.plist")" != "$minos" ]; then
+            /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion $minos" "$fw/Info.plist"
+            if [ -n "${EXPANDED_CODE_SIGN_IDENTITY:-}" ]; then
+              codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" --preserve-metadata=identifier,entitlements "$fw"
+            fi
+          fi
+          if [ "$ACTION" = "install" ]; then
             dsymutil "$bin" -o "$DWARF_DSYM_FOLDER_PATH/onnxruntime.framework.dSYM" 2>/dev/null || true
           fi
     settings:
