@@ -166,7 +166,7 @@ function add(c,html){const d=document.createElement('div');d.className=c;d.inner
  * searches in this tab. Citations, image lines, links and Markdown marks are not read.
  */
 const TALK_JS = String.raw`
-const TALK=/[?&]talk=(1|true|yes)(&|$)/i.test(location.search);
+let TALK=/[?&]talk=(1|true|yes)(&|$)/i.test(location.search);
 // Voice: the URL's voice=, else the one picked in this browser, else the server's default.
 let VOICE=(location.search.match(/[?&]voice=([a-z0-9]+)/i)||[])[1]||'';try{VOICE=VOICE||localStorage.voice2||''}catch{}
 const tk={said:0,text:'',pend:'',sent:0,q:[],busy:false,blocked:false};let tkb=null;const au=new Audio();
@@ -187,30 +187,25 @@ const cloud=(t,v)=>fetch('/api/tts',{method:'POST',headers:{'content-type':'appl
  .then(r=>r.ok?r.blob():Promise.reject(new Error('tts '+r.status)));
 function tts(t){const it={u:null},v=(VOICE||VDEF).toLowerCase();
  it.p=(v in LOCAL?localTTS(t,LOCAL[v]).catch(()=>cloud(t,'')):cloud(t,v)).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
-// tiny-voca (4.5M parameters, 24 kHz): ONNX Runtime Web from the CDN, the model cached in Cache Storage. Loaded once
-// per page; started early (preload) so it is ready before the first answer finishes.
-const LOCAL={f2:0,m2:1},MODEL='https://huggingface.co/n4ze3m/tiny-voca/resolve/main/onnx/model.onnx',ORT='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.1/dist/';
-let sessP=null;
-function voiceModel(){if(sessP)return sessP;sessP=(async()=>{
- if(!window.ort)await new Promise((ok,no)=>{const s=document.createElement('script');s.src=ORT+'ort.wasm.min.js';s.onload=ok;s.onerror=no;document.head.append(s)});
- ort.env.wasm.numThreads=1;ort.env.wasm.wasmPaths=ORT;
- let res;try{const c=await caches.open('quisk-voice-1');res=await c.match(MODEL);if(!res){res=await fetch(MODEL);if(res.ok)await c.put(MODEL,res.clone())}}catch{res=await fetch(MODEL)}
- if(!res.ok)throw new Error('model '+res.status);
- return ort.InferenceSession.create(new Uint8Array(await res.arrayBuffer()),{executionProviders:['wasm']})})();
- sessP.catch(()=>{sessP=null});return sessP}
-const i64=a=>new ort.Tensor('int64',BigInt64Array.from(a.map(x=>BigInt(x))),[1,a.length]),f32=x=>new ort.Tensor('float32',Float32Array.of(x),[1]);
-// In the iOS and Android apps the voice is built in: the page sends phoneme ids, the app returns WAV audio.
+// tiny-voca (4.5M parameters, 24 kHz) in a background worker (/voice/worker.js): phonemes with dizione (Pyodide) and,
+// on the web, audio with ONNX Runtime Web. Downloaded once and cached; started early (preload). Until its phonemizer
+// is ready (first use), phonemes come from the server.
+const LOCAL={f2:0,m2:1};
+// In the iOS and Android apps the voice model is built in: the page sends phoneme ids, the app returns WAV audio.
 const NATIVE=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.quiskVoice?b=>window.webkit.messageHandlers.quiskVoice.postMessage(b)
  :window.QuiskAndroid?b=>Promise.resolve(QuiskAndroid.speak(JSON.stringify(b))):null;
-const phonemes=sents=>fetch('/api/phonemes',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sentences:sents})}).then(r=>r.ok?r.json():Promise.reject(new Error('phonemes')));
+let vw=null,vwSeq=0;const vwReady={},vwWait={};
+function voiceWorker(){if(vw)return vw;vw=new Worker('/voice/worker.js');
+ vw.onmessage=e=>{const m=e.data;if(m.ready){vwReady[m.ready]=true;return}const w=vwWait[m.id];if(!w)return;delete vwWait[m.id];m.ok?w[0](m.result):w[1](new Error(m.error))};
+ vw.postMessage({op:'init',model:!NATIVE});return vw}
+const vcall=(op,data)=>new Promise((ok,no)=>{const id=++vwSeq;vwWait[id]=[ok,no];voiceWorker().postMessage({id,op,...data})});
+const serverPhonemes=sents=>fetch('/api/phonemes',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sentences:sents})}).then(r=>r.ok?r.json():Promise.reject(new Error('phonemes')));
+let phSrc='server';
+const phonemes=sents=>vwReady.phonemes?vcall('phonemize',{sentences:sents}).then(r=>(phSrc='device',r)).catch(()=>(phSrc='server',serverPhonemes(sents))):(phSrc='server',serverPhonemes(sents));
 async function localTTS(text,voice){const sents=(text.match(/[^.!?]+[.!?]*\s*/g)||[text]).map(s=>s.trim()).filter(Boolean);
- if(NATIVE){const b64=await NATIVE({ph:(await phonemes(sents)).filter(Boolean),voice});if(!b64)throw new Error('no audio');
-  return new Blob([Uint8Array.from(atob(b64),c=>c.charCodeAt(0))],{type:'audio/wav'})}
- const [sess,ph]=await Promise.all([voiceModel(),phonemes(sents)]);
- const parts=[];for(const p of ph){if(!p||!p.ids.length)continue;const ids=p.ids.slice(0,512),st=p.stress.slice(0,512);
-  const out=await sess.run({tokens:i64(ids),stress:i64(st),voice:new ort.Tensor('int64',BigInt64Array.of(BigInt(voice)),[1]),speed:f32(1),pitch_shift:f32(0),pitch_range:f32(1)});
-  parts.push(out.audio.data,new Float32Array(6000))}
- if(!parts.length)throw new Error('no audio');return wav(parts,24000)}
+ const ph=(await phonemes(sents)).filter(Boolean);if(!ph.length)throw new Error('no phonemes');
+ if(NATIVE){const b64=await NATIVE({ph,voice,src:phSrc});if(!b64)throw new Error('no audio');return new Blob([Uint8Array.from(atob(b64),c=>c.charCodeAt(0))],{type:'audio/wav'})}
+ return wav([await vcall('synth',{ph,voice})],24000)}
 function wav(parts,rate){const n=parts.reduce((a,p)=>a+p.length,0),b=new DataView(new ArrayBuffer(44+n*2));let o=0;
  const s=t=>{for(const c of t)b.setUint8(o++,c.charCodeAt(0))},u32=v=>{b.setUint32(o,v,true);o+=4},u16=v=>{b.setUint16(o,v,true);o+=2};
  s('RIFF');u32(36+n*2);s('WAVE');s('fmt ');u32(16);u16(1);u16(1);u32(rate);u32(rate*2);u16(2);u16(16);s('data');u32(n*2);
@@ -218,8 +213,8 @@ function wav(parts,rate){const n=parts.reduce((a,p)=>a+p.length,0),b=new DataVie
  return new Blob([b],{type:'audio/wav'})}
 // Preload in talk mode and in the phone apps: the model, and a warm phonemizer, before the first answer.
 const APP=/QuiskApp/.test(navigator.userAgent);
-if((TALK||APP)&&(VOICE||VDEF).toLowerCase() in LOCAL)addEventListener('load',()=>setTimeout(()=>{if(!NATIVE)voiceModel();
- fetch('/api/phonemes',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sentences:['Ready.']})}).catch(()=>{})},300));
+// Start at once, not on "load": a streaming answer page only fires "load" after the whole answer has arrived.
+if((TALK||APP)&&(VOICE||VDEF).toLowerCase() in LOCAL)setTimeout(()=>{voiceWorker();serverPhonemes(['Ready.']).catch(()=>{})},0);
 function enqueue(t){t=speakable(t);if(!t)return;tk.q.push(tts(t));pump()}
 function next(){const it=tk.q.shift();if(it&&it.u)URL.revokeObjectURL(it.u);tk.busy=false;tkShow();pump()}
 function pump(){if(tk.busy||tk.blocked||!tk.q.length)return;tk.busy=true;const it=tk.q[0];
@@ -322,6 +317,9 @@ let busy=false;
 if(S.streaming){busy=true;start();history.replaceState(null,'','/c/'+S.id)}
 // This page's id, so live updates it caused itself are skipped.
 const CID=Math.random().toString(36).slice(2);
+// The apps ask here when the page is already open: a new chat in place, read aloud, with the voice worker already warm.
+window.quiskAsk=q=>{if(busy||!q)return;TALK=true;S.id=crypto.randomUUID().replace(/-/g,'').slice(0,12);S.title=q.length>80?q.slice(0,77)+'…':q;S.msgs=[];S.shares=[];
+ log.innerHTML='';main.classList.remove('home');document.title=S.title;history.pushState(null,'','/c/'+S.id);ask(q)};
 async function ask(q){if(busy)return;busy=true;tkUnlock();log.querySelectorAll('.fups').forEach(e=>e.remove());S.msgs.push({role:'user',text:q});add('u',E1(q));run()}
 // o.el/o.at: answer again in place of that answer; otherwise answer the last question.
 async function run(o={}){start(o.el);cur.at=o.at;if(!o.el)main.scrollTop=main.scrollHeight;

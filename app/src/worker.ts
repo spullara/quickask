@@ -844,7 +844,9 @@ export default {
       const follow = !body.replace && n > 1;
       const searching = ask(env, chats, user.u, follow ? null : queryOf(body.msgs), loc);
       // The stored chat up to this question (the client's copy is never trusted for history or sources).
-      const base$ = stored(chats, api[1]!, body.replace ? n + 1 : n - 1);
+      // A single question that is not a rerun starts a new chat in place (the apps ask without reloading the page).
+      const fresh = !body.replace && n === 1;
+      const base$ = fresh ? Promise.resolve({ title: titleOf(body.msgs[0]!.text), msgs: [] as Msg[] }) : stored(chats, api[1]!, body.replace ? n + 1 : n - 1);
       const out = stream();
       const emit: Emit = (t, v) => out.send(t + (typeof v === "string" ? v : JSON.stringify(v)) + "\u0000");
       ctx.waitUntil((async () => {

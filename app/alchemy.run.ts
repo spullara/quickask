@@ -45,6 +45,8 @@ export const Worker = Cloudflare.Worker("Quick", {
   compatibility: { date: "2026-11-01" },
   observability: { enabled: true },
   build: { output: { minify: true } },
+  // Static files: the voice worker and the phonemizer wheel it caches (public/voice/).
+  assets: "./public",
   // Passkeys bind to this hostname. Set QUICK_DOMAIN in app/.env once the domain is in this Cloudflare account.
   ...(DOMAIN ? { domain: OLD.length ? { name: DOMAIN, aliases: OLD } : DOMAIN } : {}),
   env: {

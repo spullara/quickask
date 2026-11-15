@@ -90,7 +90,7 @@ final class VoiceBridge: NSObject, WKScriptMessageHandlerWithReply {
                 let started = Date()
                 let wav = try await NativeVoice.shared.speak(sentences, voice: voice)
                 #if DEBUG
-                NSLog("quiskVoice: %d sentences, %.1f s audio in %.0f ms", sentences.count, Double(wav.count - 44) / 48000, Date().timeIntervalSince(started) * 1000)
+                NSLog("quiskVoice: %d sentences (phonemes from %@), %.1f s audio in %.0f ms", sentences.count, (body["src"] as? String) ?? "?", Double(wav.count - 44) / 48000, Date().timeIntervalSince(started) * 1000)
                 #endif
                 await replyHandler(wav.base64EncodedString(), nil)
             } catch {

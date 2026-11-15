@@ -22,6 +22,7 @@ import android.widget.TextView
 class MainActivity : Activity() {
     private var web: WebView? = null
     private var splash: LinearLayout? = null
+    private var loaded = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +35,14 @@ class MainActivity : Activity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (take(intent)) show() else page(intent)?.let { web?.loadUrl(it) ?: show() }
+        if (take(intent)) return show()
+        val url = page(intent) ?: return
+        val w = web ?: return show()
+        val question = intent.data?.getQueryParameter("q")
+        // Page already open: ask in place, so its voice worker (already warm) makes the phonemes from the start.
+        if (question != null && loaded) {
+            w.evaluateJavascript("window.quiskAsk ? (quiskAsk(${org.json.JSONObject.quote(question)}), 1) : 0") { if (it != "1") w.loadUrl(url) }
+        } else w.loadUrl(url)
     }
 
     /** A quisk.ai page to open (a chat from the voice action), if the intent has one. */
@@ -106,6 +114,7 @@ class MainActivity : Activity() {
 
     private inner class Client : WebViewClient() {
         override fun onPageFinished(view: WebView, url: String) {
+            loaded = true
             splash?.animate()?.alpha(0f)?.setDuration(250)?.withEndAction { splash?.visibility = android.view.View.GONE }
         }
 

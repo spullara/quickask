@@ -181,8 +181,9 @@ Both sign in once through the system browser with your existing quisk.ai passkey
 They call `POST /api/ask` (answer plus a version written for speaking) and `POST /api/tts` (the Quisk voice).
 
 Both apps ship tiny-voca (a 4.5M-parameter English voice) and read answers on the phone with ONNX Runtime:
-the server turns text into phonemes (`/api/phonemes`, the dizione phonemizer in a small Python container), the app
-turns phonemes into audio. Voices F2 (default) and M2 run on the device; the Gemini voices stay available in the menu.
+text becomes phonemes on the phone too: the page runs the dizione phonemizer (Python, through Pyodide) in a background
+worker, downloaded once and cached (`/api/phonemes` on the server fills in while it starts), and the app turns phonemes
+into audio. On the web the same worker also makes the audio (ONNX Runtime Web). Voices F2 (default) and M2 run on the device; the Gemini voices stay available in the menu.
 Fetch the model once before building: `scripts/fetch-voice-model.sh`.
 
 **iOS** (Xcode 16 or later, XcodeGen):

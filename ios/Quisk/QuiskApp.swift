@@ -34,7 +34,11 @@ final class AppModel: ObservableObject {
         NativeVoice.shared.preload()
         #if DEBUG
         // Simulator testing of the Action-button path without a microphone: QUISK_ASK=<question>.
-        if let question = ProcessInfo.processInfo.environment["QUISK_ASK"], !question.isEmpty { ask(question) }
+        if let question = ProcessInfo.processInfo.environment["QUISK_ASK"], !question.isEmpty {
+            // QUISK_ASK_AFTER=<seconds>: ask once the app is open (the in-place path), not at launch.
+            let after = Double(ProcessInfo.processInfo.environment["QUISK_ASK_AFTER"] ?? "") ?? 0
+            if after > 0 { DispatchQueue.main.asyncAfter(deadline: .now() + after) { self.ask(question) } } else { ask(question) }
+        }
         #endif
     }
     /// Set by the "Ask Quisk Aloud" action (Action button): opens the listening screen.
@@ -50,7 +54,12 @@ final class AppModel: ObservableObject {
         var parts = URLComponents(url: API.base, resolvingAgainstBaseURL: false)!
         parts.queryItems = [URLQueryItem(name: "q", value: question), URLQueryItem(name: "talk", value: "true")]
         guard let url = parts.url else { return }
-        if let web { web.load(URLRequest(url: url)) } else { pending = url }
+        guard let web, loaded else { pending = url; web?.load(URLRequest(url: url)); return }
+        // Page already open: ask in place, so its voice worker (already warm) makes the phonemes from the start.
+        let arg = String(data: try! JSONSerialization.data(withJSONObject: [question]), encoding: .utf8)!.dropFirst().dropLast()
+        web.evaluateJavaScript("window.quiskAsk ? (quiskAsk(\(arg)), 1) : 0") { result, _ in
+            if (result as? Int) != 1 { web.load(URLRequest(url: url)) }
+        }
     }
 
     /// The URL to load first: a question asked before the web view existed, or the home page.

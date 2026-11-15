@@ -54,6 +54,8 @@ fi
 bun install --frozen-lockfile >/dev/null
 # The phonemizer container installs dizione from a local wheel (with its data); build it once.
 ls phonemes/wheels/dizione-*.whl >/dev/null 2>&1 || phonemes/build_wheel.sh >/dev/null
+# The same wheel runs in browsers and the apps' web views (Pyodide), served from public/voice/.
+cp phonemes/wheels/dizione-*.whl public/voice/dizione-1.whl
 if [ "${1:-}" = destroy ]; then exec bunx alchemy destroy --yes; fi
 log="$(mktemp)"
 bunx alchemy deploy --yes | tee "$log"
