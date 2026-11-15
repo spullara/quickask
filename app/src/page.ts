@@ -169,7 +169,20 @@ const TALK_JS = String.raw`
 let TALK=/[?&]talk=(1|true|yes)(&|$)/i.test(location.search);
 // Voice: the URL's voice=, else the one picked in this browser, else the server's default.
 let VOICE=(location.search.match(/[?&]voice=([a-z0-9]+)/i)||[])[1]||'';try{VOICE=VOICE||localStorage.voice2||''}catch{}
-const tk={said:0,text:'',pend:'',sent:0,q:[],busy:false,blocked:false};let tkb=null;const au=new Audio();
+const tk={said:0,text:'',pend:'',sent:0,q:[],busy:false,blocked:false};let tkb=null;
+// In the phone apps, answers play through Web Audio, not an <audio> element: WebKit puts every <audio> element on the
+// iOS lock screen as Now Playing. (Browsers keep <audio>, which Safari plays even in silent mode.) Same small API.
+class WAPlayer extends EventTarget{constructor(){super();this.ctx=null;this.node=null;this.paused=true;this._src='';this.onended=null;this.onerror=null}
+ get src(){return this._src}set src(v){this._stop();this._src=v}
+ _stop(){if(this.node){this.node.onended=null;try{this.node.stop()}catch{}this.node=null}}
+ async play(){const ctx=this.ctx||(this.ctx=new (window.AudioContext||window.webkitAudioContext)());await ctx.resume();
+  if(!this._src||this._src.startsWith('data:'))return;const src=this._src;
+  const buf=await ctx.decodeAudioData(await (await fetch(src)).arrayBuffer());if(src!==this._src)return;
+  this._stop();const n=ctx.createBufferSource();n.buffer=buf;n.connect(ctx.destination);
+  n.onended=()=>{if(this.node!==n)return;this.node=null;this.paused=true;this.dispatchEvent(new Event('ended'));if(this.onended)this.onended()};
+  this.node=n;this.paused=false;n.start();this.dispatchEvent(new Event('playing'))}
+ pause(){if(!this.paused){this._stop();this.paused=true;this.dispatchEvent(new Event('pause'))}}}
+const au=/QuiskApp/.test(navigator.userAgent)?new WAPlayer():new Audio();
 const SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 const speakable=s=>s.replace(/^\s*!\[[^\]]*\]\([^)]*\)\s*$/gm,'').replace(/\[([^\]]+)\]\([^)]*\)/g,'$1').replace(/\s*\[\d+(?:,\s*\d+)*\]/g,'')
  .replace(/https?:\/\/\S+/g,'').replace(/[*_` + "`" + String.raw`#>|~]/g,'').replace(/\s+/g,' ').trim();
@@ -216,6 +229,11 @@ function next(){const it=tk.q.shift();if(it&&it.u)URL.revokeObjectURL(it.u);tk.b
 function pump(){if(tk.busy||tk.blocked||!tk.q.length)return;tk.busy=true;const it=tk.q[0];
  it.p.then(u=>{au.src=u;return au.play()}).then(tkShow,e=>{if(e&&e.name==='NotAllowedError'){tk.busy=false;tk.blocked=true;tkShow()}else next()})}
 au.onended=next;au.onerror=()=>{if(tk.busy)next()};
+// The iOS app pauses its "Quisk" wake word while an answer plays, so it does not hear its own voice.
+const spkBridge=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.quiskSpeaking;let spk=false;
+const setSpk=v=>{if(spkBridge&&v!==spk){spk=v;spkBridge.postMessage({on:v})}};
+au.addEventListener('playing',()=>setSpk(true));
+for(const e of ['pause','ended','emptied'])au.addEventListener(e,()=>setTimeout(()=>setSpk(!au.paused||tk.q.length>0),500));
 // The tap: stop, or play. Playing starts inside the tap (iPhone), with the first chunk if it is ready, else a silent unlock.
 function tkTap(){if(playing()||tk.q.length&&!tk.blocked){au.pause();tk.q=[];tk.busy=false;tkShow();return}
  if(!tk.blocked){tk.q=chunks(tk.text).map(c=>tts(speakable(c)))}tk.blocked=false;const it=tk.q[0];
