@@ -24,6 +24,8 @@ struct QuiskWebView: UIViewRepresentable {
         config.applicationNameForUserAgent = "QuiskApp/1.0"
         // The page reads answers with the voice built into the app (no model download in the web view).
         config.userContentController.addScriptMessageHandler(VoiceBridge(), contentWorld: .page, name: "quiskVoice")
+        // The page's talk button: dictate with the phone's speech recognition, then answer aloud in the page.
+        config.userContentController.add(ListenBridge(model: model), name: "quiskListen")
         let web = WKWebView(frame: .zero, configuration: config)
         web.navigationDelegate = context.coordinator
         web.uiDelegate = context.coordinator
@@ -75,5 +77,14 @@ struct QuiskWebView: UIViewRepresentable {
             if let url = action.request.url { UIApplication.shared.open(url) }
             return nil
         }
+    }
+}
+
+final class ListenBridge: NSObject, WKScriptMessageHandler {
+    let model: AppModel
+    init(model: AppModel) { self.model = model }
+    func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+        model.listeningForPage = true
+        model.listening = true
     }
 }

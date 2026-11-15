@@ -21,6 +21,7 @@ with sources and, when they help, pictures.
 - Each user can ask 100 questions a day. The admin can change the limit for each user on `/admin`.
 - Read-only share links that anyone can open, with no account. Links show a rich preview card on X, iMessage and Slack.
 - Press ⌘K (Ctrl K) for a new search.
+- Tap the microphone in the search box to ask by voice; the answer is read aloud. In a chat it asks a follow-up.
 - Add `&talk=true` to a search URL (for example `https://quisk.ai/?q=%s&talk=true`) to hear answers read aloud as they
   stream. It stays on for follow-ups in that tab. Speech is made on your device by tiny-voca (voices F2, the default, and M2; pick one in the menu next to the
   read-aloud button or add `&voice=m2`). If the browser blocks audio that a tap did not start, tap "Read aloud".

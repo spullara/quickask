@@ -71,7 +71,7 @@ class MainActivity : Activity() {
                 // The page sees "QuiskApp" and preloads the on-device voice in the background.
                 settings.userAgentString = settings.userAgentString + " QuiskApp/1.0"
                 // The page reads answers with the voice built into the app (no model download in the web view).
-                addJavascriptInterface(NativeVoice.Bridge(applicationContext), "QuiskAndroid")
+                addJavascriptInterface(NativeVoice.Bridge(applicationContext) { runOnUiThread { listen() } }, "QuiskAndroid")
                 webViewClient = Client()
                 loadUrl(page(intent) ?: Api.BASE)
             }
@@ -135,6 +135,25 @@ class MainActivity : Activity() {
             return false
         }
     }
+
+    /** The page's talk button: Android speech input, then the question is asked in the page and read aloud. */
+    private fun listen() {
+        val intent = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+            .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH)
+            .putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "What do you want to know?")
+        try { startActivityForResult(intent, LISTEN) } catch (e: android.content.ActivityNotFoundException) {}
+    }
+
+    @Deprecated("Speech input result")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        val question = data?.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.trim()
+        if (requestCode == LISTEN && resultCode == RESULT_OK && !question.isNullOrEmpty()) {
+            web?.evaluateJavascript("window.quiskTalk && quiskTalk(${org.json.JSONObject.quote(question)})", null)
+        }
+    }
+
+    private companion object { const val LISTEN = 7 }
 
     @Deprecated("Back goes back in the web view first")
     override fun onBackPressed() {

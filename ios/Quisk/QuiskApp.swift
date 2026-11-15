@@ -43,6 +43,15 @@ final class AppModel: ObservableObject {
     }
     /// Set by the "Ask Quisk Aloud" action (Action button): opens the listening screen.
     @Published var listening = false
+    /// The listening screen was opened by the page's talk button: the question goes back to that page (a follow-up in
+    /// an open chat), not into a new chat.
+    var listeningForPage = false
+
+    /// A spoken question from the page's talk button, asked in the page with the answer read aloud.
+    func talk(_ question: String) {
+        let arg = String(data: try! JSONSerialization.data(withJSONObject: [question]), encoding: .utf8)!.dropFirst().dropLast()
+        web?.evaluateJavaScript("window.quiskTalk && quiskTalk(\(arg))")
+    }
     @Published var signInError: String?
     /// The web view has finished its first load (ends the splash screen).
     @Published var loaded = false

@@ -141,7 +141,8 @@ struct VoiceScreen: View {
         .onAppear {
             dictation.onQuestion = { question in
                 app.listening = false
-                app.ask(question)
+                if app.listeningForPage { app.talk(question) } else { app.ask(question) }
+                app.listeningForPage = false
             }
             dictation.start()
         }

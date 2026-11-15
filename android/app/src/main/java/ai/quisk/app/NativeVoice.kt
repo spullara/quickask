@@ -78,7 +78,11 @@ object NativeVoice {
     }
 
     /** window.QuiskAndroid.speak(json) -> base64 WAV, for the chat page's read-aloud. */
-    class Bridge(private val context: Context) {
+    class Bridge(private val context: Context, private val onListen: () -> Unit) {
+        /** The page's talk button: start speech input. */
+        @JavascriptInterface
+        fun listen() = onListen()
+
         @JavascriptInterface
         fun speak(json: String): String? = try {
             Base64.encodeToString(speak(context, JSONObject(json)), Base64.NO_WRAP)

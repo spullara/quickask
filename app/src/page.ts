@@ -70,8 +70,9 @@ main{flex:1;height:100vh;height:100dvh;overflow-y:auto;display:flex;flex-directi
 .m sup a{position:relative;text-decoration:none;padding:0 1px}
 .m sup a:hover::after{content:attr(data-t);position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);white-space:nowrap;background:var(--fg);color:var(--bg);font-size:12px;font-weight:500;line-height:1;padding:5px 8px;border-radius:6px;pointer-events:none;z-index:2}
 form{width:100%;max-width:760px;margin:0 auto;padding:8px 24px 20px;position:sticky;bottom:0;background:var(--bg)}
+#mic{position:absolute;right:69px;bottom:27px;width:32px;height:32px;border-radius:50%;border:0;display:grid;place-items:center;background:none;color:var(--mute);cursor:pointer;padding:0}#mic[hidden]{display:none}#mic:hover{color:var(--fg)}#mic.rec{background:#dc2626;color:#fff;animation:pulse 1.2s ease-in-out infinite}@keyframes pulse{50%{box-shadow:0 0 0 6px #dc262633}}
 #go{position:absolute;right:31px;bottom:27px;width:32px;height:32px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--fg);color:var(--bg);cursor:pointer;opacity:.25;transition:opacity .15s;padding:0}#go.on{opacity:1}
-textarea{width:100%;resize:none;border:1px solid var(--line);border-radius:14px;padding:12px 48px 12px 14px;font:inherit;background:var(--bg);color:var(--fg);outline:none;max-height:300px;overflow-y:hidden;display:block}
+textarea{width:100%;resize:none;border:1px solid var(--line);border-radius:14px;padding:12px 86px 12px 14px;font:inherit;background:var(--bg);color:var(--fg);outline:none;max-height:300px;overflow-y:hidden;display:block}
 textarea:focus{border-color:var(--mute)}
 .home{display:flex;flex-direction:column;justify-content:center}.home #log{flex:none;padding:0}.home form{position:relative}
 #tg{display:none}
@@ -329,6 +330,22 @@ async function run(o={}){start(o.el);cur.at=o.at;if(!o.el)main.scrollTop=main.sc
 $('form').addEventListener('submit',e=>{const q=ta.value.trim();if(!S.id)return;e.preventDefault();if(!q||busy)return;ta.value='';fit();if(matchMedia('(hover:none)').matches)ta.blur();ask(q)});
 ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('form').requestSubmit()}});
 const go=$('#go'),goOn=()=>{if(go)go.classList.toggle('on',!!ta.value.trim())};ta.addEventListener('input',goOn);$('form').addEventListener('submit',()=>setTimeout(goOn,0));goOn();
+// Talk: speak a question and hear the answer. A follow-up inside a chat, else a new chat, both without leaving the page,
+// so the voice worker stays warm and the tap that started it has already unlocked audio.
+window.quiskTalk=q=>{q=(q||'').trim();if(!q||busy)return;TALK=true;voiceWorker();ta.value='';fit();goOn();if(S.id)ask(q);else quiskAsk(q)};
+const mic=$('#mic'),SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const nativeListen=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.quiskListen?()=>window.webkit.messageHandlers.quiskListen.postMessage({})
+ :window.QuiskAndroid&&QuiskAndroid.listen?()=>QuiskAndroid.listen():null;
+let rec=null;
+if(mic&&(nativeListen||SR)){mic.hidden=false;mic.onclick=()=>{
+ TALK=true;tkUnlock();if(rec){rec.stop();return}
+ if(nativeListen)return nativeListen();
+ rec=new SR();rec.lang=navigator.language||'en-US';rec.interimResults=true;rec.continuous=false;let heard='';
+ mic.classList.add('rec');ta.placeholder='Listening…';
+ rec.onresult=e=>{heard=[...e.results].map(r=>r[0].transcript).join('');ta.value=heard;fit();goOn()};
+ rec.onerror=()=>{};
+ rec.onend=()=>{rec=null;mic.classList.remove('rec');ta.placeholder=S.id?'Ask a follow-up':'Ask anything';quiskTalk(heard)};
+ rec.start()}}
 const fit=()=>{ta.style.height='auto';const h=ta.scrollHeight+ta.offsetHeight-ta.clientHeight;ta.style.height=h+'px';ta.style.overflowY=h>300?'auto':'hidden'};
 ta.addEventListener('input',fit);
 $('#tg').onclick=()=>document.body.classList.toggle('open');main.addEventListener('click',()=>document.body.classList.remove('open'));
@@ -443,7 +460,7 @@ export function shell(o: { id: string | null; title: string; msgs: Msg[]; stream
 </div><footer id="foot"><a id="usage" href="/admin" hidden></a>
 <div class="me"><span>${esc(o.user.n)}</span><a href="/auth/logout">Sign out</a></div></footer></nav>
 <main class="${o.id ? "" : "home"}"><div id="brand" class="brand">${mark(44)}<span>Quisk</span></div><div id="log"></div>
-<form action="/" method="get"><textarea name="q" rows="1" placeholder="${o.id ? "Ask a follow-up" : "Ask anything"}" autocomplete="off"></textarea><button id="go" type="submit" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form><p id="tag">I feel the need, the need for speed!</p></main>
+<form action="/" method="get"><textarea name="q" rows="1" placeholder="${o.id ? "Ask a follow-up" : "Ask anything"}" autocomplete="off"></textarea><button id="mic" type="button" aria-label="Talk" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><button id="go" type="submit" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form><p id="tag">I feel the need, the need for speed!</p></main>
 ${o.id ? '<div id="shx"><button id="sl" hidden></button><button id="sh">Share</button><div id="sp" hidden></div></div>' : ""}
 <script>const S=${json(state)};${RENDER}${JS}</script>
 ${o.addKey ? `<div id="ak"><span>Add a passkey for this site so you can sign in here next time.</span><button id="akb">Add passkey</button><button id="akx" aria-label="Not now">×</button></div><script>${ADDKEY_JS}</script>` : ""}
