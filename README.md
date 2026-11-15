@@ -174,6 +174,33 @@ from more than one machine.
 ./deploy.sh destroy
 ```
 
+## Phone apps
+
+`ios/` (SwiftUI) and `android/` (Kotlin, no extra libraries) wrap the web app and add a voice action that answers out loud.
+Both sign in once through the system browser with your existing quisk.ai passkey (`/auth/app` hands the app a token).
+They call `POST /api/ask` (answer plus a version written for speaking) and `POST /api/tts` (the Quisk voice).
+
+**iOS** (Xcode 16 or later, XcodeGen):
+
+```sh
+cd ios && xcodegen generate && open Quisk.xcodeproj   # set your team in project.yml, then Run on your iPhone
+```
+
+- **Action button:** Settings → Action Button → Shortcut → Quisk → **Ask Quisk Aloud**. Pressing it opens Quisk
+  listening; say your question and it reads the answer in the Quisk voice.
+- **Siri / Shortcuts:** "Ask Quisk" asks "What do you want to know?" and Siri speaks the answer.
+
+**Android** (JDK 17+, Android SDK):
+
+```sh
+cd android && ./gradlew assembleDebug && adb install app/build/outputs/apk/debug/app-debug.apk
+```
+
+- The **Ask Quisk** icon opens speech input and reads the answer aloud. Point the side key (Samsung: Settings →
+  Advanced features → Side button → Double press → Open app) or Quick Tap (Pixel: Settings → System → Gestures →
+  Quick Tap → Open app) at **Ask Quisk**, or make Quisk the default assistant (Settings → Apps → Default apps →
+  Digital assistant app) so the assist gesture opens it.
+
 ## Test
 
 The end-to-end test runs against your deployed app. It uses a software passkey, so it
