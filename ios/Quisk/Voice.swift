@@ -18,12 +18,32 @@ final class Dictation: ObservableObject {
     private var giveUp: Timer?
     var onQuestion: (String) -> Void = { _ in }
 
+    /// Audio session changes can block while the system audio server reconfigures, so they never run on the main
+    /// thread. One serial queue keeps them in order (record for dictation, then playback for the answer).
+    private static let audioSession = DispatchQueue(label: "ai.quisk.audio-session", qos: .userInitiated)
+
+    private static func configure(_ change: @escaping @Sendable (AVAudioSession) throws -> Void) async throws {
+        try await withCheckedThrowingContinuation { (done: CheckedContinuation<Void, Error>) in
+            audioSession.async {
+                do { try change(AVAudioSession.sharedInstance()); done.resume() } catch { done.resume(throwing: error) }
+            }
+        }
+    }
+
     func start() {
         heard = ""
         phase = .listening
         Task {
             guard await Self.allowed() else { return fail("Allow the microphone and speech recognition for Quisk in Settings.") }
-            do { try listen() } catch { fail("Could not start listening.") }
+            do {
+                try await Self.configure { session in
+                    try session.setCategory(.record, mode: .measurement, options: [.duckOthers])
+                    try session.setActive(true, options: .notifyOthersOnDeactivation)
+                }
+                try listen()
+            } catch {
+                fail("Could not start listening.")
+            }
         }
     }
 
@@ -34,9 +54,6 @@ final class Dictation: ObservableObject {
     }
 
     private func listen() throws {
-        let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.record, mode: .measurement, options: [.duckOthers])
-        try session.setActive(true, options: .notifyOthersOnDeactivation)
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
         request.taskHint = .search
@@ -73,8 +90,8 @@ final class Dictation: ObservableObject {
         task?.cancel()
         request = nil
         task = nil
-        // Hand the audio session back so the page can play the answer.
-        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio)
+        // Hand the audio session back so the page can play the answer (off the main thread, after any pending setup).
+        Self.audioSession.async { try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio) }
     }
 
     func finish() {
