@@ -1,12 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
-export { VOICES } from "./voices.ts";
 
 /** The answer model, with list prices in USD per token (thinking tokens bill as output). */
-/** Gemini 3.8 Flash-Lite TTS: text in, audio out (25 audio tokens a second). $12/M audio tokens from Jan 1, 2027. */
-export const TTS = { id: "gemini-3.8-flash-lite-tts", in: 0.5 / 1e6, out: 6 / 1e6 } as const;
-
-
 export const MODELS = {
   lite: { id: "gemini-3.5-flash-lite", thinking: "minimal", name: "Gemini 3.5 Flash Lite", in: 0.3 / 1e6, out: 2.5 / 1e6 },
 } as const;

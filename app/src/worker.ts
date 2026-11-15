@@ -3,8 +3,7 @@ import { Container, getContainer } from "@cloudflare/containers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 import { cookie, session, sign } from "./session.ts";
 import { PAGE_VERSION, adminPage, call, keyPage, moveSignIn, opensearch, sharePage, shell, signIn, type Msg, type Result, type Source } from "./page.ts";
-import { DEFAULT_VOICE } from "./voices.ts";
-import { MODELS, TTS, VOICES, modelKey, type Meter, type ModelKey } from "./usage.ts";
+import { MODELS, modelKey, type Meter, type ModelKey } from "./usage.ts";
 
 import { APPLE_ICON_PNG, FAVICON_PNG, LOGO_SVG } from "./icons.ts";
 
@@ -751,28 +750,6 @@ export default {
       if (!Array.isArray(sentences)) return Response.json({ error: "sentences" }, { status: 400 });
       const r = await getContainer(env.PHONEMES, "main").fetch("https://phonemes/", { method: "POST", body: JSON.stringify({ sentences: sentences.slice(0, 60).map(String) }) });
       return new Response(r.body, { status: r.status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
-    }
-
-    // Text to speech for talk mode (signed-in users only). Gemini TTS returns a WAV file.
-    if (path === "/api/tts" && req.method === "POST") {
-      const body = (await req.json().catch(() => ({}))) as { text?: string; voice?: string };
-      const text = String(body.text ?? "").trim().slice(0, 1200);
-      const v = String(body.voice ?? "").toLowerCase(), pick = v in VOICES ? v : DEFAULT_VOICE, voice = pick[0]!.toUpperCase() + pick.slice(1);
-      if (!text) return new Response("No text", { status: 400 });
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${TTS.id}:generateContent`, {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-        body: JSON.stringify({ contents: [{ parts: [{ text }] }], generationConfig: { responseModalities: ["AUDIO"],
-          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } } }),
-      });
-      const d = r.ok ? ((await r.json()) as { candidates?: { content?: { parts?: { inlineData?: { mimeType: string; data: string } }[] } }[];
-        usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number } }) : undefined;
-      const audio = d?.candidates?.[0]?.content?.parts?.find((x) => x.inlineData)?.inlineData;
-      if (!audio) return new Response("Speech failed", { status: 502 });
-      // Audio is billed like the answer it reads, without counting another search.
-      const tin = d?.usageMetadata?.promptTokenCount ?? 0, tout = d?.usageMetadata?.candidatesTokenCount ?? 0;
-      ctx.waitUntil(charge(env, user.u, { exa: 0, tokensIn: tin, tokensOut: tout, gemini: tin * TTS.in + tout * TTS.out }, 0));
-      return new Response(Uint8Array.from(atob(audio.data), (c) => c.charCodeAt(0)), { headers: { "content-type": audio.mimeType || "audio/wav", "cache-control": "no-store" } });
     }
 
     if (path === "/api/live") {

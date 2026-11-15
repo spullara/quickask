@@ -11,7 +11,6 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 export const call = (fn: string, arg: unknown) => `<script>${fn}(${json(arg)})</script>\n`;
 
 import { LOGO_SVG } from "./icons.ts";
-import { DEFAULT_VOICE, VOICES } from "./voices.ts";
 
 const ICON_LINKS = `<link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png">`;
 const mark = (px: number) => LOGO_SVG.replace("<svg ", `<svg width="${px}" height="${px}" aria-hidden="true" `);
@@ -160,8 +159,8 @@ function add(c,html){const d=document.createElement('div');d.className=c;d.inner
 `;
 
 /**
- * talk=true (or talk=1) in the URL: read answers aloud as they stream. Finished sentences go to /api/tts (Gemini TTS) and
- * play in order through one audio element, so one tap unlocks it on iPhone and it plays even in silent mode. The first
+ * talk=true (or talk=1) in the URL: read answers aloud as they stream. Finished sentences become audio on this device
+ * (tiny-voca, voices F2 and M2) and play in order through one audio element, so one tap unlocks it on iPhone and it plays even in silent mode. The first
  * sentence is sent alone so audio starts sooner; later text goes in larger chunks. Stays on for follow-ups and new
  * searches in this tab. Citations, image lines, links and Markdown marks are not read.
  */
@@ -175,18 +174,14 @@ const speakable=s=>s.replace(/^\s*!\[[^\]]*\]\([^)]*\)\s*$/gm,'').replace(/\[([^
  .replace(/https?:\/\/\S+/g,'').replace(/[*_` + "`" + String.raw`#>|~]/g,'').replace(/\s+/g,' ').trim();
 const playing=()=>tk.busy&&!au.paused;
 function tkShow(){if(!TALK)return;if(!tkb){const w=document.createElement('div');w.id='tkw';
-  const label=k=>k in LOCAL?k.toUpperCase()+' · '+VOICES[k]:k[0].toUpperCase()+k.slice(1)+' · '+VOICES[k]+' · cloud';
-  w.innerHTML='<select id="tkv" aria-label="Voice">'+Object.keys(VOICES).map(k=>'<option value="'+k+'">'+label(k)+'</option>').join('')+'</select><button id="tk"></button>';
-  document.body.append(w);tkb=w.querySelector('#tk');tkb.onclick=tkTap;const sel=w.querySelector('#tkv');sel.value=(VOICE||VDEF).toLowerCase();
+  w.innerHTML='<select id="tkv" aria-label="Voice">'+Object.keys(VOICES).map(k=>'<option value="'+k+'">'+k.toUpperCase()+' · '+VOICES[k]+'</option>').join('')+'</select><button id="tk"></button>';
+  document.body.append(w);tkb=w.querySelector('#tk');tkb.onclick=tkTap;const sel=w.querySelector('#tkv');sel.value=voice();
   // A new voice applies at once: the answer being read starts again in it.
   sel.onchange=()=>{VOICE=sel.value;try{localStorage.voice2=VOICE}catch{}if(playing()||tk.q.length){au.pause();tk.q=[];tk.busy=false;tkTap()}}}
  tkb.textContent=playing()||tk.q.length&&!tk.blocked?'■ Stop reading':tk.blocked?'▶ Read aloud':'▶ Read again';tkb.parentNode.hidden=!tk.text}
-// Audio for a chunk: tiny-voca on this device for F2/M2 (phonemes from the server), else Gemini TTS. If the device
-// voice fails, the chunk falls back to the cloud voice so reading never stops.
-const cloud=(t,v)=>fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:t,voice:v})})
- .then(r=>r.ok?r.blob():Promise.reject(new Error('tts '+r.status)));
-function tts(t){const it={u:null},v=(VOICE||VDEF).toLowerCase();
- it.p=(v in LOCAL?localTTS(t,LOCAL[v]).catch(()=>cloud(t,'')):cloud(t,v)).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
+// Audio for a chunk: tiny-voca, on this device (phonemes from the voice worker, or the server while it starts).
+const voice=()=>{const v=(VOICE||'').toLowerCase();return v in LOCAL?v:'f2'};
+function tts(t){const it={u:null};it.p=localTTS(t,LOCAL[voice()]).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
 // tiny-voca (4.5M parameters, 24 kHz) in a background worker (/voice/worker.js): phonemes with dizione (Pyodide) and,
 // on the web, audio with ONNX Runtime Web. Downloaded once and cached; started early (preload). Until its phonemizer
 // is ready (first use), phonemes come from the server.
@@ -214,7 +209,7 @@ function wav(parts,rate){const n=parts.reduce((a,p)=>a+p.length,0),b=new DataVie
 // Preload in talk mode and in the phone apps: the model, and a warm phonemizer, before the first answer.
 const APP=/QuiskApp/.test(navigator.userAgent);
 // Start at once, not on "load": a streaming answer page only fires "load" after the whole answer has arrived.
-if((TALK||APP)&&(VOICE||VDEF).toLowerCase() in LOCAL)setTimeout(()=>{voiceWorker();serverPhonemes(['Ready.']).catch(()=>{})},0);
+if(TALK||APP)setTimeout(()=>{voiceWorker();serverPhonemes(['Ready.']).catch(()=>{})},0);
 function enqueue(t){t=speakable(t);if(!t)return;tk.q.push(tts(t));pump()}
 function next(){const it=tk.q.shift();if(it&&it.u)URL.revokeObjectURL(it.u);tk.busy=false;tkShow();pump()}
 function pump(){if(tk.busy||tk.blocked||!tk.q.length)return;tk.busy=true;const it=tk.q[0];
@@ -242,7 +237,8 @@ if(TALK)addEventListener('DOMContentLoaded',()=>{const f=document.querySelector(
 const JS = `
 const ta=$('textarea'),side=$('#list');
 let cur=null,raf=0;
-const VOICES=${JSON.stringify({ f2: "Female, on device", m2: "Male, on device", ...VOICES })},VDEF="f2";
+// Read-aloud voices: tiny-voca's two, on the device only.
+const VOICES={f2:"Female",m2:"Male"};
 ${TALK_JS}
 function start(el){talkReset();if(el){el.classList.add('wait');el.innerHTML='';cur={el,buf:'',imgs:[]}}else cur={el:add('m wait',''),buf:'',imgs:[]}}
 function paint(){raf=0;if(!cur)return;cur.el.innerHTML=(noSearch(cur.res)?NOSEARCH:'')+md(cutF(cur.buf).replace(/!\\[[^\\]\\n]*(\\]\\([^)\\n]*)?$/,''),cur.imgs,cur.src)}

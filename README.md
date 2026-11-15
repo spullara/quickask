@@ -22,8 +22,8 @@ with sources and, when they help, pictures.
 - Read-only share links that anyone can open, with no account. Links show a rich preview card on X, iMessage and Slack.
 - Press ⌘K (Ctrl K) for a new search.
 - Add `&talk=true` to a search URL (for example `https://quisk.ai/?q=%s&talk=true`) to hear answers read aloud as they
-  stream. It stays on for follow-ups in that tab. Speech is Gemini TTS audio, so it plays on iPhone in silent mode. If the browser blocks audio that a tap did not start,
-  tap "Read aloud". Pick the voice from the menu next to the read-aloud button (saved in this browser), or add `&voice=Puck` to the URL. The default is Leda.
+  stream. It stays on for follow-ups in that tab. Speech is made on your device by tiny-voca (voices F2, the default, and M2; pick one in the menu next to the
+  read-aloud button or add `&voice=m2`). If the browser blocks audio that a tap did not start, tap "Read aloud".
 - Answers know your approximate city and local time (from Cloudflare), so local questions like the weather work.
 - Follow-up questions keep the previous answer's search results in context. The model searches again (as a tool)
   only when it needs new facts, and new results are numbered after the earlier ones.
@@ -178,12 +178,12 @@ from more than one machine.
 
 `ios/` (SwiftUI) and `android/` (Kotlin, no extra libraries) wrap the web app and add a voice action that answers out loud.
 Both sign in once through the system browser with your existing quisk.ai passkey (`/auth/app` hands the app a token).
-They call `POST /api/ask` (answer plus a version written for speaking) and `POST /api/tts` (the Quisk voice).
+They call `POST /api/ask` (answer plus a version written for speaking).
 
 Both apps ship tiny-voca (a 4.5M-parameter English voice) and read answers on the phone with ONNX Runtime:
 text becomes phonemes on the phone too: the page runs the dizione phonemizer (Python, through Pyodide) in a background
 worker, downloaded once and cached (`/api/phonemes` on the server fills in while it starts), and the app turns phonemes
-into audio. On the web the same worker also makes the audio (ONNX Runtime Web). Voices F2 (default) and M2 run on the device; the Gemini voices stay available in the menu.
+into audio. On the web the same worker also makes the audio (ONNX Runtime Web). The voices are F2 (default) and M2.
 Fetch the model once before building: `scripts/fetch-voice-model.sh`.
 
 **iOS** (Xcode 16 or later, XcodeGen):
