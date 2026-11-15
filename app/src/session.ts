@@ -37,5 +37,6 @@ export const setCookie = (name: string, value: string, maxAge: number) =>
 
 /** Pure HMAC check, no storage read, so it adds well under a millisecond to every request. */
 /** Other signed cookies (ceremony, waitlist) must never pass as a session, so the fields are checked too. */
+/** The session cookie, or for the mobile apps the same signed value as "Authorization: Bearer <token>". */
 export const session = (req: Request, env: WorkerEnv) =>
-  unsign<Session>(env.SESSION_SECRET, cookie(req, "s")).then((v) => (typeof v?.u === "string" && typeof v.n === "string" ? v : null));
+  unsign<Session>(env.SESSION_SECRET, cookie(req, "s") ?? req.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1]).then((v) => (typeof v?.u === "string" && typeof v.n === "string" ? v : null));

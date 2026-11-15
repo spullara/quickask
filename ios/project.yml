@@ -1,0 +1,31 @@
+name: Quisk
+options:
+  bundleIdPrefix: ai.quisk
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    DEVELOPMENT_TEAM: 49Z7UCNQ36
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.10"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  Quisk:
+    type: application
+    platform: iOS
+    sources: [Quisk]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.quisk.app
+        PRODUCT_NAME: Quisk
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Quisk
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Quisk listens to your question when you ask aloud.
+        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: Quisk turns your spoken question into text.
+        INFOPLIST_KEY_NSSiriUsageDescription: Ask Quisk questions with Siri and hear the answers.

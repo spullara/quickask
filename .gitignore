@@ -31,3 +31,8 @@ npm-debug.log*
 
 # Intent workspace files
 .intent/
+ios/Quisk.xcodeproj/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties

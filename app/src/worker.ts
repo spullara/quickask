@@ -1,6 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
-import { cookie, session } from "./session.ts";
+import { cookie, session, sign } from "./session.ts";
 import { PAGE_VERSION, adminPage, call, keyPage, moveSignIn, opensearch, sharePage, shell, signIn, type Msg, type Result, type Source } from "./page.ts";
 import { DEFAULT_VOICE } from "./voices.ts";
 import { MODELS, TTS, VOICES, modelKey, type Meter, type ModelKey } from "./usage.ts";
@@ -424,6 +424,16 @@ const ICONS: Record<string, [() => string | Uint8Array<ArrayBuffer>, string]> = 
   "/apple-touch-icon.png": [png(APPLE_ICON_PNG), "image/png"],
 };
 
+/** An answer as plain sentences for a voice: no pictures, citations, link targets, web addresses or Markdown. */
+function speechOf(text: string, max = 1000) {
+  const t = text.replace(/^\s*!\[[^\]]*\]\([^)]*\)\s*$/gm, "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/\s*\[\d+(?:,\s*\d+)*\]/g, "").replace(/https?:\/\/\S+/g, "").replace(/^\s*[-*]\s+/gm, "")
+    .replace(/[*_`#>|~]/g, "").replace(/\n{2,}/g, "\n").trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max), end = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("\n"));
+  return (end > max / 2 ? cut.slice(0, end + 1) : cut).trim();
+}
+
 const newId = () => crypto.randomUUID().replaceAll("-", "").slice(0, 12);
 const titleOf = (q: string) => (q.length > 80 ? q.slice(0, 77) + "…" : q);
 
@@ -668,6 +678,33 @@ export default {
     const usage = env.USAGE.get(env.USAGE.idFromName("global"));
 
     // New chat from the search box: one response carries the page and the streamed answer.
+    // Mobile app sign-in: after signing in here (system browser, existing passkey), hand the app a session token.
+    if (path === "/auth/app") {
+      const cb = url.searchParams.get("cb") ?? "quisk://auth";
+      if (cb !== "quisk://auth") return new Response("Bad callback", { status: 400 });
+      const token = await sign(env.SESSION_SECRET, { u: user.u, n: user.n, e: Date.now() + 365 * 86400_000 });
+      const link = `${cb}?token=${encodeURIComponent(token)}`;
+      // A page, not a redirect: Android browsers can block a jump to an app link that no tap started, so there is a button too.
+      return new Response(`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>Quisk</title>
+<body style="font:17px -apple-system,system-ui,sans-serif;display:grid;place-items:center;min-height:90vh;margin:0">
+<a href="${link}" style="background:#111;color:#fff;padding:14px 28px;border-radius:14px;text-decoration:none;font-weight:600">Open Quisk</a>
+<script>location.replace(${JSON.stringify(link)})</script>`, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
+    }
+
+    // One-shot answer for the apps' voice action: the whole answer as JSON, plus a version written for speaking.
+    // It is saved as a chat, so it shows in the sidebar like any search.
+    if (path === "/api/ask" && req.method === "POST") {
+      const question = String(((await req.json().catch(() => ({}))) as { q?: string }).q ?? "").trim().slice(0, 500);
+      if (!question) return Response.json({ error: "Ask a question." }, { status: 400 });
+      const msgs: Msg[] = [{ role: "user", text: question }];
+      let error = "";
+      const result = await turn(env, msgs, ask(env, chats, user.u, question, loc), (t, v) => { if (t === "E") error = String(v); }, "lite", loc);
+      if (!result) return Response.json({ error: error || "No answer. Try again." }, { status: 502 });
+      const id = newId();
+      ctx.waitUntil(Promise.all([chats.save(id, titleOf(question), [...msgs, result.msg]), charge(env, user.u, result.meter)]));
+      return Response.json({ id, url: `${url.origin}/c/${id}`, answer: result.msg.text, speech: speechOf(result.msg.text) });
+    }
+
     if (path === "/" && searching && q) {
       const id = newId(), title = titleOf(q);
       const list = chats.list();

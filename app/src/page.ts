@@ -124,8 +124,8 @@ textarea:focus{border-color:var(--mute)}
 #up input{flex:1;min-width:0;font:inherit;padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);outline:none}
 .auth p.note{color:var(--mute);font-size:13px;text-align:center}.auth .lead{text-align:center;margin:0}.auth .or a{color:var(--mute)}
 #up button{font:inherit;padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer}
-@media (max-width:720px){#side{position:fixed;z-index:2;left:0;top:0;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 24px #0003;padding-top:52px}
-#zm{left:52px;top:12px}body.open #side{transform:none}#tg{display:block;position:fixed;top:10px;left:10px;z-index:3;border:0;background:var(--soft);color:var(--fg);border-radius:8px;width:34px;height:34px;font-size:16px}
+@media (max-width:720px){#side{position:fixed;z-index:2;left:0;top:0;transform:translateX(-100%);transition:transform .2s;padding-top:52px}
+#zm{left:52px;top:12px}body.open #side{transform:none;box-shadow:0 0 24px #0003}#tg{display:block;position:fixed;top:10px;left:10px;z-index:3;border:0;background:var(--soft);color:var(--fg);border-radius:8px;width:34px;height:34px;font-size:16px}
 #log{padding-top:52px}}
 `;
 
