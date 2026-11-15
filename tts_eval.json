@@ -1,0 +1,225 @@
+{
+ "summary": [
+  {
+   "system": "tiny-voca F2",
+   "synth_p50_s": 0.046,
+   "x_realtime_p50": 141.9,
+   "mean_wer": 0.0,
+   "perfect": "7/7"
+  },
+  {
+   "system": "tiny-voca M2",
+   "synth_p50_s": 0.046,
+   "x_realtime_p50": 144.6,
+   "mean_wer": 0.0,
+   "perfect": "7/7"
+  },
+  {
+   "system": "gemini Leda",
+   "synth_p50_s": 1.992,
+   "x_realtime_p50": 3.8,
+   "mean_wer": 0.0,
+   "perfect": "7/7"
+  }
+ ],
+ "rows": [
+  {
+   "text": 1,
+   "system": "tiny-voca F2",
+   "synth_s": 0.031,
+   "audio_s": 6.71,
+   "x_realtime": 217.9,
+   "wer": 0.0,
+   "heard": "The tallest mountain in the world is Mount Everest, at 8,849 meters above sea level."
+  },
+  {
+   "text": 1,
+   "system": "tiny-voca M2",
+   "synth_s": 0.041,
+   "audio_s": 5.91,
+   "x_realtime": 144.6,
+   "wer": 0.0,
+   "heard": "The tallest mountain in the world is Mount Everest at 8,849 meters above sea level."
+  },
+  {
+   "text": 1,
+   "system": "gemini Leda",
+   "synth_s": 1.711,
+   "audio_s": 7.56,
+   "x_realtime": 4.4,
+   "wer": 0.0,
+   "heard": "The tallest mountain in the world is Mount Everest at 8,849 meters above sea level."
+  },
+  {
+   "text": 2,
+   "system": "tiny-voca F2",
+   "synth_s": 0.046,
+   "audio_s": 6.54,
+   "x_realtime": 141.9,
+   "wer": 0.0,
+   "heard": "Jensen Huang co-founded Nvidia in 1993 and led it as chief executive until 2026."
+  },
+  {
+   "text": 2,
+   "system": "tiny-voca M2",
+   "synth_s": 0.046,
+   "audio_s": 6.26,
+   "x_realtime": 137.1,
+   "wer": 0.0,
+   "heard": "Jensen Huang co-founded Nvidia in 1993 and led it as chief executive until 2026."
+  },
+  {
+   "text": 2,
+   "system": "gemini Leda",
+   "synth_s": 1.992,
+   "audio_s": 7.64,
+   "x_realtime": 3.8,
+   "wer": 0.0,
+   "heard": "Jensen Huang co-founded Nvidia in 1993 and led it as chief executive until 2026."
+  },
+  {
+   "text": 3,
+   "system": "tiny-voca F2",
+   "synth_s": 0.061,
+   "audio_s": 7.21,
+   "x_realtime": 118.4,
+   "wer": 0.0,
+   "heard": "The Golden Gate Bridge opened in 1937. Its main span is about 1,280 meters long."
+  },
+  {
+   "text": 3,
+   "system": "tiny-voca M2",
+   "synth_s": 0.046,
+   "audio_s": 6.74,
+   "x_realtime": 146.1,
+   "wer": 0.0,
+   "heard": "The Golden Gate Bridge opened in 1937. Its main span is about 1,280 meters long."
+  },
+  {
+   "text": 3,
+   "system": "gemini Leda",
+   "synth_s": 2.149,
+   "audio_s": 8.52,
+   "x_realtime": 4.0,
+   "wer": 0.0,
+   "heard": "The Golden Gate Bridge opened in 1937. Its main span is about 1,280 meters long."
+  },
+  {
+   "text": 4,
+   "system": "tiny-voca F2",
+   "synth_s": 0.028,
+   "audio_s": 3.51,
+   "x_realtime": 127.0,
+   "wer": 0.0,
+   "heard": "17 times 23 is 391"
+  },
+  {
+   "text": 4,
+   "system": "tiny-voca M2",
+   "synth_s": 0.026,
+   "audio_s": 3.24,
+   "x_realtime": 124.0,
+   "wer": 0.0,
+   "heard": "17 times 23 is 391."
+  },
+  {
+   "text": 4,
+   "system": "gemini Leda",
+   "synth_s": 1.671,
+   "audio_s": 3.96,
+   "x_realtime": 2.4,
+   "wer": 0.0,
+   "heard": "17 times 23 is 391."
+  },
+  {
+   "text": 5,
+   "system": "tiny-voca F2",
+   "synth_s": 0.032,
+   "audio_s": 3.99,
+   "x_realtime": 123.1,
+   "wer": 0.0,
+   "heard": "Canberra is the capital of Australia, not Sydney or Melbourne."
+  },
+  {
+   "text": 5,
+   "system": "tiny-voca M2",
+   "synth_s": 0.029,
+   "audio_s": 3.71,
+   "x_realtime": 127.6,
+   "wer": 0.0,
+   "heard": "Canberra is the capital of Australia, not Sydney or Melbourne."
+  },
+  {
+   "text": 5,
+   "system": "gemini Leda",
+   "synth_s": 1.359,
+   "audio_s": 4.36,
+   "x_realtime": 3.2,
+   "wer": 0.0,
+   "heard": "Canberra is the capital of Australia, not Sydney or Melbourne."
+  },
+  {
+   "text": 6,
+   "system": "tiny-voca F2",
+   "synth_s": 0.053,
+   "audio_s": 8.09,
+   "x_realtime": 152.1,
+   "wer": 0.0,
+   "heard": "GitHub is a platform for hosting and sharing code. Microsoft bought it in 2018 for about 7.5 billion dollars."
+  },
+  {
+   "text": 6,
+   "system": "tiny-voca M2",
+   "synth_s": 0.049,
+   "audio_s": 7.45,
+   "x_realtime": 152.2,
+   "wer": 0.0,
+   "heard": "GitHub is a platform for hosting and sharing code. Microsoft bought it in 2018 for about 7.5 billion dollars."
+  },
+  {
+   "text": 6,
+   "system": "gemini Leda",
+   "synth_s": 2.602,
+   "audio_s": 8.8,
+   "x_realtime": 3.4,
+   "wer": 0.0,
+   "heard": "GitHub is a platform for hosting and sharing code. Microsoft bought it in 2018 for about 7.5 billion dollars."
+  },
+  {
+   "text": 7,
+   "system": "tiny-voca F2",
+   "synth_s": 0.073,
+   "audio_s": 11.4,
+   "x_realtime": 156.0,
+   "wer": 0.0,
+   "heard": "Lisa Su was born in November 1969, so she was 23 when Nvidia was founded in April 1993. She became chief executive of AMD in 2014."
+  },
+  {
+   "text": 7,
+   "system": "tiny-voca M2",
+   "synth_s": 0.052,
+   "audio_s": 10.45,
+   "x_realtime": 201.7,
+   "wer": 0.0,
+   "heard": "Lisa Su was born in November 1969, so she was 23 when Nvidia was founded in April 1993. She became chief executive of AMD in 2014."
+  },
+  {
+   "text": 7,
+   "system": "gemini Leda",
+   "synth_s": 2.224,
+   "audio_s": 11.8,
+   "x_realtime": 5.3,
+   "wer": 0.0,
+   "heard": "Lisa Su was born in November 1969, so she was 23 when Nvidia was founded in April 1993. She became chief executive of AMD in 2014."
+  }
+ ],
+ "texts": [
+  "The tallest mountain in the world is Mount Everest, at 8,849 meters above sea level.",
+  "Jensen Huang co-founded Nvidia in 1993 and led it as chief executive until 2026.",
+  "The Golden Gate Bridge opened in 1937. Its main span is about 1,280 meters long.",
+  "Seventeen times twenty-three is 391.",
+  "Canberra is the capital of Australia, not Sydney or Melbourne.",
+  "GitHub is a platform for hosting and sharing code. Microsoft bought it in 2018 for about 7.5 billion dollars.",
+  "Lisa Su was born in November 1969, so she was 23 when Nvidia was founded in April 1993. She became chief executive of AMD in 2014."
+ ]
+}
