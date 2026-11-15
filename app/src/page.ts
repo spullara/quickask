@@ -162,7 +162,7 @@ function add(c,html){const d=document.createElement('div');d.className=c;d.inner
  * searches in this tab. Citations, image lines, links and Markdown marks are not read.
  */
 const TALK_JS = String.raw`
-const TALK=/[?&]talk=(1|true|yes)(&|$)/i.test(location.search);
+const TALK=/[?&]talk=(1|true|yes)(&|$)/i.test(location.search),VOICE=(location.search.match(/[?&]voice=([a-z]+)/i)||[])[1]||'';
 const tk={said:0,text:'',pend:'',sent:0,q:[],busy:false,blocked:false};let tkb=null;const au=new Audio();
 const SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 const speakable=s=>s.replace(/^\s*!\[[^\]]*\]\([^)]*\)\s*$/gm,'').replace(/\[([^\]]+)\]\([^)]*\)/g,'$1').replace(/\s*\[\d+(?:,\s*\d+)*\]/g,'')
@@ -170,7 +170,7 @@ const speakable=s=>s.replace(/^\s*!\[[^\]]*\]\([^)]*\)\s*$/gm,'').replace(/\[([^
 const playing=()=>tk.busy&&!au.paused;
 function tkShow(){if(!TALK)return;if(!tkb){tkb=document.createElement('button');tkb.id='tk';document.body.append(tkb);tkb.onclick=tkTap}
  tkb.textContent=playing()||tk.q.length&&!tk.blocked?'■ Stop reading':tk.blocked?'▶ Read aloud':'▶ Read again';tkb.hidden=!tk.text}
-function tts(t){const it={u:null};it.p=fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:t})})
+function tts(t){const it={u:null};it.p=fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:t,voice:VOICE})})
  .then(r=>r.ok?r.blob():Promise.reject(new Error('tts '+r.status))).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
 function enqueue(t){t=speakable(t);if(!t)return;tk.q.push(tts(t));pump()}
 function next(){const it=tk.q.shift();if(it&&it.u)URL.revokeObjectURL(it.u);tk.busy=false;tkShow();pump()}
@@ -193,7 +193,7 @@ function tkUnlock(){if(!TALK)return;au.src=SILENT;au.play().then(()=>{tk.blocked
 if(TALK){const go=e=>{if(tk.blocked&&!(tkb&&tkb.contains(e.target)))tkTap()};addEventListener('pointerdown',go,true);addEventListener('keydown',go,true)}
 function talkReset(){au.pause();tk.q=[];tk.busy=false;Object.assign(tk,{said:0,text:'',pend:'',sent:0})}
 if(TALK)addEventListener('DOMContentLoaded',()=>{const f=document.querySelector('form[action="/"]');if(f&&!f.querySelector('[name=talk]'))
- f.insertAdjacentHTML('beforeend','<input type="hidden" name="talk" value="true">')});
+ f.insertAdjacentHTML('beforeend','<input type="hidden" name="talk" value="true">'+(VOICE?'<input type="hidden" name="voice" value="'+VOICE+'">':''))});
 `;
 
 const JS = `

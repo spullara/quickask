@@ -2,7 +2,7 @@ import { DurableObject } from "cloudflare:workers";
 import type { WorkerEnv } from "../alchemy.run.ts";
 import { cookie, session } from "./session.ts";
 import { PAGE_VERSION, adminPage, call, keyPage, moveSignIn, opensearch, sharePage, shell, signIn, type Msg, type Result, type Source } from "./page.ts";
-import { MODELS, TTS, modelKey, type Meter, type ModelKey } from "./usage.ts";
+import { MODELS, TTS, VOICES, modelKey, type Meter, type ModelKey } from "./usage.ts";
 
 import { APPLE_ICON_PNG, FAVICON_PNG, LOGO_SVG } from "./icons.ts";
 
@@ -702,12 +702,15 @@ export default {
 
     // Text to speech for talk mode (signed-in users only). Gemini TTS returns a WAV file.
     if (path === "/api/tts" && req.method === "POST") {
-      const text = String(((await req.json().catch(() => ({}))) as { text?: string }).text ?? "").trim().slice(0, 1200);
+      const body = (await req.json().catch(() => ({}))) as { text?: string; voice?: string };
+      const text = String(body.text ?? "").trim().slice(0, 1200);
+      const v = String(body.voice ?? "").toLowerCase(), voice = v in VOICES ? v[0]!.toUpperCase() + v.slice(1) : TTS.voice;
       if (!text) return new Response("No text", { status: 400 });
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${TTS.id}:generateContent`, {
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-        body: JSON.stringify({ contents: [{ parts: [{ text }] }], generationConfig: { responseModalities: ["AUDIO"] } }),
+        body: JSON.stringify({ contents: [{ parts: [{ text }] }], generationConfig: { responseModalities: ["AUDIO"],
+          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } } }),
       });
       const d = r.ok ? ((await r.json()) as { candidates?: { content?: { parts?: { inlineData?: { mimeType: string; data: string } }[] } }[];
         usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number } }) : undefined;
