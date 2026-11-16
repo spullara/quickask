@@ -684,7 +684,7 @@ export default {
       if (await session(req, env)) return Response.redirect(`${url.origin}/`, 302);
       return (await import("./waitlist.ts")).inviteRoute(req, env, inviteCode);
     }
-    if (waitlist && (path === "/auth/waitlist" || path === "/auth/confirm")) {
+    if (waitlist && (path === "/auth/waitlist" || path === "/auth/confirm" || path === "/auth/code")) {
       const res = await (await import("./waitlist.ts")).waitlistRoute(req, env, url);
       if (res) return res;
     }
@@ -702,7 +702,7 @@ export default {
       if (!waitlist) return new Response(signIn({ waitlist: false }), { headers });
       const email = await (await import("./waitlist.ts")).confirmed(env, req);
       const status = email ? await env.AUTH.get(env.AUTH.idFromName("auth")).statusOf(email) : null;
-      return new Response(signIn({ waitlist: true, email, status }), { headers });
+      return new Response(signIn({ waitlist: true, email, status, code: !!(env.REVIEW_EMAIL && env.REVIEW_CODE) }), { headers });
     }
 
     // Start the search before any other work: it is the first step of the critical path.

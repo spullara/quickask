@@ -21,6 +21,7 @@ export CLOUDFLARE_API_TOKEN="$(key CLOUDFLARE_API_TOKEN CF_TOKEN)"
 export CLOUDFLARE_ACCOUNT_ID="$(key CLOUDFLARE_ACCOUNT_ID)"
 export QUICK_DOMAIN="$(key QUICK_DOMAIN)"
 export ADMIN_NAME="$(key ADMIN_NAME)"
+export REVIEW_EMAIL="$(key REVIEW_EMAIL)"
 export WAITLIST="$(key WAITLIST)"
 export DAILY_QUERIES="$(key DAILY_QUERIES)"
 export MAIL_FORWARD_TO="$(key MAIL_FORWARD_TO)"
@@ -31,7 +32,8 @@ need GEMINI_API_KEY; need EXA_API_KEY; need CLOUDFLARE_API_TOKEN
 # App secrets: created once, then reused so sessions and the access key survive redeploys.
 grep -q '^ACCESS_KEY=' .env || echo "ACCESS_KEY=$(openssl rand -hex 16)" >> .env
 grep -q '^SESSION_SECRET=' .env || echo "SESSION_SECRET=$(openssl rand -hex 32)" >> .env
-export ACCESS_KEY="$(get ACCESS_KEY .env)" SESSION_SECRET="$(get SESSION_SECRET .env)"
+grep -q '^REVIEW_CODE=' .env || echo "REVIEW_CODE=$(openssl rand -hex 4)-$(openssl rand -hex 4)" >> .env
+export ACCESS_KEY="$(get ACCESS_KEY .env)" SESSION_SECRET="$(get SESSION_SECRET .env)" REVIEW_CODE="$(get REVIEW_CODE .env)"
 
 # Default to the token's first account; set CLOUDFLARE_ACCOUNT_ID when the token can see several.
 if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then

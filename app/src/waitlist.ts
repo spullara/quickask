@@ -132,6 +132,27 @@ export async function waitlistRoute(req: Request, env: WorkerEnv, url: URL): Pro
     return json({ sent: true });
   }
 
+  // The App Store reviewer signs in with an email address and a fixed code (REVIEW_EMAIL, REVIEW_CODE): Apple cannot
+  // use a passkey or read our email. From the app's sign-in sheet, it goes on to /auth/app, which hands over the token.
+  if (url.pathname === "/auth/code" && req.method === "POST" && env.REVIEW_EMAIL && env.REVIEW_CODE) {
+    const f = await req.formData().catch(() => null);
+    const email = emailOf(f?.get("n"));
+    const want = String(f?.get("to") ?? "/");
+    const to = want === "/auth/app" || want.startsWith("/auth/app?") ? want : "/";
+    const ip = req.headers.get("cf-connecting-ip") ?? "";
+    const fail = (error: string) => new Response(signIn({ waitlist: true, error, code: true, to }), { status: 400, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
+    if (!(await env.EMAIL_LIMIT.limit({ key: ip }).catch(() => ({ success: true }))).success) return fail("Too many tries. Wait a minute.");
+    // Compared as hashes, so the time taken says nothing about the code.
+    const code = String(f?.get("c") ?? "").trim();
+    if (email !== env.REVIEW_EMAIL.toLowerCase() || (await hex(`${code}:${env.SESSION_SECRET}`)) !== (await hex(`${env.REVIEW_CODE}:${env.SESSION_SECRET}`))) {
+      return fail("That email address and code do not match.");
+    }
+    const id = await store(env).ensureUser(email, b64u(crypto.getRandomValues(new Uint8Array(16))));
+    const headers = new Headers({ location: to, "cache-control": "no-store" });
+    headers.append("set-cookie", setCookie("s", await sign(env.SESSION_SECRET, { u: id, n: email, e: Date.now() + 365 * DAY }), 365 * 86400));
+    return new Response(null, { status: 302, headers });
+  }
+
   if (url.pathname === "/auth/confirm") {
     const email = emailOf(url.searchParams.get("e"));
     const token = url.searchParams.get("t") ?? "";

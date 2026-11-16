@@ -71,6 +71,9 @@ export const Worker = Cloudflare.Worker("Quick", {
     ACCESS_KEY: Config.Redacted("ACCESS_KEY"),
     SESSION_SECRET: Config.Redacted("SESSION_SECRET"),
     ADMIN_NAME: Config.String("ADMIN_NAME").pipe(Config.withDefault("")),
+    // App Store review: this address signs in with REVIEW_CODE (made by deploy.sh) instead of a passkey. Empty: off.
+    REVIEW_EMAIL: Config.String("REVIEW_EMAIL").pipe(Config.withDefault("")),
+    REVIEW_CODE: Config.Redacted("REVIEW_CODE"),
     // Questions a day for each user (the admin has no limit). The admin can change it per user on /admin.
     DAILY_QUERIES: Config.String("DAILY_QUERIES").pipe(Config.withDefault("100")),
   },

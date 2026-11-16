@@ -122,10 +122,10 @@ textarea:focus{border-color:var(--mute)}
 .auth h1{font-size:22px;margin:0 0 8px;text-align:center}
 .btn{font:inherit;padding:10px 14px;border-radius:12px;border:0;background:var(--fg);color:var(--bg);cursor:pointer;font-weight:600}
 .or{text-align:center;color:var(--mute);font-size:13px;margin-top:8px}
-#up{display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0;position:static;max-width:none}
-#up input{flex:1;min-width:0;font:inherit;padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);outline:none}
+#up,#cd{display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0;position:static;max-width:none}#cd{margin-top:10px}.auth #cd input,.auth #cd button{flex:1 1 100%}.auth summary{cursor:pointer;list-style:none}.auth summary::-webkit-details-marker{display:none}
+#up input,#cd input{flex:1;min-width:0;font:inherit;padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);outline:none}
 .auth p.note{color:var(--mute);font-size:13px;text-align:center}.auth .lead{text-align:center;margin:0}.auth .or a{color:var(--mute)}
-#up button{font:inherit;padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer}
+#up button,#cd button{font:inherit;padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer}
 @media (max-width:720px){#side{position:fixed;z-index:2;left:0;top:0;transform:translateX(-100%);transition:transform .2s;padding-top:52px}
 #zm{left:52px;top:12px}body.open #side{transform:none;box-shadow:0 0 24px #0003}#tg{display:block;position:fixed;top:10px;left:10px;z-index:3;border:0;background:var(--soft);color:var(--fg);border-radius:8px;width:34px;height:34px;font-size:16px}
 #log{padding-top:52px}}
@@ -652,7 +652,7 @@ if(up)up.onsubmit=e=>{e.preventDefault();const n=up.n.value.trim().toLowerCase()
  * Signed-out page. With the waitlist: join by email; after the email link, "waiting" or (once approved) create a passkey.
  * Without it: open sign-up with any email address (the access key already gates the app).
  */
-export function signIn(o: { waitlist: boolean; email?: string | null; status?: string | null; error?: string; invite?: boolean }) {
+export function signIn(o: { waitlist: boolean; email?: string | null; status?: string | null; error?: string; invite?: boolean; code?: boolean; to?: string }) {
   const inBtn = `<button id="in" class="btn">Sign in with passkey</button>`;
   const form = (mode: string, label: string) =>
     `<form id="up" data-mode="${mode}"><input name="n" type="email" inputmode="email" placeholder="Email address" autocomplete="email" autocapitalize="off" spellcheck="false"><button>${label}</button></form>`;
@@ -664,7 +664,10 @@ export function signIn(o: { waitlist: boolean; email?: string | null; status?: s
   else if (o.status === "waiting") { body = inBtn; note = `You're on the waitlist as ${who}. You'll get an email when you're in.`; }
   else body = `${inBtn}<div class="or">New here, or no passkey on this device? Use your email</div>${form("wait", "Continue")}`;
   const p = o.error ? `<p id="msg" class="err">${esc(o.error)}</p>` : `<p id="msg" class="${note ? "note" : "err"}">${note}</p>`;
-  return page(`<div class="auth">${BRAND}${body}${p}</div><script>${AUTH_JS}</script>`);
+  // App Store review only: an email address and a code (a plain form; it returns to the app's sign-in when started there).
+  const code = o.code ? `<details class="or"${o.error ? " open" : ""}><summary>Sign in with a code</summary><form id="cd" method="post" action="/auth/code" onsubmit="if(!this.to.value)this.to.value=location.pathname+location.search">
+<input name="n" type="email" placeholder="Email address" autocomplete="username" autocapitalize="off" spellcheck="false" required><input name="c" type="password" placeholder="Code" autocomplete="current-password" required><input type="hidden" name="to" value="${esc(o.to ?? "")}"><button>Sign in</button></form></details>` : "";
+  return page(`<div class="auth">${BRAND}${body}${p}${code}</div><script>${AUTH_JS}</script>`);
 }
 
 /** The old domain's page for someone not signed in there: sign in with the old passkey to move, or go to the new site. */

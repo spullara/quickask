@@ -111,6 +111,15 @@ export class Auth extends DurableObject<WorkerEnv> {
     this.sql.exec("INSERT INTO creds VALUES (?, ?, ?, ?, ?)", cred.id, userId, cred.publicKey, cred.counter, cred.transports);
   }
 
+  /** The account for a name, made without a passkey when there is none (the App Store reviewer's). Returns its id. */
+  ensureUser(name: string, newId: string) {
+    const id = this.firstNamed(name);
+    if (id) return id;
+    this.sql.exec("INSERT INTO users (id, name, created, verified) VALUES (?, ?, ?, 1)", newId, name, Date.now());
+    this.sql.exec("UPDATE waitlist SET status = 'joined' WHERE email = ?", name);
+    return newId;
+  }
+
   newInvite(code: string, ttl: number, note: string) {
     this.sql.exec("INSERT INTO invites (code, created, expires, note) VALUES (?, ?, ?, ?)", code, Date.now(), Date.now() + ttl, note);
   }
