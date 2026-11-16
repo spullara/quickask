@@ -95,8 +95,9 @@ textarea:focus{border-color:var(--mute)}
 #ak{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:8px;align-items:center;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 14px;font-size:13px;width:max-content;max-width:calc(100% - 24px)}
 #ak button{font:inherit;border:0;border-radius:8px;cursor:pointer;padding:6px 10px;white-space:nowrap}#akb{background:var(--fg);color:var(--bg);font-weight:600}#akx{background:none;color:var(--mute)}
 #tkw{position:fixed;right:16px;bottom:92px;z-index:6;display:flex;gap:6px;align-items:center}#tkw[hidden]{display:none}
-#tk,#tkv{font:inherit;font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer;box-shadow:0 2px 8px #0001}
-#tkv{appearance:none;-webkit-appearance:none;color:var(--mute);padding-right:24px;max-width:44vw;text-overflow:ellipsis;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 13px) 52%,calc(100% - 9px) 52%;background-size:4px 4px;background-repeat:no-repeat}
+#tk,#tkvw{position:relative;width:34px;height:34px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer;display:grid;place-items:center;box-shadow:0 2px 8px #0001}
+#tkvw{color:var(--mute)}#tkvw:hover,#tkvw:focus-within{color:var(--fg)}
+#tkv{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
 #menu .ci{display:flex;flex-wrap:wrap;align-items:center;gap:2px;border-top:1px solid var(--line);margin-top:4px;padding:6px 4px 2px}
 #menu .ci span{width:100%;font-size:12px;color:var(--mute);padding:0 6px 2px}#menu .ci button{padding:6px 8px;font-size:13px}
 #menu button{border:0;background:none;color:var(--fg);font:inherit;font-size:14px;text-align:left;padding:8px 10px;border-radius:6px;cursor:pointer}#menu button:hover:not(:disabled){background:var(--soft)}#menu button:disabled{color:var(--mute);cursor:default}
@@ -189,11 +190,16 @@ const speakable=s=>s.replace(/^\s*!\[[^\]]*\]\([^)]*\)\s*$/gm,'').replace(/\[([^
  .replace(/https?:\/\/\S+/g,'').replace(/[*_` + "`" + String.raw`#>|~]/g,'').replace(/\s+/g,' ').trim();
 const playing=()=>tk.busy&&!au.paused;
 function tkShow(){if(!TALK)return;if(!tkb){const w=document.createElement('div');w.id='tkw';
-  w.innerHTML='<select id="tkv" aria-label="Voice">'+Object.keys(VOICES).map(k=>'<option value="'+k+'">'+k.toUpperCase()+' · '+VOICES[k]+'</option>').join('')+'</select><button id="tk"></button>';
+  // Two small round buttons: the voice (a native picker under an icon) and play/stop.
+  w.innerHTML='<label id="tkvw"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3M6 6v11M10 3v18M14 8v7M18 5v13M22 10v3"/></svg><select id="tkv">'+Object.keys(VOICES).map(k=>'<option value="'+k+'">'+VOICES[k]+' voice</option>').join('')+'</select></label><button id="tk"></button>';
   document.body.append(w);tkb=w.querySelector('#tk');tkb.onclick=tkTap;const sel=w.querySelector('#tkv');sel.value=voice();
   // A new voice applies at once: the answer being read starts again in it.
-  sel.onchange=()=>{VOICE=sel.value;try{localStorage.voice2=VOICE}catch{}if(playing()||tk.q.length){au.pause();tk.q=[];tk.busy=false;tkTap()}}}
- tkb.textContent=playing()||tk.q.length&&!tk.blocked?'■ Stop reading':tk.blocked?'▶ Read aloud':'▶ Read again';tkb.parentNode.hidden=!tk.text}
+  const vlabel=()=>{const t='Voice: '+VOICES[voice()];sel.setAttribute('aria-label',t);sel.parentNode.title=t};vlabel();
+  sel.onchange=()=>{VOICE=sel.value;vlabel();try{localStorage.voice2=VOICE}catch{}if(playing()||tk.q.length){au.pause();tk.q=[];tk.busy=false;tkTap()}}}
+ const stop=playing()||tk.q.length&&!tk.blocked,t=stop?'Stop reading':tk.blocked?'Read aloud':'Read again';
+ if(tkb.dataset.s!==t){tkb.dataset.s=t;tkb.title=t;tkb.setAttribute('aria-label',t);
+  tkb.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">'+(stop?'<rect x="5" y="5" width="14" height="14" rx="2"/>':'<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/>')+'</svg>'}
+ tkb.parentNode.hidden=!tk.text}
 // Audio for a chunk: tiny-voca, on this device (phonemes from the voice worker, or the server while it starts).
 const voice=()=>{const v=(VOICE||'').toLowerCase();return v in LOCAL?v:'f2'};
 function tts(t){const it={u:null};it.p=localTTS(t,LOCAL[voice()]).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
