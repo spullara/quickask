@@ -6,7 +6,8 @@ import SwiftUI
 /// streams on screen and is read aloud by the on-device voice (F2 by default, picked on the page).
 @MainActor
 final class Dictation: ObservableObject {
-    enum Phase: Equatable { case listening, failed(String) }
+    /// done: the question was handed off; late recognizer results (cancelling sends one, often empty) are ignored.
+    enum Phase: Equatable { case listening, done, failed(String) }
     @Published var phase: Phase = .listening
     @Published var heard = ""
 
@@ -93,9 +94,10 @@ final class Dictation: ObservableObject {
 
     func finish() {
         guard phase == .listening else { return }
-        stop()
         let question = heard.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !question.isEmpty else { return fail("I didn't hear a question.") }
+        phase = .done
+        stop()
         onQuestion(question)
     }
 
@@ -117,12 +119,12 @@ struct VoiceScreen: View {
             }
             Spacer()
             switch dictation.phase {
-            case .listening:
+            case .listening, .done:
                 Image(systemName: "waveform").font(.system(size: 56)).symbolEffect(.variableColor.iterative)
                 Text(dictation.heard.isEmpty ? "What do you want to know?" : dictation.heard)
                     .font(.title2).multilineTextAlignment(.center)
                     .foregroundStyle(dictation.heard.isEmpty ? .secondary : .primary)
-                if !dictation.heard.isEmpty {
+                if !dictation.heard.isEmpty && dictation.phase == .listening {
                     Button("Ask") { dictation.finish() }.buttonStyle(.borderedProminent).tint(.primary)
                 }
             case .failed(let message):

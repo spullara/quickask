@@ -28,10 +28,22 @@ struct QuiskWebView: UIViewRepresentable {
         config.userContentController.add(ListenBridge(model: model), name: "quiskListen")
         // The page says when it starts and stops reading aloud, so the wake word ignores Quisk's own voice.
         config.userContentController.add(SpeakingBridge(), name: "quiskSpeaking")
+        #if DEBUG
+        // Debug builds: the page's console warnings and errors go to the Xcode console, and Safari can inspect the page.
+        config.userContentController.add(LogBridge(), name: "quiskLog")
+        config.userContentController.addUserScript(WKUserScript(source: """
+            for (const k of ['warn','error']) { const f = console[k]; console[k] = (...a) => { try { webkit.messageHandlers.quiskLog.postMessage(k + ': ' + a.map(String).join(' ')) } catch {} f.apply(console, a) } }
+            addEventListener('error', e => console.error(e.message));
+            addEventListener('unhandledrejection', e => console.error('unhandled', e.reason));
+            """, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        #endif
         let web = WKWebView(frame: .zero, configuration: config)
         web.navigationDelegate = context.coordinator
         web.uiDelegate = context.coordinator
         web.allowsBackForwardNavigationGestures = true
+        #if DEBUG
+        web.isInspectable = true
+        #endif
         web.scrollView.contentInsetAdjustmentBehavior = .automatic
         let token = Token.value ?? ""
         let cookie = HTTPCookie(properties: [.domain: "quisk.ai", .path: "/", .name: "s", .value: token, .secure: "TRUE",
@@ -90,6 +102,14 @@ final class ListenBridge: NSObject, WKScriptMessageHandler {
         model.listening = true
     }
 }
+
+#if DEBUG
+final class LogBridge: NSObject, WKScriptMessageHandler {
+    func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+        NSLog("quiskPage %@", String(describing: message.body))
+    }
+}
+#endif
 
 final class SpeakingBridge: NSObject, WKScriptMessageHandler {
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {

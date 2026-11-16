@@ -779,8 +779,16 @@ export default {
     if (path === "/api/phonemes" && req.method === "POST") {
       const sentences = ((await req.json().catch(() => ({}))) as { sentences?: unknown[] }).sentences;
       if (!Array.isArray(sentences)) return Response.json({ error: "sentences" }, { status: 400 });
-      const r = await getContainer(env.PHONEMES, "main").fetch("https://phonemes/", { method: "POST", body: JSON.stringify({ sentences: sentences.slice(0, 60).map(String) }) });
-      return new Response(r.body, { status: r.status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
+      // The container sleeps after 2 h; while it starts, a request can fail. Try for up to about 12 s.
+      const body = JSON.stringify({ sentences: sentences.slice(0, 60).map(String) });
+      let r: Response | null = null;
+      for (let i = 0; i < 6; i++) {
+        r = await getContainer(env.PHONEMES, "main").fetch("https://phonemes/", { method: "POST", body }).catch(() => null);
+        if (r?.ok) break;
+        await new Promise((ok) => setTimeout(ok, 2000));
+      }
+      if (!r?.ok) return Response.json({ error: "phonemes" }, { status: 503 });
+      return new Response(r.body, { headers: { "content-type": "application/json", "cache-control": "no-store" } });
     }
 
     if (path === "/api/live") {

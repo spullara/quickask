@@ -192,12 +192,15 @@ class WAPlayer extends EventTarget{constructor(){super();this.ctx=null;this.node
  _stop(){if(this.node){this.node.onended=null;try{this.node.stop()}catch{}this.node=null}}
  _new(){if(navigator.audioSession)navigator.audioSession.type='play-and-record';return new (window.AudioContext||window.webkitAudioContext)()}
  // A context that is not running plays nothing and never ends (seen at app start, while the app sets up its audio):
- // wait up to 1.5 s for it, then try a new one, then give up as "not allowed", so the page shows the play button.
- async _running(){let ctx=this.ctx||(this.ctx=this._new());
+ // wait up to 4 s for it, then try a new one for 4 s more, then give up as "not allowed", so the page shows the play
+ // button; if the context starts later, onrunning lets the page play at once.
+ async _running(){let ctx=this.ctx||(this.ctx=this._new());const t0=Date.now();
   for(let i=0;i<2;i++){ctx.resume().catch(()=>{});
-   if(ctx.state!=='running')await new Promise(r=>{const t=setTimeout(r,1500);ctx.onstatechange=()=>{if(ctx.state==='running'){clearTimeout(t);r()}}});
-   if(ctx.state==='running'){ctx.onstatechange=()=>{if(ctx.state!=='running'&&ctx.state!=='closed'&&!this.paused)ctx.resume().catch(()=>{})};return ctx}
-   ctx.close().catch(()=>{});ctx=this.ctx=this._new()}
+   if(ctx.state!=='running')await new Promise(r=>{const t=setTimeout(r,4000);ctx.onstatechange=()=>{if(ctx.state==='running'){clearTimeout(t);r()}}});
+   if(ctx.state==='running'){if(Date.now()-t0>500)console.warn('talk: audio started after',Date.now()-t0,'ms');
+    ctx.onstatechange=()=>{if(ctx.state==='running'){if(this.onrunning)this.onrunning()}else if(ctx.state!=='closed'&&!this.paused)ctx.resume().catch(()=>{})};return ctx}
+   console.warn('talk: audio context',ctx.state,'after',Date.now()-t0,'ms');if(i)break;ctx.close().catch(()=>{});ctx=this.ctx=this._new()}
+  ctx.onstatechange=()=>{if(ctx.state==='running'&&this.onrunning)this.onrunning()};
   throw new DOMException('Audio did not start','NotAllowedError')}
  async play(){const ctx=await this._running();
   if(!this._src||this._src.startsWith('data:'))return;const src=this._src;
@@ -208,6 +211,7 @@ class WAPlayer extends EventTarget{constructor(){super();this.ctx=null;this.node
   this.node=n;this.paused=false;n.start();this.dispatchEvent(new Event('playing'))}
  pause(){if(!this.paused){this._stop();this.paused=true;this.dispatchEvent(new Event('pause'))}}}
 const au=/QuiskApp/.test(navigator.userAgent)?new WAPlayer():new Audio();
+if(au instanceof WAPlayer)au.onrunning=()=>{if(tk.blocked){tk.blocked=false;tk.busy=false;tkShow();pump()}};
 const setRate=()=>{if(au instanceof WAPlayer)au.rate=SPEED;else{au.preservesPitch=true;au.defaultPlaybackRate=au.playbackRate=SPEED}};setRate();
 const SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 const speakable=s=>s.replace(/^\s*!\[[^\]]*\]\([^)]*\)\s*$/gm,'').replace(/\[([^\]]+)\]\([^)]*\)/g,'$1').replace(/\s*\[\d+(?:,\s*\d+)*\]/g,'')
@@ -230,7 +234,7 @@ function tkShow(){if(!TALK)return;if(!tkb){const w=document.createElement('div')
  tkb.parentNode.hidden=!tk.text}
 // Audio for a chunk: tiny-voca, on this device (phonemes from the voice worker, or the server while it starts).
 const voice=()=>{const v=(VOICE||'').toLowerCase();return v in LOCAL?v:'f2'};
-function tts(t){const it={u:null};it.p=localTTS(t,LOCAL[voice()]).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
+function tts(t){const it={u:null,t};it.p=localTTS(t,LOCAL[voice()]).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
 // tiny-voca (4.5M parameters, 24 kHz) in a background worker (/voice/worker.js): phonemes with dizione (Pyodide) and,
 // on the web, audio with ONNX Runtime Web. Downloaded once and cached; started early (preload). Until its phonemizer
 // is ready (first use), phonemes come from the server.
@@ -262,7 +266,9 @@ if(TALK||APP)setTimeout(()=>{voiceWorker();serverPhonemes(['Ready.']).catch(()=>
 function enqueue(t){t=speakable(t);if(!t)return;tk.q.push(tts(t));pump()}
 function next(){const it=tk.q.shift();if(it&&it.u)URL.revokeObjectURL(it.u);tk.busy=false;tkShow();pump()}
 function pump(){if(tk.busy||tk.blocked||!tk.q.length)return;tk.busy=true;const it=tk.q[0];
- it.p.then(u=>{au.src=u;return au.play()}).then(tkShow,e=>{if(e&&e.name==='NotAllowedError'){tk.busy=false;tk.blocked=true;tkShow()}else next()})}
+ it.p.then(u=>{au.src=u;return au.play()}).then(tkShow,e=>{console.warn('talk: chunk failed',e&&e.name,e&&e.message);if(e&&e.name==='NotAllowedError'){tk.busy=false;tk.blocked=true;tkShow()}
+  // Speech for a chunk failed (the phoneme server waking up): make it once more before skipping it.
+  else if(!it.again){const n=tts(it.t);n.again=1;tk.q[0]=n;tk.busy=false;setTimeout(pump,500)}else next()})}
 au.onended=next;au.onerror=()=>{if(tk.busy)next()};
 // The iOS app pauses its "Quisk" wake word while an answer plays, so it does not hear its own voice.
 const spkBridge=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.quiskSpeaking;let spk=false;
@@ -282,7 +288,8 @@ function talk(buf,done){if(!TALK)return;let s=buf.split(/\n\s*:::/)[0];
 // Unlock audio inside a user action: then later answers can play by themselves (iPhone needs the same audio element).
 function tkUnlock(){if(!TALK)return;au.src=SILENT;au.play().then(()=>{tk.blocked=false;tkShow()},()=>{})}
 // Blocked autoplay: any tap, click or key on the page starts reading, not only the button.
-if(TALK){const go=e=>{if(tk.blocked&&!(tkb&&tkb.contains(e.target)))tkTap()};addEventListener('pointerdown',go,true);addEventListener('keydown',go,true)}
+// Blocked audio starts on the next tap or key anywhere (talk mode can turn on after the page has loaded).
+{const go=e=>{if(TALK&&tk.blocked&&!(tkb&&tkb.contains(e.target)))tkTap()};addEventListener('pointerdown',go,true);addEventListener('keydown',go,true)}
 function talkReset(){au.pause();tk.q=[];tk.busy=false;Object.assign(tk,{said:0,text:'',pend:'',sent:0})}
 if(TALK)addEventListener('DOMContentLoaded',()=>{const f=document.querySelector('form[action="/"]');if(f&&!f.querySelector('[name=talk]'))
  f.insertAdjacentHTML('beforeend','<input type="hidden" name="talk" value="true">'+(VOICE?'<input type="hidden" name="voice" value="'+VOICE+'">':''))});
