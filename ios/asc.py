@@ -22,6 +22,7 @@ def send(method, path, body=None):
     req = urllib.request.Request("https://api.appstoreconnect.apple.com" + path, method=method,
                                  data=json.dumps(body).encode() if body is not None else None,
                                  headers={"Authorization": f"Bearer {jwt}", "Content-Type": "application/json"})
-    return json.load(urllib.request.urlopen(req, context=CTX, timeout=30))
+    body = urllib.request.urlopen(req, context=CTX, timeout=30).read()
+    return json.loads(body) if body else None  # 204 No Content for relationship changes
 
 
