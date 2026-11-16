@@ -6,8 +6,9 @@ import OnnxRuntimeBindings
 @MainActor
 final class WakeWord {
     static let shared = WakeWord()
-    /// From wakeword/models/report.json: high recall on held-out voices with few false starts on real speech.
+    /// A wake needs `streak` scores in a row above `threshold` (see wakeword/report-v2.json; tested live with listen.py).
     static let threshold: Float = 0.8
+    static let streak = 2
 
     var onWake: () -> Void = {}
     /// Settings → Quisk → Listen for "Quisk" (on by default).
@@ -19,6 +20,7 @@ final class WakeWord {
     private var running = false
     private var paused = false
     private var lastWake = Date.distantPast
+    private var run = 0
 
     func start() {
         guard enabled, !running else { return }
@@ -54,6 +56,7 @@ final class WakeWord {
     /// While an answer is read aloud: ignore the mic, so Quisk does not hear itself.
     func setPaused(_ on: Bool) {
         paused = on
+        run = 0
         if on { detector.reset() }
     }
 
@@ -79,8 +82,8 @@ final class WakeWord {
             }
             guard let ch = out.floatChannelData?[0], out.frameLength > 0 else { return }
             let samples = Array(UnsafeBufferPointer(start: ch, count: Int(out.frameLength))).map { $0 * 32767 }
-            detector.feed(samples) { score in
-                Task { @MainActor in self?.heard(score) }
+            detector.feed(samples) { scores in
+                Task { @MainActor in self?.heard(scores) }
             }
         }
         engine.prepare()
@@ -96,11 +99,17 @@ final class WakeWord {
         }
     }
 
-    private func heard(_ score: Float) {
-        guard running, !paused, score > Self.threshold, Date().timeIntervalSince(lastWake) > 2 else { return }
-        lastWake = Date()
-        detector.reset()
-        onWake()
+    private func heard(_ scores: [Float]) {
+        guard running, !paused else { return }
+        for score in scores {
+            run = score > Self.threshold ? run + 1 : 0
+            guard run >= Self.streak, Date().timeIntervalSince(lastWake) > 2 else { continue }
+            run = 0
+            lastWake = Date()
+            detector.reset()
+            onWake()
+            return
+        }
     }
 }
 
@@ -135,13 +144,13 @@ private final class Detector: @unchecked Sendable {
         return try ORTValue(tensorData: data, elementType: .float, shape: shape.map { NSNumber(value: $0) })
     }
 
-    /// 16 kHz samples scaled like 16-bit PCM. Calls back with the best score of the new 80 ms steps.
-    func feed(_ samples: [Float], score: @escaping (Float) -> Void) {
+    /// 16 kHz samples scaled like 16-bit PCM. Calls back with the score of each new 80 ms step, in order.
+    func feed(_ samples: [Float], score: @escaping ([Float]) -> Void) {
         queue.async {
             do {
                 try self.load()
                 self.pending += samples
-                var best: Float = 0
+                var scores: [Float] = []
                 while self.pending.count >= 1280 {
                     let chunk = Array(self.pending.prefix(1280))
                     self.pending.removeFirst(1280)
@@ -160,9 +169,9 @@ private final class Detector: @unchecked Sendable {
                     guard self.features.count == 16 else { continue }
                     let s = try Self.floats(try self.classify!.run(withInputs: ["embeddings": try Self.tensor(self.features.flatMap { $0 }, [1, 16, 96])],
                                                                     outputNames: ["score"], runOptions: nil)["score"])
-                    best = max(best, s.first ?? 0)
+                    scores.append(s.first ?? 0)
                 }
-                if best > 0 { score(best) }
+                if !scores.isEmpty { score(scores) }
             } catch {}
         }
     }
