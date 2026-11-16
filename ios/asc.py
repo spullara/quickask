@@ -10,12 +10,18 @@ b64 = lambda b: base64.urlsafe_b64encode(b).rstrip(b"=")
 
 
 def get(path):
+    return send("GET", path)
+
+
+def send(method, path, body=None):
     now = int(time.time())
     head = b64(json.dumps({"alg": "ES256", "kid": kid, "typ": "JWT"}).encode()) + b"." + \
         b64(json.dumps({"iss": iss, "iat": now, "exp": now + 900, "aud": "appstoreconnect-v1"}).encode())
     r, s = utils.decode_dss_signature(key.sign(head, ec.ECDSA(hashes.SHA256())))
     jwt = (head + b"." + b64(r.to_bytes(32, "big") + s.to_bytes(32, "big"))).decode()
-    req = urllib.request.Request("https://api.appstoreconnect.apple.com" + path, headers={"Authorization": f"Bearer {jwt}"})
+    req = urllib.request.Request("https://api.appstoreconnect.apple.com" + path, method=method,
+                                 data=json.dumps(body).encode() if body is not None else None,
+                                 headers={"Authorization": f"Bearer {jwt}", "Content-Type": "application/json"})
     return json.load(urllib.request.urlopen(req, context=CTX, timeout=30))
 
 
