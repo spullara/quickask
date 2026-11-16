@@ -21,22 +21,26 @@ final class WakeWord {
     private var paused = false
     private var lastWake = Date.distantPast
     private var run = 0
+    /// Each start gets a number, so a slow start that was stopped (or restarted) in the meantime does nothing.
+    private var generation = 0
 
     func start() {
         guard enabled, !running else { return }
         running = true
+        generation += 1
+        let mine = generation
         Task {
-            guard await AVAudioApplication.requestRecordPermission() else { running = false; return }
+            guard await AVAudioApplication.requestRecordPermission() else { if mine == generation { running = false }; return }
             do {
                 // Play and record at once: answers keep playing (and are not ducked) while the mic listens.
                 try await AudioSession.configure { s in
                     try s.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .mixWithOthers, .allowBluetoothHFP])
                     try s.setActive(true)
                 }
-                guard running else { return }
+                guard running, mine == generation else { return }
                 try listen()
             } catch {
-                running = false
+                if mine == generation { running = false }
             }
         }
     }
@@ -58,6 +62,9 @@ final class WakeWord {
         paused = on
         run = 0
         if on { detector.reset() }
+        // Playing an answer can change the audio session (the web view asks for playback), which silently stops the
+        // mic. Listen again from scratch once the answer ends, so follow-ups can start with "Quisk" too.
+        else if running { stop(); start() }
     }
 
     /// A new engine each time: an engine keeps the mic format from when it was made, and dictation or a new route
