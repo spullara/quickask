@@ -5,8 +5,9 @@
   - tiny-voca F2/M2 at several speeds and pitches
 Writes 16 kHz mono WAVs to OUT/{pos,hard,talk}/ and OUT/meta.json (source, voice, text, split). About 15% of the
 Gemini voices and 20% of the macOS voices are held out for testing ("test" split).
-Usage: python generate.py OUT [TINY_VOCA_WEIGHTS]   (GEMINI_API_KEY from ~/.env)"""
-import base64, io, json, os, random, re, ssl, subprocess, sys, tempfile, time, urllib.error, urllib.request
+Usage: python generate.py OUT [TINY_VOCA_WEIGHTS]   (GEMINI_API_KEY from ~/.env)
+Resumable: Gemini clips already in OUT are kept (they cost API calls); the local stages run again."""
+import base64, glob, io, json, os, random, re, ssl, subprocess, sys, tempfile, time, urllib.error, urllib.request, zlib
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 import soundfile as sf
@@ -32,6 +33,12 @@ TALK = ["The meeting moved to three o'clock on Thursday.", "Can you pick up some
         "Let's take a quick break and come back in ten minutes.", "The quiz show starts right after the evening news.",
         "Hey, can you hear me? I'm calling from the car.", "Okay, so the plan is to leave at dawn and arrive by noon."]
 meta = []
+tag = lambda text: zlib.crc32(text.encode()) % 100000
+safe = lambda name: re.sub(r"[^A-Za-z0-9._-]+", "_", name)
+
+
+def flush():
+    json.dump(meta, open(os.path.join(OUT, "meta.json"), "w"), indent=0)
 
 
 def save(kind, name, audio, rate, **info):
@@ -39,7 +46,7 @@ def save(kind, name, audio, rate, **info):
         audio = resample_poly(audio, 16000, rate)
     audio = np.asarray(audio, dtype=np.float32)
     peak = np.abs(audio).max() or 1.0
-    path = os.path.join(kind, re.sub(r"[^A-Za-z0-9._-]+", "_", name) + ".wav")
+    path = os.path.join(kind, safe(name) + ".wav")
     sf.write(os.path.join(OUT, path), (audio / peak * 0.9 * 32767).astype(np.int16), 16000, subtype="PCM_16")
     meta.append({"path": path, "kind": kind, **info})
 
@@ -88,15 +95,29 @@ def run(job):
     kind, text, v, split = job
     got = gemini(text, v["id"])
     if got:
-        save(kind, f"gemini-{v['id']}-{kind}-{abs(hash(text)) % 10000}", got[0], got[1], source="gemini", voice=v["id"],
+        save(kind, f"gemini-{v['id']}-{kind}-{tag(text)}", got[0], got[1], source="gemini", voice=v["id"],
              accent=v.get("accent"), gender=v.get("gender"), text=text, split=split)
     return got is not None
 
 
-t0 = time.time()
-with ThreadPoolExecutor(16) as ex:
-    ok = sum(ex.map(run, jobs))
-print(f"gemini: {ok}/{len(jobs)} clips in {time.time() - t0:.0f}s", flush=True)
+old = sorted(glob.glob(os.path.join(OUT, "*", "gemini-*.wav")))
+if old:
+    by_name = {safe(v["id"]): v for v in voices}
+    for f in old:
+        kind, name = f.split(os.sep)[-2], os.path.basename(f)[len("gemini-"):-len(".wav")]
+        v = by_name.get(name.rsplit("-", 2)[0])
+        if v:
+            meta.append({"path": os.path.join(kind, os.path.basename(f)), "kind": kind, "source": "gemini", "voice": v["id"],
+                         "accent": v.get("accent"), "gender": v.get("gender"), "split": "test" if v["id"] in held else "train"})
+    print(f"gemini: kept {len(meta)} of {len(old)} clips already made", flush=True)
+else:
+    t0 = time.time()
+    with ThreadPoolExecutor(16) as ex:
+        ok = sum(ex.map(run, jobs))
+    print(f"gemini: {ok}/{len(jobs)} clips in {time.time() - t0:.0f}s", flush=True)
+flush()
+for f in glob.glob(os.path.join(OUT, "*", "mac-*.wav")) + glob.glob(os.path.join(OUT, "*", "tv-*.wav")):
+    os.remove(f)
 
 # --- macOS voices ---------------------------------------------------------------------------------------------------
 mac = [l.split()[0] for l in subprocess.run(["say", "-v", "?"], capture_output=True, text=True).stdout.splitlines()
@@ -113,7 +134,7 @@ def say(job):
         if r.returncode:
             return False
         audio, sr = sf.read(f.name, dtype="float32")
-    save(kind, f"mac-{voice}-{rate}-{kind}-{abs(hash(text)) % 100000}", audio, sr, source="mac", voice=voice, text=text,
+    save(kind, f"mac-{voice}-{rate}-{kind}-{tag(text)}", audio, sr, source="mac", voice=voice, text=text,
          split="test" if voice in mac_held else "train")
     return True
 
@@ -127,6 +148,7 @@ for voice in mac:
 with ThreadPoolExecutor(8) as ex:
     ok = sum(ex.map(say, jobs))
 print(f"mac: {ok}/{len(jobs)} clips from {len(mac)} voices", flush=True)
+flush()
 
 # --- tiny-voca --------------------------------------------------------------------------------------------------------
 if TV:
@@ -144,11 +166,11 @@ if TV:
                         p = dizione.phonemize(text)
                         audio, _ = sess.run(None, {"tokens": np.array([p.ids], dtype=np.int64), "stress": np.array([p.stress], dtype=np.int64),
                                                    "voice": np.array([voice], dtype=np.int64), "speed": one(speed), "pitch_shift": one(pitch), "pitch_range": one(1.0)})
-                        save(kind, f"tv-{voice}-{speed}-{pitch}-{kind}-{abs(hash(text)) % 100000}", audio[0], 24000, source="tiny-voca",
+                        save(kind, f"tv-{voice}-{speed}-{pitch}-{kind}-{tag(text)}", audio[0], 24000, source="tiny-voca",
                              voice=f"tv{voice}", text=text, split="train")
                         n += 1
     print(f"tiny-voca: {n} clips", flush=True)
 
-json.dump(meta, open(os.path.join(OUT, "meta.json"), "w"), indent=0)
+flush()
 from collections import Counter
 print(Counter((m["kind"], m["split"]) for m in meta))
