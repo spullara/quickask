@@ -86,9 +86,9 @@ onmessage = async (e) => {
         const ids = p.ids.slice(0, 512), stress = p.stress.slice(0, 512);
         const out = await session.run({
           tokens: i64(ids), stress: i64(stress), voice: new ort.Tensor("int64", BigInt64Array.of(BigInt(m.voice)), [1]),
-          speed: f32(1), pitch_shift: f32(0), pitch_range: f32(1),
+          speed: f32(m.speed || 1), pitch_shift: f32(0), pitch_range: f32(1),
         });
-        parts.push(out.audio.data, new Float32Array(6000));
+        parts.push(out.audio.data, new Float32Array(Math.round(6000 / (m.speed || 1))));
       }
       const all = new Float32Array(parts.reduce((n, p) => n + p.length, 0));
       let o = 0;

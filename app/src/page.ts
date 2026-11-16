@@ -95,8 +95,8 @@ textarea:focus{border-color:var(--mute)}
 #ak{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:8px;align-items:center;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 14px;font-size:13px;width:max-content;max-width:calc(100% - 24px)}
 #ak button{font:inherit;border:0;border-radius:8px;cursor:pointer;padding:6px 10px;white-space:nowrap}#akb{background:var(--fg);color:var(--bg);font-weight:600}#akx{background:none;color:var(--mute)}
 #tkw{position:fixed;right:16px;bottom:92px;z-index:6;display:flex;gap:6px;align-items:center}#tkw[hidden]{display:none}
-#tk,#tkvw{position:relative;width:34px;height:34px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer;display:grid;place-items:center;box-shadow:0 2px 8px #0001}
-#tkvw{color:var(--mute)}#tkvw:hover,#tkvw:focus-within{color:var(--fg)}
+#tk,#tkvw,#tks{position:relative;width:34px;height:34px;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--soft);color:var(--fg);cursor:pointer;display:grid;place-items:center;box-shadow:0 2px 8px #0001}
+#tkvw,#tks{color:var(--mute)}#tks{font-family:inherit;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}#tks:hover{color:var(--fg)}#tkvw:hover,#tkvw:focus-within{color:var(--fg)}
 #tkv{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
 #menu .ci{display:flex;flex-wrap:wrap;align-items:center;gap:2px;border-top:1px solid var(--line);margin-top:4px;padding:6px 4px 2px}
 #menu .ci span{width:100%;font-size:12px;color:var(--mute);padding:0 6px 2px}#menu .ci button{padding:6px 8px;font-size:13px}
@@ -171,13 +171,24 @@ let TALK=/[?&]talk=(1|true|yes)(&|$)/i.test(location.search);
 // Voice: the URL's voice=, else the one picked in this browser, else the server's default.
 let VOICE=(location.search.match(/[?&]voice=([a-z0-9]+)/i)||[])[1]||'';try{VOICE=VOICE||localStorage.voice2||''}catch{}
 const tk={said:0,text:'',pend:'',sent:0,q:[],busy:false,blocked:false};let tkb=null;
+// Reading speed, saved in this browser: the voice model speaks faster at the same pitch.
+const SPEEDS=[1,1.5,2];let SPEED=1;try{SPEED=SPEEDS.includes(+localStorage.speed)?+localStorage.speed:1}catch{}
 // In the phone apps, answers play through Web Audio, not an <audio> element: WebKit puts every <audio> element on the
 // iOS lock screen as Now Playing. Web Audio is silenced by the ring/silent switch unless the page asks for
 // an audio session that is not; play-and-record also matches the app's, so the wake word keeps the mic. (Browsers keep <audio>, which Safari plays even in silent mode.) Same small API.
 class WAPlayer extends EventTarget{constructor(){super();this.ctx=null;this.node=null;this.paused=true;this._src='';this.onended=null;this.onerror=null}
  get src(){return this._src}set src(v){this._stop();this._src=v}
  _stop(){if(this.node){this.node.onended=null;try{this.node.stop()}catch{}this.node=null}}
- async play(){if(!this.ctx&&navigator.audioSession)navigator.audioSession.type='play-and-record';const ctx=this.ctx||(this.ctx=new (window.AudioContext||window.webkitAudioContext)());await ctx.resume();
+ _new(){if(navigator.audioSession)navigator.audioSession.type='play-and-record';return new (window.AudioContext||window.webkitAudioContext)()}
+ // A context that is not running plays nothing and never ends (seen at app start, while the app sets up its audio):
+ // wait up to 1.5 s for it, then try a new one, then give up as "not allowed", so the page shows the play button.
+ async _running(){let ctx=this.ctx||(this.ctx=this._new());
+  for(let i=0;i<2;i++){ctx.resume().catch(()=>{});
+   if(ctx.state!=='running')await new Promise(r=>{const t=setTimeout(r,1500);ctx.onstatechange=()=>{if(ctx.state==='running'){clearTimeout(t);r()}}});
+   if(ctx.state==='running'){ctx.onstatechange=()=>{if(ctx.state!=='running'&&ctx.state!=='closed'&&!this.paused)ctx.resume().catch(()=>{})};return ctx}
+   ctx.close().catch(()=>{});ctx=this.ctx=this._new()}
+  throw new DOMException('Audio did not start','NotAllowedError')}
+ async play(){const ctx=await this._running();
   if(!this._src||this._src.startsWith('data:'))return;const src=this._src;
   const buf=await ctx.decodeAudioData(await (await fetch(src)).arrayBuffer());if(src!==this._src)return;
   this._stop();const n=ctx.createBufferSource();n.buffer=buf;n.connect(ctx.destination);
@@ -190,19 +201,22 @@ const speakable=s=>s.replace(/^\s*!\[[^\]]*\]\([^)]*\)\s*$/gm,'').replace(/\[([^
  .replace(/https?:\/\/\S+/g,'').replace(/[*_` + "`" + String.raw`#>|~]/g,'').replace(/\s+/g,' ').trim();
 const playing=()=>tk.busy&&!au.paused;
 function tkShow(){if(!TALK)return;if(!tkb){const w=document.createElement('div');w.id='tkw';
-  // Two small round buttons: the voice (a native picker under an icon) and play/stop.
-  w.innerHTML='<label id="tkvw"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3M6 6v11M10 3v18M14 8v7M18 5v13M22 10v3"/></svg><select id="tkv">'+Object.keys(VOICES).map(k=>'<option value="'+k+'">'+VOICES[k]+' voice</option>').join('')+'</select></label><button id="tk"></button>';
+  // Small round buttons: speed, the voice (a native picker under an icon) and play/stop.
+  w.innerHTML='<button id="tks"></button><label id="tkvw"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3M6 6v11M10 3v18M14 8v7M18 5v13M22 10v3"/></svg><select id="tkv">'+Object.keys(VOICES).map(k=>'<option value="'+k+'">'+VOICES[k]+' voice</option>').join('')+'</select></label><button id="tk"></button>';
   document.body.append(w);tkb=w.querySelector('#tk');tkb.onclick=tkTap;const sel=w.querySelector('#tkv');sel.value=voice();
-  // A new voice applies at once: the answer being read starts again in it.
+  // A new voice or speed applies at once: the answer being read starts again with it.
+  const again=()=>{if(playing()||tk.q.length){au.pause();tk.q=[];tk.busy=false;tkTap()}};
   const vlabel=()=>{const t='Voice: '+VOICES[voice()];sel.setAttribute('aria-label',t);sel.parentNode.title=t};vlabel();
-  sel.onchange=()=>{VOICE=sel.value;vlabel();try{localStorage.voice2=VOICE}catch{}if(playing()||tk.q.length){au.pause();tk.q=[];tk.busy=false;tkTap()}}}
+  sel.onchange=()=>{VOICE=sel.value;vlabel();try{localStorage.voice2=VOICE}catch{}again()};
+  const sp=w.querySelector('#tks'),slabel=()=>{sp.textContent=SPEED+'×';sp.title='Speed '+SPEED+'×';sp.setAttribute('aria-label',sp.title)};slabel();
+  sp.onclick=()=>{SPEED=SPEEDS[(SPEEDS.indexOf(SPEED)+1)%SPEEDS.length];slabel();try{localStorage.speed=SPEED}catch{}again()}}
  const stop=playing()||tk.q.length&&!tk.blocked,t=stop?'Stop reading':tk.blocked?'Read aloud':'Read again';
  if(tkb.dataset.s!==t){tkb.dataset.s=t;tkb.title=t;tkb.setAttribute('aria-label',t);
   tkb.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">'+(stop?'<rect x="5" y="5" width="14" height="14" rx="2"/>':'<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/>')+'</svg>'}
  tkb.parentNode.hidden=!tk.text}
 // Audio for a chunk: tiny-voca, on this device (phonemes from the voice worker, or the server while it starts).
 const voice=()=>{const v=(VOICE||'').toLowerCase();return v in LOCAL?v:'f2'};
-function tts(t){const it={u:null};it.p=localTTS(t,LOCAL[voice()]).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
+function tts(t){const it={u:null};it.p=localTTS(t,LOCAL[voice()],SPEED).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
 // tiny-voca (4.5M parameters, 24 kHz) in a background worker (/voice/worker.js): phonemes with dizione (Pyodide) and,
 // on the web, audio with ONNX Runtime Web. Downloaded once and cached; started early (preload). Until its phonemizer
 // is ready (first use), phonemes come from the server.
@@ -211,17 +225,17 @@ const LOCAL={f2:0,m2:1};
 const NATIVE=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.quiskVoice?b=>window.webkit.messageHandlers.quiskVoice.postMessage(b)
  :window.QuiskAndroid?b=>Promise.resolve(QuiskAndroid.speak(JSON.stringify(b))):null;
 let vw=null,vwSeq=0;const vwReady={},vwWait={};
-function voiceWorker(){if(vw)return vw;vw=new Worker('/voice/worker.js');
+function voiceWorker(){if(vw)return vw;vw=new Worker('/voice/worker.js?v=2');
  vw.onmessage=e=>{const m=e.data;if(m.ready){vwReady[m.ready]=true;return}const w=vwWait[m.id];if(!w)return;delete vwWait[m.id];m.ok?w[0](m.result):w[1](new Error(m.error))};
  vw.postMessage({op:'init',model:!NATIVE});return vw}
 const vcall=(op,data)=>new Promise((ok,no)=>{const id=++vwSeq;vwWait[id]=[ok,no];voiceWorker().postMessage({id,op,...data})});
 const serverPhonemes=sents=>fetch('/api/phonemes',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sentences:sents})}).then(r=>r.ok?r.json():Promise.reject(new Error('phonemes')));
 let phSrc='server';
 const phonemes=sents=>vwReady.phonemes?vcall('phonemize',{sentences:sents}).then(r=>(phSrc='device',r)).catch(()=>(phSrc='server',serverPhonemes(sents))):(phSrc='server',serverPhonemes(sents));
-async function localTTS(text,voice){const sents=(text.match(/[^.!?]+[.!?]*\s*/g)||[text]).map(s=>s.trim()).filter(Boolean);
+async function localTTS(text,voice,speed=1){const sents=(text.match(/[^.!?]+[.!?]*\s*/g)||[text]).map(s=>s.trim()).filter(Boolean);
  const ph=(await phonemes(sents)).filter(Boolean);if(!ph.length)throw new Error('no phonemes');
- if(NATIVE){const b64=await NATIVE({ph,voice,src:phSrc});if(!b64)throw new Error('no audio');return new Blob([Uint8Array.from(atob(b64),c=>c.charCodeAt(0))],{type:'audio/wav'})}
- return wav([await vcall('synth',{ph,voice})],24000)}
+ if(NATIVE){const b64=await NATIVE({ph,voice,speed,src:phSrc});if(!b64)throw new Error('no audio');return new Blob([Uint8Array.from(atob(b64),c=>c.charCodeAt(0))],{type:'audio/wav'})}
+ return wav([await vcall('synth',{ph,voice,speed})],24000)}
 function wav(parts,rate){const n=parts.reduce((a,p)=>a+p.length,0),b=new DataView(new ArrayBuffer(44+n*2));let o=0;
  const s=t=>{for(const c of t)b.setUint8(o++,c.charCodeAt(0))},u32=v=>{b.setUint32(o,v,true);o+=4},u16=v=>{b.setUint16(o,v,true);o+=2};
  s('RIFF');u32(36+n*2);s('WAVE');s('fmt ');u32(16);u16(1);u16(1);u32(rate);u32(rate*2);u16(2);u16(16);s('data');u32(n*2);
