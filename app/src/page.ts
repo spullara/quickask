@@ -307,8 +307,9 @@ find.querySelector('button').onclick=closeFind;
 fi.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();closeFind()}});
 fi.addEventListener('input',()=>{clearTimeout(ft);ft=setTimeout(()=>{const q=fi.value.trim();findQ=q;if(!q){found=[];paintList();return}
  fetch('/api/chats?q='+encodeURIComponent(q)).then(r=>r.json()).then(p=>{if(q!==findQ)return;found=p;findMore=p.length>=PAGE;sideEl.scrollTop=0;paintList()},()=>{})},150)});
-function del(id){fetch('/api/chats/'+id,{method:'DELETE'});base=base.filter(c=>c.id!==id);found=found.filter(c=>c.id!==id);
- const r=side.querySelector('[data-id="'+id+'"]');if(r)r.closest('.row').remove();if(id===S.id)location.href='/'}
+// Leaving the page cancels a pending fetch (iOS web views do), so leave only after the delete is done.
+function del(id){const done=fetch('/api/chats/'+id,{method:'DELETE',keepalive:true}).catch(()=>{});base=base.filter(c=>c.id!==id);found=found.filter(c=>c.id!==id);
+ const r=side.querySelector('[data-id="'+id+'"]');if(r)r.closest('.row').remove();if(id===S.id)done.then(()=>location.href='/')}
 // Swipe left on a row (touch): reveal Delete; a long swipe deletes; swipe back or tap to close.
 let sw=null,opened=null,swiped=false;const shut=it=>{it.style.transform='';if(opened===it)opened=null;setTimeout(()=>{if(!it.style.transform)it.parentNode.classList.remove('sw')},220)};
 side.addEventListener('touchstart',e=>{const it=e.target.closest('.it');if(!it)return;if(opened&&opened!==it)shut(opened);
