@@ -179,7 +179,7 @@ def main():
         np.save(c("test_streams.npy"), np.concatenate(test_streams))
         np.save(c("test_lens.npy"), np.array([len(e) for e in test_streams]))
     version = str(zlib.crc32(open(os.path.join(DATA, "meta.json"), "rb").read()))
-    if os.path.exists(c("clip_streams.npz")) and open(c("synthetic.version")).read() == version:
+    if os.path.exists(c("synthetic.version")) and open(c("synthetic.version")).read() == version:
         tr, te = dict(np.load(c("train.npz"))), dict(np.load(c("test.npz")))
         cs = np.load(c("clip_streams.npz"))
         pos_streams = np.split(cs["pos"], np.cumsum(cs["pos_lens"])[:-1])
