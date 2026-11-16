@@ -173,11 +173,11 @@ let VOICE=(location.search.match(/[?&]voice=([a-z0-9]+)/i)||[])[1]||'';try{VOICE
 const tk={said:0,text:'',pend:'',sent:0,q:[],busy:false,blocked:false};let tkb=null;
 // In the phone apps, answers play through Web Audio, not an <audio> element: WebKit puts every <audio> element on the
 // iOS lock screen as Now Playing. Web Audio is silenced by the ring/silent switch unless the page asks for
-// the playback audio session. (Browsers keep <audio>, which Safari plays even in silent mode.) Same small API.
+// an audio session that is not; play-and-record also matches the app's, so the wake word keeps the mic. (Browsers keep <audio>, which Safari plays even in silent mode.) Same small API.
 class WAPlayer extends EventTarget{constructor(){super();this.ctx=null;this.node=null;this.paused=true;this._src='';this.onended=null;this.onerror=null}
  get src(){return this._src}set src(v){this._stop();this._src=v}
  _stop(){if(this.node){this.node.onended=null;try{this.node.stop()}catch{}this.node=null}}
- async play(){if(!this.ctx&&navigator.audioSession)navigator.audioSession.type='playback';const ctx=this.ctx||(this.ctx=new (window.AudioContext||window.webkitAudioContext)());await ctx.resume();
+ async play(){if(!this.ctx&&navigator.audioSession)navigator.audioSession.type='play-and-record';const ctx=this.ctx||(this.ctx=new (window.AudioContext||window.webkitAudioContext)());await ctx.resume();
   if(!this._src||this._src.startsWith('data:'))return;const src=this._src;
   const buf=await ctx.decodeAudioData(await (await fetch(src)).arrayBuffer());if(src!==this._src)return;
   this._stop();const n=ctx.createBufferSource();n.buffer=buf;n.connect(ctx.destination);

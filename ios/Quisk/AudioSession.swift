@@ -13,6 +13,13 @@ enum AudioSession {
         }
     }
 
+    /// Answers play (on the speaker, not ducked, not muted by the silent switch) while the mic can listen for
+    /// "Quisk". Dictation, the wake word and the page all use this one setup, so none of them turns the mic off.
+    static func playAndListen(_ s: AVAudioSession) throws {
+        try s.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .mixWithOthers, .allowBluetoothHFP, .allowBluetoothA2DP])
+        try s.setActive(true)
+    }
+
     static func later(_ change: @escaping @Sendable (AVAudioSession) throws -> Void) {
         queue.async { try? change(AVAudioSession.sharedInstance()) }
     }

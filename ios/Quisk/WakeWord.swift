@@ -16,6 +16,7 @@ final class WakeWord {
 
     private var engine: AVAudioEngine?
     private var change: NSObjectProtocol?
+    private var watchdog: Timer?
     private let detector = Detector()
     private var running = false
     private var paused = false
@@ -32,11 +33,7 @@ final class WakeWord {
         Task {
             guard await AVAudioApplication.requestRecordPermission() else { if mine == generation { running = false }; return }
             do {
-                // Play and record at once: answers keep playing (and are not ducked) while the mic listens.
-                try await AudioSession.configure { s in
-                    try s.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .mixWithOthers, .allowBluetoothHFP])
-                    try s.setActive(true)
-                }
+                try await AudioSession.configure(AudioSession.playAndListen)
                 guard running, mine == generation else { return }
                 try listen()
             } catch {
@@ -49,6 +46,8 @@ final class WakeWord {
         running = false
         if let change { NotificationCenter.default.removeObserver(change) }
         change = nil
+        watchdog?.invalidate()
+        watchdog = nil
         if let engine {
             engine.stop()
             engine.inputNode.removeTap(onBus: 0)
@@ -62,9 +61,9 @@ final class WakeWord {
         paused = on
         run = 0
         if on { detector.reset() }
-        // Playing an answer can change the audio session (the web view asks for playback), which silently stops the
-        // mic. Listen again from scratch once the answer ends, so follow-ups can start with "Quisk" too.
-        else if running { stop(); start() }
+        // Playing an answer can change the audio session, which silently stops the mic. Listen again from scratch
+        // once the answer ends, so follow-ups can start with "Quisk" too.
+        else if running { restart() }
     }
 
     /// A new engine each time: an engine keeps the mic format from when it was made, and dictation or a new route
@@ -98,12 +97,22 @@ final class WakeWord {
         self.engine = engine
         // The route changed under the engine: listen again with the new format.
         change = NotificationCenter.default.addObserver(forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.restart() }
+        }
+        // Anything else that stops the mic (another app, a call, a session change): no audio for 3 s means listen again.
+        detector.heardAudio()
+        watchdog = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                guard let self, self.running else { return }
-                self.stop()
-                self.start()
+                guard let self, self.running, self.engine != nil, self.detector.silentFor > 3 else { return }
+                self.restart()
             }
         }
+    }
+
+    private func restart() {
+        guard running else { return }
+        stop()
+        start()
     }
 
     private func heard(_ scores: [Float]) {
@@ -129,6 +138,12 @@ private final class Detector: @unchecked Sendable {
 
     func reset() { queue.async { self.pending = []; self.tail = []; self.frames = []; self.features = [] } }
 
+    private let lock = NSLock()
+    private var lastAudio = Date()
+    func heardAudio() { lock.withLock { lastAudio = Date() } }
+    /// Seconds since the mic last delivered audio.
+    var silentFor: TimeInterval { lock.withLock { Date().timeIntervalSince(lastAudio) } }
+
     private func load() throws {
         guard mel == nil else { return }
         let env = try ORTEnv(loggingLevel: .warning)
@@ -153,6 +168,7 @@ private final class Detector: @unchecked Sendable {
 
     /// 16 kHz samples scaled like 16-bit PCM. Calls back with the score of each new 80 ms step, in order.
     func feed(_ samples: [Float], score: @escaping ([Float]) -> Void) {
+        heardAudio()
         queue.async {
             do {
                 try self.load()

@@ -87,8 +87,8 @@ final class Dictation: ObservableObject {
         task?.cancel()
         request = nil
         task = nil
-        // Hand the audio session back so the page can play the answer (off the main thread, after any pending setup).
-        AudioSession.later { try $0.setCategory(.playback, mode: .spokenAudio) }
+        // Hand the audio session back for the answer, keeping the mic usable for the wake word.
+        AudioSession.later(AudioSession.playAndListen)
     }
 
     func finish() {
