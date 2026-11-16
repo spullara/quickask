@@ -8,7 +8,7 @@ score highest are mined and weighted up in the next round.
 Test: held-out voices, held-out sound-alikes, and false triggers per hour over the LibriSpeech dev/test sets (other
 speakers). Writes OUT/quisk.onnx, OUT/report.json, and copies the two feature models next to it.
 Usage: python train.py DATA LIBRISPEECH_DIR OUT"""
-import glob, json, os, random, shutil, sys, time
+import glob, json, os, random, shutil, sys, time, zlib
 from multiprocessing import Pool
 import numpy as np
 import soundfile as sf
@@ -162,35 +162,38 @@ def main():
         e = feat._get_embeddings(window(clip, "test", n=56000, end_at=40000)).astype(np.float32)
         return np.lib.stride_tricks.sliding_window_view(e, (16, 96))[:, 0]
 
-    # The slow parts (synthetic windows, 100 h of speech features) are cached next to OUT for later runs.
+    # The slow parts are cached next to OUT for later runs: speech features once, synthetic windows per clip list.
     cache = os.path.join(os.path.dirname(os.path.abspath(OUT)), "cache")
     os.makedirs(cache, exist_ok=True)
+    c = lambda name: os.path.join(cache, name)
     t0 = time.time()
-    if os.path.exists(os.path.join(cache, "stream.npy")):
-        tr = dict(np.load(os.path.join(cache, "train.npz")))
-        te = dict(np.load(os.path.join(cache, "test.npz")))
-        stream = np.load(os.path.join(cache, "stream.npy"), mmap_mode="r")
-        flat, lens = np.load(os.path.join(cache, "test_streams.npy")), np.load(os.path.join(cache, "test_lens.npy"))
-        test_streams = np.split(flat, np.cumsum(lens)[:-1])
-        cs = np.load(os.path.join(cache, "clip_streams.npz"))
+    if os.path.exists(c("stream.npy")):
+        stream = np.load(c("stream.npy"), mmap_mode="r")
+        test_streams = np.split(np.load(c("test_streams.npy")), np.cumsum(np.load(c("test_lens.npy")))[:-1])
+    else:
+        # Real speech: every 160 ms window of train-clean-100 for training; whole test-set files for testing.
+        stream = np.concatenate([np.lib.stride_tricks.sliding_window_view(e, (16, 96))[::2, 0]
+                                 for e in embed_files(libri["train"], True, 1000) if len(e) >= 16])
+        test_streams = [e.astype(np.float32) for e in embed_files(libri["test"], False, 900000) if len(e) >= 16]
+        np.save(c("stream.npy"), stream)
+        np.save(c("test_streams.npy"), np.concatenate(test_streams))
+        np.save(c("test_lens.npy"), np.array([len(e) for e in test_streams]))
+    version = str(zlib.crc32(open(os.path.join(DATA, "meta.json"), "rb").read()))
+    if os.path.exists(c("clip_streams.npz")) and open(c("synthetic.version")).read() == version:
+        tr, te = dict(np.load(c("train.npz"))), dict(np.load(c("test.npz")))
+        cs = np.load(c("clip_streams.npz"))
         pos_streams = np.split(cs["pos"], np.cumsum(cs["pos_lens"])[:-1])
         hard_streams = np.split(cs["hard"], np.cumsum(cs["hard_lens"])[:-1])
     else:
         tr = build("train", {"pos": 10, "hard": 4, "talk": 8, "bg": 20000, "early": 1800})
         te = build("test", {"pos": 4, "hard": 2, "talk": 4, "bg": 3000, "early": 400})
-        # Real speech: every 160 ms window of train-clean-100 for training; whole test-set files for testing.
-        stream = np.concatenate([np.lib.stride_tricks.sliding_window_view(e, (16, 96))[::2, 0]
-                                 for e in embed_files(libri["train"], True, 1000) if len(e) >= 16])
-        test_streams = [e.astype(np.float32) for e in embed_files(libri["test"], False, 900000) if len(e) >= 16]
-        pos_streams = [clip_stream(c) for c in clips["pos"]["test"] for _ in range(2)]
-        hard_streams = [clip_stream(c) for c in clips["hard"]["test"] for _ in range(2)]
-        np.savez(os.path.join(cache, "train.npz"), **tr)
-        np.savez(os.path.join(cache, "test.npz"), **te)
-        np.save(os.path.join(cache, "stream.npy"), stream)
-        np.save(os.path.join(cache, "test_streams.npy"), np.concatenate(test_streams))
-        np.save(os.path.join(cache, "test_lens.npy"), np.array([len(e) for e in test_streams]))
-        np.savez(os.path.join(cache, "clip_streams.npz"), pos=np.concatenate(pos_streams), pos_lens=[len(x) for x in pos_streams],
+        pos_streams = [clip_stream(x) for x in clips["pos"]["test"] for _ in range(2)]
+        hard_streams = [clip_stream(x) for x in clips["hard"]["test"] for _ in range(2)]
+        np.savez(c("train.npz"), **tr)
+        np.savez(c("test.npz"), **te)
+        np.savez(c("clip_streams.npz"), pos=np.concatenate(pos_streams), pos_lens=[len(x) for x in pos_streams],
                  hard=np.concatenate(hard_streams), hard_lens=[len(x) for x in hard_streams])
+        open(c("synthetic.version"), "w").write(version)
     print(f"synthetic windows: train {sum(len(v) for v in tr.values())}, test {sum(len(v) for v in te.values())}", flush=True)
     test_hours = sum(len(e) for e in test_streams) * 0.08 / 3600
     print(f"speech windows: train {len(stream)} ({len(stream) * 0.16 / 3600:.0f} h), test {test_hours:.1f} h "
