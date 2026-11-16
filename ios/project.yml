@@ -63,7 +63,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
         # iPad multitasking requires all four orientations.
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
-        INFOPLIST_KEY_NSMicrophoneUsageDescription: Quisk listens to your question when you ask aloud.
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Quisk listens for "Quisk" while the app is open (on this iPhone only), and to your question when you ask aloud.
         INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: Quisk turns your spoken question into text.
         INFOPLIST_KEY_NSSiriUsageDescription: Ask Quisk questions with Siri and hear the answers.
   QuiskShare:
@@ -78,6 +78,9 @@ targets:
       path: Share/Info.plist
       properties:
         CFBundleDisplayName: Quisk
+        # Same version and build as the app (App Store Connect warns when they differ).
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.share-services
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
