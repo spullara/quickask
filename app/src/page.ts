@@ -378,6 +378,8 @@ U();
 function fresh(){document.body.classList.remove('open');
  if(!S.id){ta.value='';fit();ta.focus();return}
  if(cur){location.href='/';return}
+ // A new chat leaves talk mode (the wake word, talk button or ?talk=true turn it on again): stop reading, hide its buttons.
+ if(window.talkReset){talkReset();TALK=false;if(tkb)tkb.parentNode.hidden=true}
  S.id=null;S.msgs=[];S.title='Quisk';S.shares=[];log.innerHTML='';main.classList.add('home');
  const x=$('#shx');if(x)x.remove();side.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));
  document.title='Quisk';ta.placeholder='Ask anything';ta.value='';fit();history.pushState(null,'','/');ta.focus()}
