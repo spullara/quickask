@@ -137,9 +137,12 @@ struct VoiceScreen: View {
         .padding(24)
         .onAppear {
             dictation.onQuestion = { question in
-                app.listening = false
-                if app.listeningForPage { app.talk(question) } else { app.ask(question) }
+                // Close once the page shows the question; at most 1 s later if the page does not answer.
+                var closed = false
+                let close = { if !closed { closed = true; app.listening = false } }
+                if app.listeningForPage { app.talk(question, shown: close) } else { app.ask(question, shown: close) }
                 app.listeningForPage = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: close)
             }
             dictation.start()
         }

@@ -64,10 +64,17 @@ final class AppModel: ObservableObject {
         if active && signedIn && !listening { wake.start() } else { wake.stop() }
     }
 
-    /// A spoken question from the page's talk button, asked in the page with the answer read aloud.
-    func talk(_ question: String) {
+    /// A spoken question from the page's talk button, asked in the page with the answer read aloud. `shown` runs once
+    /// the page shows the question (so the listening screen closes onto it, not onto the page that was there before).
+    func talk(_ question: String, shown: @escaping () -> Void = {}) {
         let arg = String(data: try! JSONSerialization.data(withJSONObject: [question]), encoding: .utf8)!.dropFirst().dropLast()
-        web?.evaluateJavaScript("window.quiskTalk && quiskTalk(\(arg))")
+        guard let web else { return shown() }
+        web.evaluateJavaScript("window.quiskTalk && quiskTalk(\(arg))") { _, _ in Self.afterPaint(shown) }
+    }
+
+    /// After the page has drawn its change (one frame), and at most once.
+    private static func afterPaint(_ then: @escaping () -> Void) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: then)
     }
     @Published var signInError: String?
     /// The web view has finished its first load (ends the splash screen).
@@ -76,7 +83,7 @@ final class AppModel: ObservableObject {
     private var pending: URL?
 
     /// Ask in the chat page with talk mode on: the answer streams and is read aloud.
-    func ask(_ question: String) {
+    func ask(_ question: String, shown: @escaping () -> Void = {}) {
         var parts = URLComponents(url: API.base, resolvingAgainstBaseURL: false)!
         parts.queryItems = [URLQueryItem(name: "q", value: question), URLQueryItem(name: "talk", value: "true")]
         #if DEBUG
@@ -84,11 +91,12 @@ final class AppModel: ObservableObject {
         if let speed = ProcessInfo.processInfo.environment["QUISK_SPEED"] { parts.queryItems?.append(URLQueryItem(name: "speed", value: speed)) }
         #endif
         guard let url = parts.url else { return }
-        guard let web, loaded else { pending = url; web?.load(URLRequest(url: url)); return }
+        guard let web, loaded else { pending = url; web?.load(URLRequest(url: url)); return shown() }
         // Page already open: ask in place, so its voice worker (already warm) makes the phonemes from the start.
         let arg = String(data: try! JSONSerialization.data(withJSONObject: [question]), encoding: .utf8)!.dropFirst().dropLast()
         web.evaluateJavaScript("window.quiskAsk ? (quiskAsk(\(arg)), 1) : 0") { result, _ in
             if (result as? Int) != 1 { web.load(URLRequest(url: url)) }
+            Self.afterPaint(shown)
         }
     }
 
