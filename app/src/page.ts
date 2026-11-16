@@ -187,9 +187,14 @@ function stretch(x,rate){if(rate===1||x.length<4096)return x;const N=1024,H=512,
    for(let i=0;i<N;i+=8)c+=x[p+i]*x[nat+i];if(c>bc){bc=c;best=p}}}
   const o=k*H;for(let i=0;i<N;i++){out[o+i]+=x[best+i]*win[i];norm[o+i]+=win[i]}prev=best}
  for(let i=0;i<out.length;i++)if(norm[i]>1e-3)out[i]/=norm[i];return out}
+// Debug builds of the apps only (they add the quiskLog handler): notes for the Xcode console.
+const dbg=(...a)=>{const h=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.quiskLog;if(h)h.postMessage('talk: '+a.join(' '))};
 class WAPlayer extends EventTarget{constructor(){super();this.ctx=null;this.node=null;this.paused=true;this._src='';this.rate=1;this.onended=null;this.onerror=null}
  get src(){return this._src}set src(v){this._stop();this._src=v}
  _stop(){if(this.node){this.node.onended=null;try{this.node.stop()}catch{}this.node=null}}
+ // A fresh context for each answer and each tap: one made while dictation held the audio session (record only) can
+ // report "running" and still play nothing.
+ reset(){this._stop();this.paused=true;if(this.ctx){dbg('new audio context (was',this.ctx.state+')');this.ctx.close().catch(()=>{});this.ctx=null}}
  _new(){if(navigator.audioSession)navigator.audioSession.type='play-and-record';return new (window.AudioContext||window.webkitAudioContext)()}
  // A context that is not running plays nothing and never ends (seen at app start, while the app sets up its audio):
  // wait up to 4 s for it, then try a new one for 4 s more, then give up as "not allowed", so the page shows the play
@@ -208,7 +213,8 @@ class WAPlayer extends EventTarget{constructor(){super();this.ctx=null;this.node
   if(this.rate!==1){const y=stretch(buf.getChannelData(0),this.rate);buf=ctx.createBuffer(1,y.length,buf.sampleRate);buf.copyToChannel(y,0)}
   this._stop();const n=ctx.createBufferSource();n.buffer=buf;n.connect(ctx.destination);
   n.onended=()=>{if(this.node!==n)return;this.node=null;this.paused=true;this.dispatchEvent(new Event('ended'));if(this.onended)this.onended()};
-  this.node=n;this.paused=false;n.start();this.dispatchEvent(new Event('playing'))}
+  this.node=n;this.paused=false;n.start();const t0=Date.now();dbg('play',buf.duration.toFixed(1)+'s','context',ctx.state,ctx.sampleRate,'session',navigator.audioSession&&navigator.audioSession.type);
+  n.addEventListener('ended',()=>dbg('ended after',((Date.now()-t0)/1000).toFixed(1)+'s'));this.dispatchEvent(new Event('playing'))}
  pause(){if(!this.paused){this._stop();this.paused=true;this.dispatchEvent(new Event('pause'))}}}
 const au=/QuiskApp/.test(navigator.userAgent)?new WAPlayer():new Audio();
 if(au instanceof WAPlayer)au.onrunning=()=>{if(tk.blocked){tk.blocked=false;tk.busy=false;tkShow();pump()}};
@@ -277,6 +283,7 @@ au.addEventListener('playing',()=>setSpk(true));
 for(const e of ['pause','ended','emptied'])au.addEventListener(e,()=>setTimeout(()=>setSpk(!au.paused||tk.q.length>0),500));
 // The tap: stop, or play. Playing starts inside the tap (iPhone), with the first chunk if it is ready, else a silent unlock.
 function tkTap(){if(playing()||tk.q.length&&!tk.blocked){au.pause();tk.q=[];tk.busy=false;tkShow();return}
+ if(au.reset)au.reset();
  if(!tk.blocked){tk.q=chunks(tk.text).map(c=>tts(speakable(c)))}tk.blocked=false;const it=tk.q[0];
  if(!it)return;tk.busy=true;au.src=it.u||SILENT;au.play().then(()=>{if(it.u)tkShow();else{tk.busy=false;pump()}},()=>{tk.busy=false;tk.blocked=true;tkShow()})}
 const chunks=t=>(t.match(/[^.!?\n]+[.!?]*\s*|\n+/g)||[t]).reduce((a,x)=>{if(a.length&&a[a.length-1].length+x.length<300)a[a.length-1]+=x;else a.push(x);return a},[]).filter(x=>x.trim());
@@ -376,7 +383,7 @@ if(S.streaming){busy=true;start();history.replaceState(null,'','/c/'+S.id)}
 // This page's id, so live updates it caused itself are skipped.
 const CID=Math.random().toString(36).slice(2);
 // The apps ask here when the page is already open: a new chat in place, read aloud, with the voice worker already warm.
-window.quiskAsk=q=>{if(busy||!q)return;TALK=true;S.id=crypto.randomUUID().replace(/-/g,'').slice(0,12);S.title=q.length>80?q.slice(0,77)+'…':q;S.msgs=[];S.shares=[];
+window.quiskAsk=q=>{if(busy||!q)return;TALK=true;if(au.reset)au.reset();S.id=crypto.randomUUID().replace(/-/g,'').slice(0,12);S.title=q.length>80?q.slice(0,77)+'…':q;S.msgs=[];S.shares=[];
  log.innerHTML='';main.classList.remove('home');document.title=S.title;history.pushState(null,'','/c/'+S.id);ask(q)};
 async function ask(q){if(busy)return;busy=true;tkUnlock();log.querySelectorAll('.fups').forEach(e=>e.remove());S.msgs.push({role:'user',text:q});add('u',E1(q));run()}
 // o.el/o.at: answer again in place of that answer; otherwise answer the last question.
@@ -393,7 +400,7 @@ ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposin
 const go=$('#go'),goOn=()=>{if(go)go.classList.toggle('on',!!ta.value.trim())};ta.addEventListener('input',goOn);$('form').addEventListener('submit',()=>setTimeout(goOn,0));goOn();
 // Talk: speak a question and hear the answer. A follow-up inside a chat, else a new chat, both without leaving the page,
 // so the voice worker stays warm and the tap that started it has already unlocked audio.
-window.quiskTalk=q=>{q=(q||'').trim();if(!q||busy)return;TALK=true;voiceWorker();ta.value='';fit();goOn();if(S.id)ask(q);else quiskAsk(q)};
+window.quiskTalk=q=>{q=(q||'').trim();if(!q||busy)return;TALK=true;if(au.reset)au.reset();voiceWorker();ta.value='';fit();goOn();if(S.id)ask(q);else quiskAsk(q)};
 const mic=$('#mic'),SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 const nativeListen=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.quiskListen?()=>window.webkit.messageHandlers.quiskListen.postMessage({})
  :window.QuiskAndroid&&QuiskAndroid.listen?()=>QuiskAndroid.listen():null;
