@@ -79,6 +79,10 @@ final class AppModel: ObservableObject {
     func ask(_ question: String) {
         var parts = URLComponents(url: API.base, resolvingAgainstBaseURL: false)!
         parts.queryItems = [URLQueryItem(name: "q", value: question), URLQueryItem(name: "talk", value: "true")]
+        #if DEBUG
+        // Simulator testing of reading speed: QUISK_SPEED=1.5
+        if let speed = ProcessInfo.processInfo.environment["QUISK_SPEED"] { parts.queryItems?.append(URLQueryItem(name: "speed", value: speed)) }
+        #endif
         guard let url = parts.url else { return }
         guard let web, loaded else { pending = url; web?.load(URLRequest(url: url)); return }
         // Page already open: ask in place, so its voice worker (already warm) makes the phonemes from the start.

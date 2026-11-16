@@ -171,12 +171,23 @@ let TALK=/[?&]talk=(1|true|yes)(&|$)/i.test(location.search);
 // Voice: the URL's voice=, else the one picked in this browser, else the server's default.
 let VOICE=(location.search.match(/[?&]voice=([a-z0-9]+)/i)||[])[1]||'';try{VOICE=VOICE||localStorage.voice2||''}catch{}
 const tk={said:0,text:'',pend:'',sent:0,q:[],busy:false,blocked:false};let tkb=null;
-// Reading speed, saved in this browser: the voice model speaks faster at the same pitch.
-const SPEEDS=[1,1.5,2];let SPEED=1;try{SPEED=SPEEDS.includes(+localStorage.speed)?+localStorage.speed:1}catch{}
+// Reading speed, saved in this browser. Playback is faster at the same pitch: the browser's own <audio> setting, or a
+// time-stretch of each chunk in the apps' Web Audio player (so it works with every app build).
+const SPEEDS=[1,1.5,2];let SPEED=+(location.search.match(/[?&]speed=([\d.]+)/)||[])[1]||0;try{SPEED=SPEED||+localStorage.speed}catch{}if(!SPEEDS.includes(SPEED))SPEED=1;
 // In the phone apps, answers play through Web Audio, not an <audio> element: WebKit puts every <audio> element on the
 // iOS lock screen as Now Playing. Web Audio is silenced by the ring/silent switch unless the page asks for
 // an audio session that is not; play-and-record also matches the app's, so the wake word keeps the mic. (Browsers keep <audio>, which Safari plays even in silent mode.) Same small API.
-class WAPlayer extends EventTarget{constructor(){super();this.ctx=null;this.node=null;this.paused=true;this._src='';this.onended=null;this.onerror=null}
+// Faster speech at the same pitch (WSOLA): overlap-add 43 ms frames taken every rate*21 ms, each moved by up to
+// 8 ms to line up with the last one, so the voice keeps its pitch. A few milliseconds for a sentence.
+function stretch(x,rate){if(rate===1||x.length<4096)return x;const N=1024,H=512,tol=200,Ha=H*rate,win=new Float32Array(N);
+ for(let i=0;i<N;i++)win[i]=.5-.5*Math.cos(2*Math.PI*i/N);
+ const frames=Math.floor((x.length-N-tol)/Ha),out=new Float32Array(frames*H+N),norm=new Float32Array(out.length);let prev=0;
+ for(let k=0;k<frames;k++){const target=Math.round(k*Ha);let best=target;
+  if(k){const nat=prev+H;let bc=-Infinity;for(let d=-tol;d<=tol;d+=2){const p=target+d;if(p<0||p+N>x.length)continue;let c=0;
+   for(let i=0;i<N;i+=8)c+=x[p+i]*x[nat+i];if(c>bc){bc=c;best=p}}}
+  const o=k*H;for(let i=0;i<N;i++){out[o+i]+=x[best+i]*win[i];norm[o+i]+=win[i]}prev=best}
+ for(let i=0;i<out.length;i++)if(norm[i]>1e-3)out[i]/=norm[i];return out}
+class WAPlayer extends EventTarget{constructor(){super();this.ctx=null;this.node=null;this.paused=true;this._src='';this.rate=1;this.onended=null;this.onerror=null}
  get src(){return this._src}set src(v){this._stop();this._src=v}
  _stop(){if(this.node){this.node.onended=null;try{this.node.stop()}catch{}this.node=null}}
  _new(){if(navigator.audioSession)navigator.audioSession.type='play-and-record';return new (window.AudioContext||window.webkitAudioContext)()}
@@ -190,12 +201,14 @@ class WAPlayer extends EventTarget{constructor(){super();this.ctx=null;this.node
   throw new DOMException('Audio did not start','NotAllowedError')}
  async play(){const ctx=await this._running();
   if(!this._src||this._src.startsWith('data:'))return;const src=this._src;
-  const buf=await ctx.decodeAudioData(await (await fetch(src)).arrayBuffer());if(src!==this._src)return;
+  let buf=await ctx.decodeAudioData(await (await fetch(src)).arrayBuffer());if(src!==this._src)return;
+  if(this.rate!==1){const y=stretch(buf.getChannelData(0),this.rate);buf=ctx.createBuffer(1,y.length,buf.sampleRate);buf.copyToChannel(y,0)}
   this._stop();const n=ctx.createBufferSource();n.buffer=buf;n.connect(ctx.destination);
   n.onended=()=>{if(this.node!==n)return;this.node=null;this.paused=true;this.dispatchEvent(new Event('ended'));if(this.onended)this.onended()};
   this.node=n;this.paused=false;n.start();this.dispatchEvent(new Event('playing'))}
  pause(){if(!this.paused){this._stop();this.paused=true;this.dispatchEvent(new Event('pause'))}}}
 const au=/QuiskApp/.test(navigator.userAgent)?new WAPlayer():new Audio();
+const setRate=()=>{if(au instanceof WAPlayer)au.rate=SPEED;else{au.preservesPitch=true;au.defaultPlaybackRate=au.playbackRate=SPEED}};setRate();
 const SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 const speakable=s=>s.replace(/^\s*!\[[^\]]*\]\([^)]*\)\s*$/gm,'').replace(/\[([^\]]+)\]\([^)]*\)/g,'$1').replace(/\s*\[\d+(?:,\s*\d+)*\]/g,'')
  .replace(/https?:\/\/\S+/g,'').replace(/[*_` + "`" + String.raw`#>|~]/g,'').replace(/\s+/g,' ').trim();
@@ -204,19 +217,20 @@ function tkShow(){if(!TALK)return;if(!tkb){const w=document.createElement('div')
   // Small round buttons: speed, the voice (a native picker under an icon) and play/stop.
   w.innerHTML='<button id="tks"></button><label id="tkvw"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10v3M6 6v11M10 3v18M14 8v7M18 5v13M22 10v3"/></svg><select id="tkv">'+Object.keys(VOICES).map(k=>'<option value="'+k+'">'+VOICES[k]+' voice</option>').join('')+'</select></label><button id="tk"></button>';
   document.body.append(w);tkb=w.querySelector('#tk');tkb.onclick=tkTap;const sel=w.querySelector('#tkv');sel.value=voice();
-  // A new voice or speed applies at once: the answer being read starts again with it.
+  // A new voice applies at once: the answer being read starts again in it. A new speed too in the apps (browsers
+  // change the speed of the sentence that is playing).
   const again=()=>{if(playing()||tk.q.length){au.pause();tk.q=[];tk.busy=false;tkTap()}};
   const vlabel=()=>{const t='Voice: '+VOICES[voice()];sel.setAttribute('aria-label',t);sel.parentNode.title=t};vlabel();
   sel.onchange=()=>{VOICE=sel.value;vlabel();try{localStorage.voice2=VOICE}catch{}again()};
   const sp=w.querySelector('#tks'),slabel=()=>{sp.textContent=SPEED+'×';sp.title='Speed '+SPEED+'×';sp.setAttribute('aria-label',sp.title)};slabel();
-  sp.onclick=()=>{SPEED=SPEEDS[(SPEEDS.indexOf(SPEED)+1)%SPEEDS.length];slabel();try{localStorage.speed=SPEED}catch{}again()}}
+  sp.onclick=()=>{SPEED=SPEEDS[(SPEEDS.indexOf(SPEED)+1)%SPEEDS.length];slabel();try{localStorage.speed=SPEED}catch{}setRate();if(au instanceof WAPlayer)again()}}
  const stop=playing()||tk.q.length&&!tk.blocked,t=stop?'Stop reading':tk.blocked?'Read aloud':'Read again';
  if(tkb.dataset.s!==t){tkb.dataset.s=t;tkb.title=t;tkb.setAttribute('aria-label',t);
   tkb.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">'+(stop?'<rect x="5" y="5" width="14" height="14" rx="2"/>':'<path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/>')+'</svg>'}
  tkb.parentNode.hidden=!tk.text}
 // Audio for a chunk: tiny-voca, on this device (phonemes from the voice worker, or the server while it starts).
 const voice=()=>{const v=(VOICE||'').toLowerCase();return v in LOCAL?v:'f2'};
-function tts(t){const it={u:null};it.p=localTTS(t,LOCAL[voice()],SPEED).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
+function tts(t){const it={u:null};it.p=localTTS(t,LOCAL[voice()]).then(b=>it.u=URL.createObjectURL(b));it.p.catch(()=>{});return it}
 // tiny-voca (4.5M parameters, 24 kHz) in a background worker (/voice/worker.js): phonemes with dizione (Pyodide) and,
 // on the web, audio with ONNX Runtime Web. Downloaded once and cached; started early (preload). Until its phonemizer
 // is ready (first use), phonemes come from the server.
@@ -225,17 +239,17 @@ const LOCAL={f2:0,m2:1};
 const NATIVE=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.quiskVoice?b=>window.webkit.messageHandlers.quiskVoice.postMessage(b)
  :window.QuiskAndroid?b=>Promise.resolve(QuiskAndroid.speak(JSON.stringify(b))):null;
 let vw=null,vwSeq=0;const vwReady={},vwWait={};
-function voiceWorker(){if(vw)return vw;vw=new Worker('/voice/worker.js?v=2');
+function voiceWorker(){if(vw)return vw;vw=new Worker('/voice/worker.js?v=3');
  vw.onmessage=e=>{const m=e.data;if(m.ready){vwReady[m.ready]=true;return}const w=vwWait[m.id];if(!w)return;delete vwWait[m.id];m.ok?w[0](m.result):w[1](new Error(m.error))};
  vw.postMessage({op:'init',model:!NATIVE});return vw}
 const vcall=(op,data)=>new Promise((ok,no)=>{const id=++vwSeq;vwWait[id]=[ok,no];voiceWorker().postMessage({id,op,...data})});
 const serverPhonemes=sents=>fetch('/api/phonemes',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sentences:sents})}).then(r=>r.ok?r.json():Promise.reject(new Error('phonemes')));
 let phSrc='server';
 const phonemes=sents=>vwReady.phonemes?vcall('phonemize',{sentences:sents}).then(r=>(phSrc='device',r)).catch(()=>(phSrc='server',serverPhonemes(sents))):(phSrc='server',serverPhonemes(sents));
-async function localTTS(text,voice,speed=1){const sents=(text.match(/[^.!?]+[.!?]*\s*/g)||[text]).map(s=>s.trim()).filter(Boolean);
+async function localTTS(text,voice){const sents=(text.match(/[^.!?]+[.!?]*\s*/g)||[text]).map(s=>s.trim()).filter(Boolean);
  const ph=(await phonemes(sents)).filter(Boolean);if(!ph.length)throw new Error('no phonemes');
- if(NATIVE){const b64=await NATIVE({ph,voice,speed,src:phSrc});if(!b64)throw new Error('no audio');return new Blob([Uint8Array.from(atob(b64),c=>c.charCodeAt(0))],{type:'audio/wav'})}
- return wav([await vcall('synth',{ph,voice,speed})],24000)}
+ if(NATIVE){const b64=await NATIVE({ph,voice,src:phSrc});if(!b64)throw new Error('no audio');return new Blob([Uint8Array.from(atob(b64),c=>c.charCodeAt(0))],{type:'audio/wav'})}
+ return wav([await vcall('synth',{ph,voice})],24000)}
 function wav(parts,rate){const n=parts.reduce((a,p)=>a+p.length,0),b=new DataView(new ArrayBuffer(44+n*2));let o=0;
  const s=t=>{for(const c of t)b.setUint8(o++,c.charCodeAt(0))},u32=v=>{b.setUint32(o,v,true);o+=4},u16=v=>{b.setUint16(o,v,true);o+=2};
  s('RIFF');u32(36+n*2);s('WAVE');s('fmt ');u32(16);u16(1);u16(1);u32(rate);u32(rate*2);u16(2);u16(16);s('data');u32(n*2);

@@ -32,8 +32,7 @@ final class NativeVoice: @unchecked Sendable {
     }
 
     /// Sentences as phoneme ids and stress (from /api/phonemes) -> one WAV file, with a short pause after each sentence.
-    /// `speed` 1-2 speaks faster at the same pitch (the model's own speed input).
-    func speak(_ sentences: [(ids: [Int64], stress: [Int64])], voice: Int64, speed: Float = 1) async throws -> Data {
+    func speak(_ sentences: [(ids: [Int64], stress: [Int64])], voice: Int64) async throws -> Data {
         try await withCheckedThrowingContinuation { done in
             queue.async {
                 do {
@@ -46,13 +45,13 @@ final class NativeVoice: @unchecked Sendable {
                             "tokens": try Self.tensor(ids, .int64, [1, n]),
                             "stress": try Self.tensor(stress, .int64, [1, n]),
                             "voice": try Self.tensor([voice], .int64, [1]),
-                            "speed": try Self.tensor([speed], .float, [1]),
+                            "speed": try Self.tensor([Float(1)], .float, [1]),
                             "pitch_shift": try Self.tensor([Float(0)], .float, [1]),
                             "pitch_range": try Self.tensor([Float(1)], .float, [1]),
                         ], outputNames: ["audio"], runOptions: nil)
                         guard let audio = try out["audio"]?.tensorData() as Data? else { continue }
                         audio.withUnsafeBytes { samples.append(contentsOf: $0.bindMemory(to: Float.self)) }
-                        samples.append(contentsOf: [Float](repeating: 0, count: Int(6000 / speed)))
+                        samples.append(contentsOf: [Float](repeating: 0, count: 6000))
                     }
                     done.resume(returning: Self.wav(samples, rate: 24000))
                 } catch {
@@ -74,7 +73,7 @@ final class NativeVoice: @unchecked Sendable {
     }
 }
 
-/// window.webkit.messageHandlers.quiskVoice.postMessage({ph: [{ids, stress}], voice, speed}) -> base64 WAV.
+/// window.webkit.messageHandlers.quiskVoice.postMessage({ph: [{ids, stress}], voice}) -> base64 WAV.
 final class VoiceBridge: NSObject, WKScriptMessageHandlerWithReply {
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage,
                                replyHandler: @escaping @MainActor @Sendable (Any?, String?) -> Void) {
@@ -82,7 +81,6 @@ final class VoiceBridge: NSObject, WKScriptMessageHandlerWithReply {
             return replyHandler(nil, "bad message")
         }
         let voice = Int64((body["voice"] as? NSNumber)?.intValue ?? 0)
-        let speed = min(3, max(0.5, (body["speed"] as? NSNumber)?.floatValue ?? 1))
         let sentences: [(ids: [Int64], stress: [Int64])] = list.compactMap {
             guard let p = $0 as? [String: Any], let ids = p["ids"] as? [NSNumber], let stress = p["stress"] as? [NSNumber] else { return nil }
             return (ids.map { $0.int64Value }, stress.map { $0.int64Value })
@@ -90,9 +88,9 @@ final class VoiceBridge: NSObject, WKScriptMessageHandlerWithReply {
         Task {
             do {
                 let started = Date()
-                let wav = try await NativeVoice.shared.speak(sentences, voice: voice, speed: speed)
+                let wav = try await NativeVoice.shared.speak(sentences, voice: voice)
                 #if DEBUG
-                NSLog("quiskVoice: %d sentences (phonemes from %@), %.1f s audio in %.0f ms", sentences.count, (body["src"] as? String) ?? "?", Double(wav.count - 44) / 48000, Date().timeIntervalSince(started) * 1000)
+                NSLog("quiskVoice: %d sentences, %d phonemes (from %@), %.1f s audio in %.0f ms", sentences.count, sentences.reduce(0) { $0 + $1.ids.count }, (body["src"] as? String) ?? "?", Double(wav.count - 44) / 48000, Date().timeIntervalSince(started) * 1000)
                 #endif
                 replyHandler(wav.base64EncodedString(), nil)
             } catch {

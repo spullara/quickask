@@ -37,12 +37,11 @@ object NativeVoice {
     private fun longs(values: LongArray, shape: LongArray) = OnnxTensor.createTensor(env, LongBuffer.wrap(values), shape)
     private fun float(value: Float) = OnnxTensor.createTensor(env, FloatBuffer.wrap(floatArrayOf(value)), longArrayOf(1))
 
-    /** {"ph": [{"ids": [...], "stress": [...]}], "voice": 0|1, "speed": 1-2} -> WAV bytes, with a short pause after each sentence. */
+    /** {"ph": [{"ids": [...], "stress": [...]}], "voice": 0|1} -> WAV bytes, with a short pause after each sentence. */
     fun speak(context: Context, request: JSONObject): ByteArray {
         val session = load(context)
         val voice = request.optLong("voice", 0)
-        val speed = request.optDouble("speed", 1.0).toFloat().coerceIn(0.5f, 3f)
-        val pause = (6000 / speed).toInt()
+        val pause = 6000
         val pcm = ByteArrayOutputStream()
         val sentences = request.getJSONArray("ph")
         for (i in 0 until sentences.length()) {
@@ -57,7 +56,7 @@ object NativeVoice {
                 "tokens" to longs(ids, longArrayOf(1, n.toLong())),
                 "stress" to longs(stress, longArrayOf(1, n.toLong())),
                 "voice" to longs(longArrayOf(voice), longArrayOf(1)),
-                "speed" to float(speed), "pitch_shift" to float(0f), "pitch_range" to float(1f),
+                "speed" to float(1f), "pitch_shift" to float(0f), "pitch_range" to float(1f),
             )
             session.run(inputs, setOf("audio")).use { out ->
                 @Suppress("UNCHECKED_CAST")
