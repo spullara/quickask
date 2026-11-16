@@ -5,6 +5,7 @@ import WebKit
 @main
 struct QuiskApp: App {
     @StateObject private var model = AppModel.shared
+    @Environment(\.scenePhase) private var phase
 
     var body: some Scene {
         WindowGroup {
@@ -16,6 +17,10 @@ struct QuiskApp: App {
             .animation(.easeOut(duration: 0.3), value: model.loaded)
             .environmentObject(model)
             .fullScreenCover(isPresented: $model.listening) { VoiceScreen().environmentObject(model) }
+            // "Quisk" wake word: only while the app is open, signed in and not already dictating.
+            .onChange(of: phase, initial: true) { model.updateWakeWord(active: phase == .active) }
+            .onChange(of: model.listening) { model.updateWakeWord(active: phase == .active) }
+            .onChange(of: model.signedIn) { model.updateWakeWord(active: phase == .active) }
         }
     }
 }
@@ -46,6 +51,18 @@ final class AppModel: ObservableObject {
     /// The listening screen was opened by the page's talk button: the question goes back to that page (a follow-up in
     /// an open chat), not into a new chat.
     var listeningForPage = false
+
+    /// Start or stop listening for "Quisk". Saying it opens dictation; the question is asked in the open page.
+    func updateWakeWord(active: Bool) {
+        let wake = WakeWord.shared
+        wake.onWake = { [weak self] in
+            guard let self, !self.listening else { return }
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            self.listeningForPage = true
+            self.listening = true
+        }
+        if active && signedIn && !listening { wake.start() } else { wake.stop() }
+    }
 
     /// A spoken question from the page's talk button, asked in the page with the answer read aloud.
     func talk(_ question: String) {
