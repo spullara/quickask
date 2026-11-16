@@ -1,0 +1,131 @@
+{
+ "test_hours_of_speech": 18.91,
+ "thresholds": [
+  {
+   "threshold": 0.5,
+   "steps_in_a_row": 1,
+   "recall_heldout_voices": 0.912,
+   "false_on_soundalikes": 0.2586,
+   "false_per_hour_real_speech": 17.51
+  },
+  {
+   "threshold": 0.7,
+   "steps_in_a_row": 1,
+   "recall_heldout_voices": 0.89,
+   "false_on_soundalikes": 0.2057,
+   "false_per_hour_real_speech": 12.22
+  },
+  {
+   "threshold": 0.8,
+   "steps_in_a_row": 1,
+   "recall_heldout_voices": 0.874,
+   "false_on_soundalikes": 0.1704,
+   "false_per_hour_real_speech": 9.63
+  },
+  {
+   "threshold": 0.9,
+   "steps_in_a_row": 1,
+   "recall_heldout_voices": 0.847,
+   "false_on_soundalikes": 0.1401,
+   "false_per_hour_real_speech": 7.56
+  },
+  {
+   "threshold": 0.95,
+   "steps_in_a_row": 1,
+   "recall_heldout_voices": 0.812,
+   "false_on_soundalikes": 0.1112,
+   "false_per_hour_real_speech": 4.81
+  },
+  {
+   "threshold": 0.98,
+   "steps_in_a_row": 1,
+   "recall_heldout_voices": 0.762,
+   "false_on_soundalikes": 0.0801,
+   "false_per_hour_real_speech": 3.07
+  },
+  {
+   "threshold": 0.5,
+   "steps_in_a_row": 2,
+   "recall_heldout_voices": 0.874,
+   "false_on_soundalikes": 0.1662,
+   "false_per_hour_real_speech": 4.81
+  },
+  {
+   "threshold": 0.7,
+   "steps_in_a_row": 2,
+   "recall_heldout_voices": 0.845,
+   "false_on_soundalikes": 0.1291,
+   "false_per_hour_real_speech": 3.17
+  },
+  {
+   "threshold": 0.8,
+   "steps_in_a_row": 2,
+   "recall_heldout_voices": 0.821,
+   "false_on_soundalikes": 0.1059,
+   "false_per_hour_real_speech": 2.38
+  },
+  {
+   "threshold": 0.9,
+   "steps_in_a_row": 2,
+   "recall_heldout_voices": 0.781,
+   "false_on_soundalikes": 0.078,
+   "false_per_hour_real_speech": 1.48
+  },
+  {
+   "threshold": 0.95,
+   "steps_in_a_row": 2,
+   "recall_heldout_voices": 0.744,
+   "false_on_soundalikes": 0.0579,
+   "false_per_hour_real_speech": 1.0
+  },
+  {
+   "threshold": 0.98,
+   "steps_in_a_row": 2,
+   "recall_heldout_voices": 0.677,
+   "false_on_soundalikes": 0.0392,
+   "false_per_hour_real_speech": 0.53
+  },
+  {
+   "threshold": 0.5,
+   "steps_in_a_row": 3,
+   "recall_heldout_voices": 0.829,
+   "false_on_soundalikes": 0.1066,
+   "false_per_hour_real_speech": 1.32
+  },
+  {
+   "threshold": 0.7,
+   "steps_in_a_row": 3,
+   "recall_heldout_voices": 0.791,
+   "false_on_soundalikes": 0.0797,
+   "false_per_hour_real_speech": 0.69
+  },
+  {
+   "threshold": 0.8,
+   "steps_in_a_row": 3,
+   "recall_heldout_voices": 0.763,
+   "false_on_soundalikes": 0.0642,
+   "false_per_hour_real_speech": 0.58
+  },
+  {
+   "threshold": 0.9,
+   "steps_in_a_row": 3,
+   "recall_heldout_voices": 0.714,
+   "false_on_soundalikes": 0.0416,
+   "false_per_hour_real_speech": 0.26
+  },
+  {
+   "threshold": 0.95,
+   "steps_in_a_row": 3,
+   "recall_heldout_voices": 0.664,
+   "false_on_soundalikes": 0.0303,
+   "false_per_hour_real_speech": 0.21
+  },
+  {
+   "threshold": 0.98,
+   "steps_in_a_row": 3,
+   "recall_heldout_voices": 0.591,
+   "false_on_soundalikes": 0.0194,
+   "false_per_hour_real_speech": 0.16
+  }
+ ]
+}

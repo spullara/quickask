@@ -6,9 +6,10 @@ import OnnxRuntimeBindings
 @MainActor
 final class WakeWord {
     static let shared = WakeWord()
-    /// A wake needs `streak` scores in a row above `threshold` (see wakeword/report-v2.json; tested live with listen.py).
+    /// A wake needs `streak` scores in a row above `threshold`. Model 4 at 0.8 x 3 (wakeword/evaluate.py): hears 76% of
+    /// held-out voices in noise, 6% on sound-alikes, 0.6 false starts per hour of unseen speech.
     static let threshold: Float = 0.8
-    static let streak = 2
+    static let streak = 3
 
     var onWake: () -> Void = {}
     /// Settings → Quisk → Listen for "Quisk" (on by default).
