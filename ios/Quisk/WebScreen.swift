@@ -40,7 +40,9 @@ struct QuiskWebView: UIViewRepresentable {
         let web = WKWebView(frame: .zero, configuration: config)
         web.navigationDelegate = context.coordinator
         web.uiDelegate = context.coordinator
-        web.allowsBackForwardNavigationGestures = true
+        // No swipe back: chats open in place, so an accidental edge swipe went back to an older chat and the next
+        // spoken question landed there. The page has its own New chat button and chat list.
+        web.allowsBackForwardNavigationGestures = false
         #if DEBUG
         web.isInspectable = true
         #endif

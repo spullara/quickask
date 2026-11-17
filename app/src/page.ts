@@ -393,7 +393,7 @@ async function run(o={}){start(o.el);cur.at=o.at;if(!o.el)main.scrollTop=main.sc
   if(!r.ok)throw new Error('HTTP '+r.status);
   const rd=r.body.pipeThrough(new TextDecoderStream()).getReader();let buf='';
   for(;;){const {value,done}=await rd.read();if(done)break;buf+=value;const parts=buf.split('\\u0000');buf=parts.pop();
-   for(const p of parts){const k=p[0],v=p.slice(1);if(k==='T')T(v);else if(k==='I')I(JSON.parse(v));else if(k==='R')R(JSON.parse(v));else if(k==='F')F(JSON.parse(v));else if(k==='D')D(JSON.parse(v));else if(k==='E')E(v)}}
+   for(const p of parts){const k=p[0],v=p.slice(1);if(k==='T')T(v);else if(k==='X'){cur.buf='';paint()}else if(k==='I')I(JSON.parse(v));else if(k==='R')R(JSON.parse(v));else if(k==='F')F(JSON.parse(v));else if(k==='D')D(JSON.parse(v));else if(k==='E')E(v)}}
   if(cur)E('Connection closed.')}catch(e){E(String(e.message||e))}}
 $('form').addEventListener('submit',e=>{const q=ta.value.trim();if(!S.id)return;e.preventDefault();if(!q||busy)return;ta.value='';fit();if(matchMedia('(hover:none)').matches)ta.blur();ask(q)});
 ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('form').requestSubmit()}});

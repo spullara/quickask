@@ -61,9 +61,11 @@ final class Dictation: ObservableObject {
                 guard let self, self.phase == .listening else { return }
                 if let result {
                     self.heard = result.bestTranscription.formattedString
-                    // The question ends after 1.2 s of silence once something was said.
+                    // The question ends after 1.2 s of silence once something was said; 2.5 s while it is under three
+                    // words, so a pause after "I have" does not cut the question off.
                     self.silence?.invalidate()
-                    self.silence = Timer.scheduledTimer(withTimeInterval: result.isFinal ? 0 : 1.2, repeats: false) { _ in
+                    let short = self.heard.split(separator: " ").count < 3
+                    self.silence = Timer.scheduledTimer(withTimeInterval: result.isFinal ? 0 : short ? 2.5 : 1.2, repeats: false) { _ in
                         Task { @MainActor in self.finish() }
                     }
                 } else if error != nil, self.heard.isEmpty {

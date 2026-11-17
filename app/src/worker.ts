@@ -525,7 +525,7 @@ function queryOf(msgs: Msg[]) {
   return last.split(/\s+/).length < 8 && asked.length > 1 ? `${asked.at(-2)} ${last}` : last;
 }
 
-type Emit = (type: "T" | "I" | "R" | "F" | "D" | "E", value: unknown) => void;
+type Emit = (type: "T" | "X" | "I" | "R" | "F" | "D" | "E", value: unknown) => void;
 
 /** Highlights are page Markdown; strip the marks for the search results panel. */
 const plain = (t: string) => t.replace(/(^|\s)#{1,6}(?=\s|$)/g, "$1").replace(/\*\*|__|`/g, "").replace(/\s+/g, " ").trim();
@@ -579,6 +579,14 @@ async function followUp(env: WorkerEnv, msgs: Msg[], prev: Promise<Msg | undefin
       raw += second.text;
       tokensIn += second.tokensIn;
       tokensOut += second.tokensOut;
+    }
+    // An empty answer (seen with a cut-off question such as "I have"): ask once more, for words this time.
+    if (!splitFollowups(raw).answer.trim()) {
+      emit("X", ""); // the page drops what it has (only follow-up chips) and starts the answer again
+      const again = await relay(gemini(env, contentsOf(msgs, `${earlier}\n\n(If this message seems cut off or unclear, say briefly what you understood and ask for the rest.)`), model, loc, "none"), (t) => emit("T", t));
+      raw = again.text;
+      tokensIn += again.tokensIn;
+      tokensOut += again.tokensOut;
     }
     emit("R", results);
     const { answer: text, followups } = splitFollowups(raw);
