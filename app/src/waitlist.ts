@@ -192,6 +192,8 @@ export async function inviteRoute(req: Request, env: WorkerEnv, code: string) {
 
 /** Admin actions on /api/admin/*. The caller checked that this is the admin. */
 export async function adminRoute(req: Request, env: WorkerEnv, url: URL): Promise<Response> {
+  // Accounts with their ids, for support (reading a chat a user asked about).
+  if (url.pathname === "/api/admin/users" && req.method === "GET") return json(await store(env).users());
   const body = (await req.json().catch(() => ({}))) as { email?: string; daily?: number | null; note?: string };
   if (url.pathname === "/api/admin/invite" && req.method === "POST") {
     // A single-use link the admin sends by hand. Whoever opens it signs up with any email address, without the waitlist.

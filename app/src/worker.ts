@@ -285,9 +285,12 @@ const SEARCH_TOOL = {
 /** Follow-up mode: the previous answer's results are in context, and the model searches only when it needs to. */
 const FOLLOW_UP = `This question follows earlier turns. The search results the previous answer used are attached to it as
 <earlier_results>; cite them by their numbers. When they and the chat already answer the question, answer directly
-without searching. Call web_search (once, with a precise query) only when the question needs facts they do not have:
-a new topic, more detail, or newer information. New results continue the numbering. Only images listed in new search
-results can be shown.`;
+without searching. Call web_search (once, with a precise query) when the question needs facts they do not have: a new
+topic, more detail, or newer information. Also search when the message narrows or corrects the earlier question (a
+device, product, version, place, person or date, even a single word such as "iPad"): the earlier results are about the
+wrong thing, so search for the earlier question with the new detail (for example "iPad large app icons labels still
+showing"). Do not answer a product or software question from memory when the results are about something else. New
+results continue the numbering. Only images listed in new search results can be shown.`;
 
 /** Streamed Gemini call. tools: offer web_search ("auto"), or allow no more calls after a search ("none"). */
 function gemini(env: WorkerEnv, contents: Content[], model: ModelKey, loc: Loc, tools?: "auto" | "none") {
