@@ -176,7 +176,7 @@ const tk={said:0,text:'',pend:'',sent:0,q:[],busy:false,blocked:false};let tkb=n
 const SPEEDS=[1,1.5,2];let SPEED=+(location.search.match(/[?&]speed=([\d.]+)/)||[])[1]||0;try{SPEED=SPEED||+localStorage.speed}catch{}if(!SPEEDS.includes(SPEED))SPEED=1;
 // In the phone apps, answers play through Web Audio, not an <audio> element: WebKit puts every <audio> element on the
 // iOS lock screen as Now Playing. Web Audio is silenced by the ring/silent switch unless the page asks for
-// an audio session that is not; play-and-record also matches the app's, so the wake word keeps the mic. (Browsers keep <audio>, which Safari plays even in silent mode.) Same small API.
+// an audio session that is not; play-and-record also matches the app's after dictation. (Browsers keep <audio>, which Safari plays even in silent mode.) Same small API.
 // Faster speech at the same pitch (WSOLA): overlap-add 43 ms frames taken every rate*21 ms, each moved by up to
 // 8 ms to line up with the last one, so the voice keeps its pitch. A few milliseconds for a sentence.
 function stretch(x,rate){if(rate===1||x.length<4096)return x;const N=1024,H=512,tol=200,Ha=H*rate,win=new Float32Array(N);
@@ -276,11 +276,6 @@ function pump(){if(tk.busy||tk.blocked||!tk.q.length)return;tk.busy=true;const i
   // Speech for a chunk failed (the phoneme server waking up): make it once more before skipping it.
   else if(!it.again){const n=tts(it.t);n.again=1;tk.q[0]=n;tk.busy=false;setTimeout(pump,500)}else next()})}
 au.onended=next;au.onerror=()=>{if(tk.busy)next()};
-// The iOS app pauses its "Quisk" wake word while an answer plays, so it does not hear its own voice.
-const spkBridge=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.quiskSpeaking;let spk=false;
-const setSpk=v=>{if(spkBridge&&v!==spk){spk=v;spkBridge.postMessage({on:v})}};
-au.addEventListener('playing',()=>setSpk(true));
-for(const e of ['pause','ended','emptied'])au.addEventListener(e,()=>setTimeout(()=>setSpk(!au.paused||tk.q.length>0),500));
 // The tap: stop, or play. Playing starts inside the tap (iPhone), with the first chunk if it is ready, else a silent unlock.
 function tkTap(){if(playing()||tk.q.length&&!tk.blocked){au.pause();tk.q=[];tk.busy=false;tkShow();return}
  if(au.reset)au.reset();
@@ -426,7 +421,7 @@ U();
 function fresh(){document.body.classList.remove('open');
  if(!S.id){ta.value='';fit();ta.focus();return}
  if(cur){location.href='/';return}
- // A new chat leaves talk mode (the wake word, talk button or ?talk=true turn it on again): stop reading, hide its buttons.
+ // A new chat leaves talk mode (the talk button, the Action button or ?talk=true turn it on again): stop reading, hide its buttons.
  if(window.talkReset){talkReset();TALK=false;if(tkb)tkb.parentNode.hidden=true}
  S.id=null;S.msgs=[];S.title='Quisk';S.shares=[];log.innerHTML='';main.classList.add('home');
  const x=$('#shx');if(x)x.remove();side.querySelectorAll('.on').forEach(e=>e.classList.remove('on'));

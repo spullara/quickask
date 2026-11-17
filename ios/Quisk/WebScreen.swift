@@ -26,8 +26,6 @@ struct QuiskWebView: UIViewRepresentable {
         config.userContentController.addScriptMessageHandler(VoiceBridge(), contentWorld: .page, name: "quiskVoice")
         // The page's talk button: dictate with the phone's speech recognition, then answer aloud in the page.
         config.userContentController.add(ListenBridge(model: model), name: "quiskListen")
-        // The page says when it starts and stops reading aloud, so the wake word ignores Quisk's own voice.
-        config.userContentController.add(SpeakingBridge(), name: "quiskSpeaking")
         #if DEBUG
         // Debug builds: the page's console warnings and errors go to the Xcode console, and Safari can inspect the page.
         config.userContentController.add(LogBridge(), name: "quiskLog")
@@ -113,9 +111,3 @@ final class LogBridge: NSObject, WKScriptMessageHandler {
 }
 #endif
 
-final class SpeakingBridge: NSObject, WKScriptMessageHandler {
-    func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
-        let on = ((message.body as? [String: Any])?["on"] as? Bool) ?? false
-        Task { @MainActor in WakeWord.shared.setPaused(on) }
-    }
-}

@@ -47,7 +47,8 @@ final class Dictation: ObservableObject {
         request.shouldReportPartialResults = true
         request.taskHint = .search
         self.request = request
-        // A new engine each time, so the tap uses the mic format of the session set up just now (see WakeWord).
+        // A new engine each time: an engine keeps the mic format it first saw, and a new route (AirPods, the car)
+        // changes it. A tap with an old format raises "format mismatch" and ends the app.
         let engine = AVAudioEngine()
         let input = engine.inputNode
         let format = input.inputFormat(forBus: 0)
@@ -90,7 +91,7 @@ final class Dictation: ObservableObject {
         task?.cancel()
         request = nil
         task = nil
-        // Hand the audio session back for the answer, keeping the mic usable for the wake word.
+        // Hand the audio session back for the answer.
         AudioSession.later(AudioSession.playAndListen)
     }
 
